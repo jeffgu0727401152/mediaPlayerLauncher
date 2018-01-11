@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_enabled="true" android:state_window_focused="false">
+        <nine-patch android:src="@drawable/textfield_default" android:tint="?attr/textColor" />
+    </item>
+    <item android:state_enabled="false" android:state_window_focused="false">
+        <nine-patch android:src="@drawable/textfield_disabled" android:tint="?attr/textColor" />
+    </item>
+    <item android:state_enabled="true" android:state_focused="true">
+        <nine-patch android:src="@drawable/textfield_focused" android:tint="?attr/textColor" />
+    </item>
+    <item android:state_enabled="true">
+        <nine-patch android:src="@drawable/textfield_default" android:tint="?attr/textColor" />
+    </item>
+    <item android:state_focused="true">
+        <nine-patch android:src="@drawable/textfield_default" android:tint="?attr/textColor" />
+    </item>
+    <item>
+        <nine-patch android:src="@drawable/textfield_disabled" android:tint="?attr/textColor" />
+    </item>
+
+</selector>

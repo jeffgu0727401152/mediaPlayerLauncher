@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@drawable/shape_clean_bg"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <com.whitesky.sdk.widget.WaveLoadingView
+        android:id="@+id/wlv_quicken_loading"
+        android:layout_width="@dimen/x300"
+        android:layout_height="@dimen/x300"
+        android:layout_marginBottom="@dimen/x40"
+        android:layout_marginLeft="@dimen/x30"
+        android:layout_marginRight="@dimen/x30"
+        android:layout_marginTop="@dimen/x40"
+        android:focusable="false"
+        app:wlv_borderColor="@color/white"
+        app:wlv_borderWidth="3dp"
+        app:wlv_progressValue="40"
+        app:wlv_shapeType="circle"
+        app:wlv_titleBottom=""
+        app:wlv_titleBottomColor="@color/white"
+        app:wlv_titleBottomSize="20sp"
+        app:wlv_titleCenter=""
+        app:wlv_titleCenterColor="@color/quicken1"
+        app:wlv_titleCenterSize="24sp"
+        app:wlv_titleTop=""
+        app:wlv_titleTopColor="@color/white"
+        app:wlv_titleTopSize="@dimen/x30"
+        app:wlv_waveAmplitude="40"
+        app:wlv_waveColor="@color/white" />
+
+    <Button
+        android:id="@+id/bt_quicken_clean"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_clean_btn_bg"
+        android:padding="@dimen/x8"
+        android:text="一键优化"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x40" />
+
+</LinearLayout>

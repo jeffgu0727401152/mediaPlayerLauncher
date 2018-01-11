@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/x648"
+    android:layout_height="@dimen/x110"
+    android:background="@drawable/selector_button"
+    android:focusable="true"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/iv_wifi_lock"
+        android:layout_width="@dimen/x48"
+        android:layout_height="@dimen/x48"
+        android:layout_marginLeft="@dimen/x38"
+        android:layout_centerVertical="true"
+        android:src="@drawable/img_wifi_lock" />
+
+    <TextView
+        android:id="@+id/tv_wifi_name"
+        android:layout_width="@dimen/x280"
+        android:layout_height="@dimen/x56"
+        android:layout_marginLeft="@dimen/x34"
+        android:layout_toRightOf="@+id/iv_wifi_lock"
+        android:layout_centerVertical="true"
+        android:text="测试wifi"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x40" />
+
+    <ImageView
+        android:id="@+id/iv_wifi_logo"
+        android:layout_width="@dimen/x76"
+        android:layout_height="@dimen/x76"
+        android:layout_marginLeft="@dimen/x184"
+        android:layout_toRightOf="@+id/tv_wifi_name"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="@dimen/x10"
+        android:src="@drawable/img_wifi_def" />
+
+</RelativeLayout>

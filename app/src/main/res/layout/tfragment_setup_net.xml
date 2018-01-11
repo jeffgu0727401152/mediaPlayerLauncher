@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_background"
+    android:focusable="false">
+
+    <RelativeLayout
+        android:id="@+id/rl_net_cable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/x200"
+        android:focusable="false"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_net_1"
+            android:layout_width="@dimen/x256"
+            android:layout_height="@dimen/x90"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/x100"
+            android:focusable="false"
+            android:text="@string/setup_title_net"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x64" />
+
+        <TextView
+            android:id="@+id/tv_netinfo"
+            android:layout_width="@dimen/x744"
+            android:layout_height="@dimen/x90"
+            android:layout_below="@+id/tv_net_1"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/x160"
+            android:focusable="false"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x64" />
+
+        <TextView
+            android:id="@+id/tv_pass"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/x90"
+            android:layout_below="@+id/tv_netinfo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/x30"
+            android:focusable="false"
+            android:gravity="center"
+            android:text="@string/setup_net_pass_info"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x64"
+            android:visibility="invisible" />
+
+        <Button
+            android:id="@+id/bt_net_pass"
+            android:layout_width="@dimen/x500"
+            android:layout_height="@dimen/x100"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginBottom="@dimen/x80"
+            android:layout_marginTop="@dimen/x30"
+            android:background="@drawable/selector_button"
+            android:focusable="true"
+            android:text="@string/setup_net_pass" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_net_wifi"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/x200"
+        android:focusable="false"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_wifi_title"
+            android:layout_width="@dimen/x256"
+            android:layout_height="@dimen/x90"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/x100"
+            android:focusable="false"
+            android:text="@string/setup_title_wifi"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x64" />
+
+        <com.whitesky.sdk.widget.pulltorefresh.PullToRefreshLayout
+            android:id="@+id/refresh_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/tv_wifi_title"
+            android:layout_marginLeft="@dimen/x360"
+            android:layout_marginRight="@dimen/x360"
+            android:layout_marginTop="@dimen/x100"
+            android:focusable="true">
+
+            <com.whitesky.sdk.widget.pulltorefresh.PullableRecyclerView
+                android:id="@+id/recyclerview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+            </com.whitesky.sdk.widget.pulltorefresh.PullableRecyclerView>
+
+        </com.whitesky.sdk.widget.pulltorefresh.PullToRefreshLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_net_success"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/x200"
+        android:focusable="false"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_net_success"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:focusable="false"
+            android:gravity="center"
+            android:text="@string/setup_title_wifi"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x86" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/x70"
+        android:focusable="false"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_left" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:text="上一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:layout_marginLeft="@dimen/x66"
+            android:focusable="false"
+            android:text="下一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_right" />
+    </LinearLayout>
+
+
+</RelativeLayout>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 按压后的背景 -->
+    <item android:drawable="@drawable/exitplayfocus" android:state_focused="true"></item>
+    <!-- 默认的背景 -->
+    <item android:drawable="@color/translucent" android:state_focused="false"></item>
+
+</selector>

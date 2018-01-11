@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="@dimen/x448"
+        android:layout_height="@dimen/x90"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/x200"
+        android:text="@string/setup_title_language"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x64" />
+
+    <RadioGroup
+        android:id="@+id/rg_setup_language"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true">
+
+        <RadioButton
+            android:id="@+id/rb_setup_language_zh"
+            android:layout_width="@dimen/x684"
+            android:layout_height="@dimen/x110"
+            android:background="@drawable/selector_button"
+            android:button="@null"
+            android:drawableRight="@drawable/selector_radiobutton"
+            android:focusable="true"
+            android:paddingLeft="40px"
+            android:paddingRight="45px"
+            android:text="简体中文"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+
+        <RadioButton
+            android:id="@+id/rb_setup_language_en"
+            android:layout_width="@dimen/x684"
+            android:layout_height="@dimen/x110"
+            android:layout_marginTop="@dimen/x10"
+            android:background="@drawable/selector_button"
+            android:button="@null"
+            android:drawableRight="@drawable/selector_radiobutton"
+            android:focusable="true"
+            android:paddingLeft="40px"
+            android:paddingRight="45px"
+            android:text="English"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/x70"
+        android:focusable="false"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_left" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:text="上一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:layout_marginLeft="@dimen/x66"
+            android:focusable="false"
+            android:text="下一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_right" />
+    </LinearLayout>
+</RelativeLayout>

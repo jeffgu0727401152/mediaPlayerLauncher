@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_background"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="@dimen/x256"
+        android:layout_height="@dimen/x90"
+        android:layout_marginLeft="@dimen/x832"
+        android:layout_marginTop="@dimen/x110"
+        android:text="@string/title_admin_device_info"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x64" />
+
+    <LinearLayout
+        android:layout_width="@dimen/x926"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/x20"
+        android:layout_marginLeft="@dimen/x497"
+        android:layout_marginTop="@dimen/x40"
+        android:background="@drawable/border_shape2"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x164"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_terminal_model"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_terminalmodel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_sys_version"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_sys_version"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x164"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_ui_version"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_uiversion"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_dlp_info"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_dlpinfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x164"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_ram_info"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_raminfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_rom_info"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_rominfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x164"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x264"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_mac_adr"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_mac"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x214"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x264"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_wifi_mac_adr"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_wifi_mac"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x214"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x164"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_sys_sn"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_sys_sn"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:text="@string/str_admin_device_default"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_sys_version_date"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_sys_version_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="true"
+    android:fillEnabled="true"
+    android:shareInterpolator="true"
+    android:interpolator="@android:anim/bounce_interpolator">
+    <!--@android:anim/bounce_interpolator回弹效果-->
+    <!--fillBefore是指动画结束时画面停留在第一帧，fillAfter是指动画结束是画面停留在最后一帧。-->
+    <!--最关键的问题是这2个参数不能在</alpha>,</scale>,</translate>,</rotate>中设置，这是没有用的，必须-->
+    <!--在动画xml文件的</set>节点中设置-->
+    <!--大小变化-->
+    <scale
+        android:duration="1000"
+        android:fromXScale="1.0"
+        android:fromYScale="1.0"
+        android:pivotX="0%"
+        android:pivotY="100%"
+        android:toXScale="1.0"
+        android:toYScale="0.0" />
+</set>

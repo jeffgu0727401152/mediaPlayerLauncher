@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_background"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/imageView19"
+        android:layout_width="@dimen/x180"
+        android:layout_height="@dimen/x100"
+        android:layout_alignParentLeft="true"
+        android:layout_margin="@dimen/x25"
+        android:focusable="false"
+        android:src="@drawable/img_logo_sm" />
+
+    <com.whitesky.sdk.widget.TvHorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.whitesky.sdk.widget.TvZorderRelativeLayout
+            android:id="@+id/rl_settings_ota_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:clipToPadding="false"
+            android:focusable="false"
+            android:gravity="center"
+            android:paddingBottom="@dimen/x80"
+            android:paddingEnd="@dimen/x40"
+            android:paddingStart="@dimen/x40">
+
+            <com.whitesky.sdk.widget.RoundedFrameLayout
+                android:id="@+id/rf_settings_ota_local"
+                android:layout_width="@dimen/x420"
+                android:layout_height="@dimen/x560"
+                android:layout_marginLeft="@dimen/x5"
+                android:layout_marginRight="@dimen/x5"
+                android:layout_marginTop="@dimen/x5"
+                android:background="@drawable/border_shape"
+                android:focusable="true"
+                app:radius="@dimen/x4">
+
+
+                <ImageView
+                    android:id="@+id/iv_settings_ota_local"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="left|center_vertical"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img_ota_local" />
+
+
+            </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+            <com.whitesky.sdk.widget.RoundedFrameLayout
+                android:id="@+id/rf_settings_ota_net"
+                android:layout_width="@dimen/x420"
+                android:layout_height="@dimen/x560"
+                android:layout_alignBaseline="@+id/view"
+                android:layout_alignBottom="@+id/view"
+                android:layout_below="@+id/view4"
+                android:layout_gravity="bottom"
+                android:layout_marginLeft="@dimen/x5"
+                android:layout_marginRight="@dimen/x5"
+                android:layout_marginTop="@dimen/x5"
+                android:layout_toEndOf="@+id/rf_settings_ota_local"
+                android:background="@drawable/border_shape"
+                android:focusable="true"
+                app:radius="@dimen/x4">
+
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="left|center_vertical"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/img_ota_net" />
+
+            </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+        </com.whitesky.sdk.widget.TvZorderRelativeLayout>
+    </com.whitesky.sdk.widget.TvHorizontalScrollView>
+</LinearLayout>

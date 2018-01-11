@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false">
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="@dimen/x129"
+        android:layout_height="@dimen/x90"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:gravity="center"
+        android:text="@string/setup_title_focuse"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x64" />
+
+
+    <ImageView
+        android:id="@+id/iv_setup_focus_up"
+        android:layout_width="@dimen/x198"
+        android:layout_height="@dimen/x232"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="46dp"
+        android:src="@drawable/img_f_up" />
+
+    <ImageView
+        android:id="@+id/iv_setup_focus_down"
+        android:layout_width="@dimen/x198"
+        android:layout_height="@dimen/x232"
+        android:layout_below="@+id/iv_setup_focus_up"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/x40"
+        android:src="@drawable/img_f_down" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/x70"
+        android:focusable="false"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_left" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:text="上一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <TextView
+            android:layout_width="@dimen/x120"
+            android:layout_height="@dimen/x56"
+            android:layout_marginLeft="@dimen/x66"
+            android:focusable="false"
+            android:text="下一页"
+            android:textColor="#eeeeee"
+            android:textSize="@dimen/x40" />
+
+        <ImageView
+            android:layout_width="@dimen/x56"
+            android:layout_height="@dimen/x56"
+            android:focusable="false"
+            android:src="@drawable/img_arrow_right" />
+    </LinearLayout>
+</RelativeLayout>

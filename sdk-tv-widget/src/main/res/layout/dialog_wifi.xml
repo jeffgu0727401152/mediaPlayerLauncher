@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#7fffffff"
+    android:focusable="true"
+    android:gravity="center">
+
+    <RelativeLayout
+        android:layout_width="@dimen/x720"
+        android:layout_height="@dimen/x480"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/txt_title"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x80"
+            android:layout_marginTop="@dimen/x20"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x70" />
+
+        <EditText
+            android:id="@+id/edit_msg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txt_title"
+            android:layout_marginTop="@dimen/x20"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+
+        <TextView
+            android:id="@+id/txt_msg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/edit_msg"
+            android:layout_marginTop="@dimen/x20"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x80"
+            android:layout_below="@+id/txt_msg"
+            android:layout_marginTop="@dimen/x20"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_neg"
+                android:layout_width="@dimen/x142"
+                android:layout_height="@dimen/x60"
+                android:background="@drawable/selector_ota"
+                android:focusable="true"
+                android:text="确定"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x35" />
+
+            <Button
+                android:id="@+id/btn_pos"
+                android:layout_width="@dimen/x142"
+                android:layout_height="@dimen/x60"
+                android:layout_marginLeft="@dimen/x60"
+                android:background="@drawable/selector_ota"
+                android:focusable="true"
+                android:text="取消"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x35" />
+        </LinearLayout>
+    </RelativeLayout>
+</RelativeLayout>

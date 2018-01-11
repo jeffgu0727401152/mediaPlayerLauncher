@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="vertical">
+
+    <com.whitesky.sdk.widget.FocusListenerLinearLayout
+        android:id="@+id/layoutContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/x60"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/Base.TextAppearance.AppCompat.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/x60"
+                android:layout_marginLeft="@dimen/x20"
+                android:text="本地应用"
+                android:textColor="@color/white"
+                android:textSize="30sp" />
+
+            <com.whitesky.sdk.widget.TvRecyclerView
+                android:id="@+id/rv_app_list"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x560"
+                android:layout_marginLeft="@dimen/x60"
+                android:layout_marginRight="@dimen/x20"
+                android:layout_marginTop="@dimen/x60"
+                android:clipToPadding="false"
+                android:focusable="false"
+                android:scrollbarStyle="outsideInset"
+                android:scrollbars="vertical" />
+
+        </LinearLayout>
+
+        <com.whitesky.sdk.widget.MainUpView
+            android:id="@+id/mainUpView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </com.whitesky.sdk.widget.FocusListenerLinearLayout>
+
+</LinearLayout>

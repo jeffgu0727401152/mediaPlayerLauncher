@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:customAttr="http://schemas.android.com/apk/res-auto"
+    xmlns:lv="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/rl_home2_main"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/x150"
+        android:focusable="false">
+
+        <ImageView
+            android:id="@+id/iv_home2_1"
+            android:layout_width="@dimen/x180"
+            android:layout_height="@dimen/x100"
+            android:layout_alignParentLeft="true"
+            android:layout_margin="@dimen/x25"
+            android:focusable="false"
+            android:src="@drawable/img_logo_sm" />
+
+        <ImageView
+            android:id="@+id/iv_home2_2"
+            android:layout_width="@dimen/x56"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="@dimen/x200"
+            android:layout_toRightOf="@+id/iv_home2_1"
+            android:focusable="false"
+            android:src="@drawable/img_brocast" />
+
+        <com.whitesky.sdk.widget.TvScrollTextView
+            android:id="@+id/sv_home2_message"
+            android:layout_width="@dimen/x480"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="@dimen/x30"
+            android:layout_toRightOf="@+id/iv_home2_2"
+            android:focusable="false"
+            customAttr:isHorizontal="true"
+            customAttr:speed="3"
+            customAttr:textColor="#ffffffff"
+            customAttr:textSize="21sp"
+            customAttr:times="567" />
+
+        <include
+            android:id="@+id/include_home2"
+            layout="@layout/activity_title_time"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/x150"
+            android:layout_toRightOf="@+id/sv_home2_message"
+            android:focusable="false" />
+
+        <ImageView
+            android:id="@+id/iv_home2_net"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/x100"
+            android:layout_toRightOf="@+id/include_home2"
+            android:focusable="false"
+            android:src="@mipmap/icon_enh" />
+
+        <ImageView
+            android:id="@+id/iv_home2_wifi"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="@dimen/x30"
+            android:layout_toRightOf="@+id/iv_home2_net"
+            android:focusable="false"
+            android:src="@mipmap/icon_wifi"
+            android:visibility="invisible" />
+
+    </RelativeLayout>
+
+
+    <com.whitesky.sdk.widget.TvZorderRelativeLayout
+        android:id="@+id/rl_home2_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:clipToPadding="false"
+        android:focusable="false"
+        android:gravity="center">
+
+        <com.whitesky.sdk.widget.RoundedFrameLayout
+            android:id="@+id/rf_home2_media"
+            android:layout_width="@dimen/x430"
+            android:layout_height="@dimen/x650"
+            android:layout_margin="@dimen/x5"
+            android:background="@drawable/border_shape"
+            android:focusable="true"
+            android:nextFocusUp="@+id/rf_home2_media"
+            android:padding="0dp"
+            app:radius="@dimen/x4">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="left|center_vertical"
+                android:scaleType="centerCrop"
+                android:src="@drawable/img_2_media" />
+
+            <com.whitesky.sdk.widget.LabelView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:paddingLeft="@dimen/x5"
+                android:paddingRight="@dimen/x5"
+                android:visibility="invisible"
+                lv:lv_fill_triangle="true"
+                lv:lv_gravity="TOP_RIGHT"
+                lv:lv_text_size="15sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x80"
+                android:layout_gravity="bottom"
+                android:background="@drawable/border_down_shape"
+                android:gravity="center"
+                android:padding="@dimen/x15"
+                android:text="@string/str_home_media"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:visibility="visible" />
+        </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+        <com.whitesky.sdk.widget.RoundedFrameLayout
+            android:id="@+id/rf_home2_admin"
+            android:layout_width="@dimen/x430"
+            android:layout_height="@dimen/x650"
+            android:layout_margin="@dimen/x5"
+            android:layout_toEndOf="@+id/rf_home2_media"
+            android:background="@drawable/border_shape"
+            android:focusable="true"
+            android:nextFocusUp="@+id/rf_home2_admin"
+            android:padding="0dp"
+            app:radius="@dimen/x4">
+
+            <ImageView
+                android:id="@+id/iv_home2_3"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="left|center_vertical"
+                android:scaleType="centerCrop"
+                android:src="@drawable/img_2_peo" />
+
+            <com.whitesky.sdk.widget.LabelView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:paddingLeft="@dimen/x5"
+                android:paddingRight="@dimen/x5"
+                android:visibility="invisible"
+                lv:lv_fill_triangle="true"
+                lv:lv_gravity="TOP_RIGHT"
+                lv:lv_text_size="15sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x80"
+                android:layout_gravity="bottom"
+                android:background="@drawable/border_down_shape"
+                android:gravity="center"
+                android:padding="@dimen/x15"
+                android:text="@string/str_home_peo"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:visibility="visible" />
+        </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+        <com.whitesky.sdk.widget.RoundedFrameLayout
+            android:id="@+id/rf_home2_sys"
+            android:layout_width="@dimen/x430"
+            android:layout_height="@dimen/x650"
+            android:layout_margin="@dimen/x5"
+            android:focusable="true"
+            android:nextFocusUp="@+id/rf_home2_sys"
+            android:layout_toEndOf="@+id/rf_home2_admin"
+            app:radius="@dimen/x4">
+
+            <com.whitesky.sdk.widget.LabelView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:tag="top"
+                android:visibility="invisible"
+                lv:lv_background_color="@color/orangered"
+                lv:lv_fill_triangle="true"
+                lv:lv_gravity="TOP_RIGHT"
+                lv:lv_text_size="15sp" />
+
+
+            <ImageView
+                android:id="@+id/iv_home2_sys"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/img_2_sys" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x80"
+                android:layout_gravity="bottom"
+                android:background="@drawable/border_down_shape"
+                android:gravity="center"
+                android:padding="@dimen/x15"
+                android:text="@string/str_home_sys"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:visibility="visible" />
+        </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+    </com.whitesky.sdk.widget.TvZorderRelativeLayout>
+</LinearLayout>

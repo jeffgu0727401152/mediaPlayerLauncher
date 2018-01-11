@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:background="#7fffffff">
+
+    <LinearLayout
+        android:layout_width="@dimen/x520"
+        android:layout_height="@dimen/x440"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@drawable/border_shape"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/tv_ota_dialog_title"
+            android:layout_width="@dimen/x377"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="发现可升级版本"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x34" />
+
+        <LinearLayout
+            android:layout_width="@dimen/x377"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/x20">
+
+            <TextView
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="版本号"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+
+            <TextView
+                android:id="@+id/tv_ota_dialog_vision"
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="1.0.0"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="@dimen/x377"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/x20">
+
+            <TextView
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="大小"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+
+            <TextView
+                android:id="@+id/tv_ota_dialog_size"
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="300m"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="@dimen/x377"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/x20">
+
+            <TextView
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="发布日期"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+
+            <TextView
+                android:id="@+id/tv_ota_dialog_date"
+                android:layout_width="@dimen/x180"
+                android:layout_height="wrap_content"
+                android:text="1.0.0"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x160"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/bt_dialog_ota"
+                android:layout_width="@dimen/x142"
+                android:layout_height="@dimen/x60"
+                android:background="@drawable/selector_ota"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x35"
+                android:focusable="true"
+                android:text="升级" />
+            <Button
+                android:id="@+id/bt_dialog_ota_cancle"
+                android:layout_width="@dimen/x142"
+                android:layout_height="@dimen/x60"
+                android:layout_marginLeft="@dimen/x35"
+                android:background="@drawable/selector_ota"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x35"
+                android:focusable="true"
+                android:text="取消" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

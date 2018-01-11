@@ -1,0 +1,67 @@
+<resources>
+    <string name="app_name">whiteskyUI</string>
+    <!-- Admin页面 -->
+    <string name="title_test">whitesky</string>
+    <string name="title_admin">个人页面</string>
+    <string name="title_admin_account">账号</string>
+    <string name="title_admin_account_type_Visitor">访客模式</string>
+    <string name="title_admin_device_info">设备信息</string>
+    <string name="str_admin_device_terminal_model">终端型号</string>
+    <string name="str_admin_device_sys_version_date">版本日期</string>
+    <string name="str_admin_device_sys_version">系统版本</string>
+    <string name="str_admin_device_sys_sn">SN号</string>
+    <string name="str_admin_device_ui_version">UI版本</string>
+    <string name="str_admin_device_dlp_info">DLP信息</string>
+    <string name="str_admin_device_ram_info">内存信息</string>
+    <string name="str_admin_device_rom_info">存储空间</string>
+    <string name="str_admin_device_common_available">可用</string>
+    <string name="str_admin_device_common_all">总共</string>
+    <string name="str_admin_device_mac_adr">有线 MAC地址</string>
+    <string name="str_admin_device_wifi_mac_adr">WIFI MAC地址</string>
+    <string name="str_admin_device_default">UP100</string>
+    <!-- 公共标签 -->
+    <string name="title_default">敬请期待</string>
+    <string name="title_bg_ok">【  按下确定键更换  】</string>
+    <!--Home 页-->
+    <string name="str_home_welcome">欢迎使用皓空投影仪</string>
+    <string name="str_home_peo">个人页面</string>
+    <string name="str_home_media">多媒体</string>
+    <string name="str_home_sys">系统设置</string>
+    <!-- 系统设置之设置引导页 -->
+    <string name="setup_title_language">请选择语言设置</string>
+    <string name="setup_title_mode">请选择安装模式</string>
+    <string name="setup_title_focuse">对焦</string>
+    <string name="setup_title_trapezoidal">梯形校正</string>
+    <string name="setup_title_net">网络设置</string>
+    <string name="setup_title_wifi">无线网络</string>
+    <string name="setup_title_login">注册登陆</string>
+    <string name="setup_net_pass_info">选择跳过可直接跳转到主页面，但设备不被激活，是否跳过？</string>
+    <string name="setup_net_pass">跳过</string>
+    <!--系统设置页-->
+    <string name="setting_page">系统设置</string>
+    <string name="background_page">背景管理</string>
+    <!--系统设置之系统升级页-->
+    <string name="update_bt_ota">点击升级</string>
+    <string name="title_check_update">检查更新</string>
+    <string name="title_net_update">正在下载请稍后...</string>
+    <string name="title_net_update_finis">更新完成，稍后重启</string>
+    <string name="title_net_update_new">已经是最新版</string>
+    <string name="update_bt_update">有可升级的升级包</string>
+    <string name="update_bt_update_n">无可用升级包，请检查U盘</string>
+    <string name="update_tv_updating">正在升级中，请勿进行任何操作，请勿断开电源！！！</string>
+    <!--系统设置之内存优化页-->
+    <string name="title_memory_footprint">内存占用:</string>
+    <string name="title_already_cleanup">已清理</string>
+    <!--梯形校正-->
+    <string name="str_trapezoid_select">自动梯形矫正</string>
+    <string name="str_trapezoid_auto_close">自动梯形矫正关闭</string>
+    <string name="str_trapezoid_auto_open">自动梯形矫正打开</string>
+    <string-array name="str_arr_trapezoid_vals">
+        <item>on</item>
+        <item>off</item>
+    </string-array>
+    <!--网络配置页-->
+    <string name="title_net_connected">有线网络已连接</string>
+    <string name="str_connect_success">成功连接</string>
+
+</resources>

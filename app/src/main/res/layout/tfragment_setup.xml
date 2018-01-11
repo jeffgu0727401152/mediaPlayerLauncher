@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_setup_welcome"
+        android:layout_width="@dimen/x744"
+        android:layout_height="@dimen/x90"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:focusable="false"
+        android:gravity="center"
+        android:text="欢迎使用WHITESKY投影仪"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x64" />
+
+</RelativeLayout>

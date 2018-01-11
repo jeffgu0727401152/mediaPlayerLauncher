@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="false">
+
+        <ImageView
+            android:id="@+id/iv_admin_account_1"
+            android:layout_width="@dimen/x106"
+            android:layout_height="@dimen/x106"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="@dimen/x77"
+            android:layout_marginTop="@dimen/x47"
+            android:focusable="false"
+            android:src="@drawable/img_admin_acc" />
+
+        <LinearLayout
+            android:id="@+id/ll_admin_account_1"
+            android:layout_width="@dimen/x225"
+            android:layout_height="@dimen/x48"
+            android:layout_marginLeft="@dimen/x47"
+            android:layout_marginTop="@dimen/x78"
+            android:layout_toRightOf="@+id/iv_admin_account_1"
+            android:focusable="false"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_admin_account_ac_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:focusable="false"
+                android:text="账号:"
+                android:textColor="@color/white"
+                android:textSize="@dimen/x34" />
+
+            <TextView
+                android:id="@+id/tv_admin_account_ac"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:focusable="false"
+                android:text="xxx"
+                android:textColor="@color/skyblue"
+                android:textSize="@dimen/x34" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/bt_admin_account_login"
+            android:layout_width="@dimen/x160"
+            android:layout_height="@dimen/x84"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/x60"
+            android:layout_marginTop="@dimen/x60"
+            android:background="@drawable/button_selector_admin"
+            android:focusable="true"
+            android:text="登陆"
+            android:textColor="@color/white"
+            android:visibility="invisible" />
+
+        <Button
+            android:id="@+id/bt_admin_account_logout"
+            android:layout_width="@dimen/x60"
+            android:layout_height="@dimen/x60"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/x60"
+            android:layout_marginTop="@dimen/x60"
+            android:background="@drawable/button_selector_admin_des"
+            android:focusable="true"
+            android:textColor="@color/white"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:id="@+id/iv_admin_account_2"
+            android:layout_width="@dimen/x80"
+            android:layout_height="@dimen/x78"
+            android:layout_below="@+id/iv_admin_account_1"
+            android:layout_marginLeft="@dimen/x90"
+            android:layout_marginTop="@dimen/x75"
+            android:src="@drawable/img_admin_h" />
+
+        <TextView
+            android:id="@+id/tv_admin_account_1"
+            android:layout_width="@dimen/x160"
+            android:layout_height="@dimen/x56"
+            android:layout_alignBottom="@+id/iv_admin_account_2"
+            android:layout_alignStart="@+id/ll_admin_account_1"
+            android:text="历史记录"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+
+        <ListView
+            android:id="@+id/lv_admin_account_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/iv_admin_account_2"
+            android:layout_margin="@dimen/x60"
+            android:layout_marginTop="@dimen/x30"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:divider="@drawable/broken_shap"
+            android:dividerHeight="8dp"
+            android:focusable="false"
+            android:gravity="center_vertical"
+            android:layerType="software"
+            android:listSelector="@drawable/list_item_shape"
+            android:scrollbars="none" />
+    </RelativeLayout>
+
+</LinearLayout>

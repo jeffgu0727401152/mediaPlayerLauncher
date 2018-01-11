@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="true"
+    android:fillEnabled="true"
+    android:shareInterpolator="true"
+    android:interpolator="@android:anim/accelerate_interpolator">
+    <!--anim/accelerate_interpolator加速度变化-->
+    <!--android:interpolator="@android:anim/accelerate_interpolator"插值器必须在set的节点里设-->
+    <!--大小变化-->
+    <scale
+        android:fromXScale="1.0"
+        android:toXScale="1.0"
+        android:fromYScale="0.0"
+        android:toYScale="1.0"
+        android:pivotX="0%"
+        android:pivotY="100%"
+        android:duration="1000"/>
+</set>
