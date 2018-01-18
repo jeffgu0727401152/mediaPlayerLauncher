@@ -36,10 +36,97 @@
             android:paddingStart="@dimen/x40">
 
             <com.whitesky.sdk.widget.RoundedFrameLayout
+                android:id="@+id/rf_sys_net"
+                android:layout_width="@dimen/x420"
+                android:layout_height="@dimen/x560"
+                android:layout_margin="@dimen/x5"
+                android:background="@drawable/border_shape"
+                android:focusable="true"
+                android:padding="0dp"
+                app:radius="@dimen/x4">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="left|center_vertical"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img_net" />
+
+
+                <com.whitesky.sdk.widget.LabelView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:paddingLeft="@dimen/x5"
+                    android:paddingRight="@dimen/x5"
+                    android:visibility="invisible"
+                    lv:lv_fill_triangle="true"
+                    lv:lv_gravity="TOP_RIGHT"
+                    lv:lv_text_size="15sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/x80"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/border_down_shape"
+                    android:gravity="center"
+                    android:padding="@dimen/x15"
+                    android:text="@string/setup_title_net"
+                    android:textColor="@color/white"
+                    android:textSize="24sp"
+                    android:visibility="visible" />
+            </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+            <com.whitesky.sdk.widget.RoundedFrameLayout
+                android:id="@+id/rf_sys_speed"
+                android:layout_width="@dimen/x420"
+                android:layout_height="@dimen/x560"
+                android:layout_margin="@dimen/x5"
+                android:layout_toEndOf="@+id/rf_sys_net"
+                android:background="@drawable/border_shape"
+                android:focusable="true"
+                android:padding="0dp"
+                app:radius="@dimen/x4">
+
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="left|center_vertical"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img_net_speed" />
+
+
+                <com.whitesky.sdk.widget.LabelView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:paddingLeft="@dimen/x5"
+                    android:paddingRight="@dimen/x5"
+                    android:visibility="invisible"
+                    lv:lv_fill_triangle="true"
+                    lv:lv_gravity="TOP_RIGHT"
+                    lv:lv_text_size="15sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/x80"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/border_down_shape"
+                    android:gravity="center"
+                    android:padding="@dimen/x15"
+                    android:text="@string/setup_title_speed"
+                    android:textColor="@color/white"
+                    android:textSize="24sp"
+                    android:visibility="visible" />
+            </com.whitesky.sdk.widget.RoundedFrameLayout>
+
+            <com.whitesky.sdk.widget.RoundedFrameLayout
                 android:id="@+id/rf_sys_seo"
                 android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x275"
+                android:layout_height="@dimen/x560"
                 android:layout_margin="@dimen/x5"
+                android:layout_toEndOf="@+id/rf_sys_speed"
                 android:background="@drawable/border_shape"
                 android:focusable="true"
                 android:padding="0dp"
@@ -72,19 +159,17 @@
                     android:background="@drawable/border_down_shape"
                     android:gravity="center"
                     android:padding="@dimen/x15"
-                    android:text="@string/title_test"
+                    android:text="@string/setup_title_seo"
                     android:textColor="@color/white"
                     android:textSize="24sp"
-                    android:visibility="invisible" />
-
-
+                    android:visibility="visible" />
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 
             <com.whitesky.sdk.widget.RoundedFrameLayout
                 android:id="@+id/rf_sys_update"
                 android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x275"
-                android:layout_below="@+id/rf_sys_seo"
+                android:layout_height="@dimen/x560"
+                android:layout_toEndOf="@+id/rf_sys_seo"
                 android:layout_margin="@dimen/x5"
                 android:background="@drawable/border_shape"
                 android:focusable="true"
@@ -107,55 +192,6 @@
                     android:paddingLeft="@dimen/x5"
                     android:paddingRight="@dimen/x5"
                     android:visibility="invisible"
-                    lv:lv_background_color="@color/deepskyblue"
-                    lv:lv_fill_triangle="true"
-                    lv:lv_gravity="TOP_RIGHT"
-                    lv:lv_text="@string/title_default"
-                    lv:lv_text_color="@color/white"
-                    lv:lv_text_size="15sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/x80"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/border_down_shape"
-                    android:gravity="center"
-                    android:padding="@dimen/x15"
-                    android:text="@string/title_test"
-                    android:textColor="@color/white"
-                    android:textSize="24sp"
-                    android:visibility="invisible" />
-
-
-            </com.whitesky.sdk.widget.RoundedFrameLayout>
-
-            <com.whitesky.sdk.widget.RoundedFrameLayout
-                android:id="@+id/rf_sys_bg"
-                android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x275"
-                android:layout_margin="@dimen/x5"
-                android:layout_toEndOf="@+id/rf_sys_seo"
-                android:background="@drawable/border_shape"
-                android:focusable="true"
-                android:padding="0dp"
-                app:radius="@dimen/x4">
-
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="left|center_vertical"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/img_bg_manager" />
-
-
-                <com.whitesky.sdk.widget.LabelView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:paddingLeft="@dimen/x5"
-                    android:paddingRight="@dimen/x5"
-                    android:visibility="invisible"
                     lv:lv_fill_triangle="true"
                     lv:lv_gravity="TOP_RIGHT"
                     lv:lv_text_size="15sp" />
@@ -167,21 +203,18 @@
                     android:background="@drawable/border_down_shape"
                     android:gravity="center"
                     android:padding="@dimen/x15"
-                    android:text="@string/title_test"
+                    android:text="@string/setup_title_update"
                     android:textColor="@color/white"
                     android:textSize="24sp"
-                    android:visibility="invisible" />
-
-
+                    android:visibility="visible" />
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 
             <com.whitesky.sdk.widget.RoundedFrameLayout
                 android:id="@+id/rf_sys_language"
                 android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x275"
-                android:layout_below="@+id/rf_sys_bg"
-                android:layout_margin="@dimen/x5"
+                android:layout_height="@dimen/x560"
                 android:layout_toEndOf="@+id/rf_sys_update"
+                android:layout_margin="@dimen/x5"
                 android:background="@drawable/border_shape"
                 android:focusable="true"
                 android:padding="0dp"
@@ -214,67 +247,18 @@
                     android:background="@drawable/border_down_shape"
                     android:gravity="center"
                     android:padding="@dimen/x15"
-                    android:text="@string/title_test"
+                    android:text="@string/setup_title_language"
                     android:textColor="@color/white"
                     android:textSize="24sp"
-                    android:visibility="invisible" />
-
-
+                    android:visibility="visible" />
             </com.whitesky.sdk.widget.RoundedFrameLayout>
-
-            <com.whitesky.sdk.widget.RoundedFrameLayout
-                android:id="@+id/rf_sys_net"
-                android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x560"
-                android:layout_margin="@dimen/x5"
-                android:layout_toEndOf="@+id/rf_sys_bg"
-                android:background="@drawable/border_shape"
-                android:focusable="true"
-                android:padding="0dp"
-                app:radius="@dimen/x4">
-
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="left|center_vertical"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/img_net" />
-
-
-                <com.whitesky.sdk.widget.LabelView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:paddingLeft="@dimen/x5"
-                    android:paddingRight="@dimen/x5"
-                    android:visibility="invisible"
-                    lv:lv_fill_triangle="true"
-                    lv:lv_gravity="TOP_RIGHT"
-                    lv:lv_text_size="15sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/x80"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/border_down_shape"
-                    android:gravity="center"
-                    android:padding="@dimen/x15"
-                    android:text="@string/title_test"
-                    android:textColor="@color/white"
-                    android:textSize="24sp"
-                    android:visibility="invisible" />
-
-
-            </com.whitesky.sdk.widget.RoundedFrameLayout>
-
 
             <com.whitesky.sdk.widget.RoundedFrameLayout
                 android:id="@+id/rf_sys_sound"
                 android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x275"
+                android:layout_height="@dimen/x560"
                 android:layout_margin="@dimen/x5"
-                android:layout_toEndOf="@+id/rf_sys_net"
+                android:layout_toEndOf="@+id/rf_sys_language"
                 android:background="@drawable/border_shape"
                 android:focusable="true"
                 android:padding="0dp"
@@ -312,8 +296,6 @@
                     android:textColor="@color/white"
                     android:textSize="24sp"
                     android:visibility="invisible" />
-
-
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 
             <com.whitesky.sdk.widget.RoundedFrameLayout
@@ -364,49 +346,6 @@
 
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 
-            <com.whitesky.sdk.widget.RoundedFrameLayout
-                android:id="@+id/rf_sys_speed"
-                android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x560"
-                android:layout_margin="@dimen/x5"
-                android:layout_toEndOf="@+id/rf_sys_sound"
-                android:background="@drawable/border_shape"
-                android:focusable="true"
-                android:padding="0dp"
-                app:radius="@dimen/x4">
-
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="left|center_vertical"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/img_net_speed" />
-
-
-                <com.whitesky.sdk.widget.LabelView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:paddingLeft="@dimen/x5"
-                    android:paddingRight="@dimen/x5"
-                    android:visibility="invisible"
-                    lv:lv_fill_triangle="true"
-                    lv:lv_gravity="TOP_RIGHT"
-                    lv:lv_text_size="15sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/x80"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/border_down_shape"
-                    android:gravity="center"
-                    android:padding="@dimen/x15"
-                    android:text="@string/title_test"
-                    android:textColor="@color/white"
-                    android:textSize="24sp"
-                    android:visibility="invisible" />
-            </com.whitesky.sdk.widget.RoundedFrameLayout>
         </com.whitesky.sdk.widget.TvZorderRelativeLayout>
 
     </com.whitesky.sdk.widget.TvHorizontalScrollView>

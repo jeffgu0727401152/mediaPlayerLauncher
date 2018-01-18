@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import com.whitesky.sdk.widget.BorderView;
 import com.whitesky.sdk.widget.RoundedFrameLayout;
 import com.whiteskycn.tv.projectorlauncher.R;
+import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
 import com.whiteskycn.tv.projectorlauncher.settings.common.SkinSettingManager;
 
 /**
@@ -62,7 +63,15 @@ public class AdminActivity extends Activity implements View.OnClickListener
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        SkinSettingManager mSettingManager = new SkinSettingManager(this, layout);
-        mSettingManager.initSkins();
+        layout.setBackgroundResource(R.drawable.img_background);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        Intent deviceIntent = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(deviceIntent);
+        AdminActivity.this.finish();
+        super.onBackPressed();
     }
 }

@@ -26,7 +26,9 @@ import com.whiteskycn.tv.projectorlauncher.common.MQTTService;
 import com.whiteskycn.tv.projectorlauncher.media.MediaActivity;
 import com.whiteskycn.tv.projectorlauncher.settings.SysSettingActivity;
 import com.whiteskycn.tv.projectorlauncher.settings.common.SkinSettingManager;
+import com.whiteskycn.tv.projectorlauncher.utils.ServiceStatusUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
+
 
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener, FocusBorder.OnFocusCallback
@@ -38,12 +40,14 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     private boolean mLastEthConnected = false;
 
     private BroadcastReceiver mNetworkStatusReceiver;
+    private BroadcastReceiver mMqttStatusReceiver;
 
     //遥控光标框
     private FocusBorder mFocusBorder;
 
     public final int SCROLLING_MARQUEE_SPEED = 2;
     public final int SCROLLING_MARQUEE_TIMES = 1314;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +58,11 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(mNetworkStatusReceiver, filter);
+
+        mMqttStatusReceiver = new MqttStateBroadcastReceiver();
+        IntentFilter filterTime = new IntentFilter();
+        filterTime.addAction(Intent.ACTION_TIME_TICK);
+        registerReceiver(mMqttStatusReceiver,filterTime);
 
         BorderView border = new BorderView(getApplicationContext());
         initBorder();
@@ -88,6 +97,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 mediaPage.requestFocus();
             }
         });
+
+        startService(new Intent(getApplicationContext(), MQTTService.class));
     }
 
     @Override
@@ -95,9 +106,25 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        SkinSettingManager mSettingManager = new SkinSettingManager(this, layout);
-        mSettingManager.initSkins();
+        layout.setBackgroundResource(R.drawable.img_background);
     }
+
+
+    public class MqttStateBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
+
+                if (!ServiceStatusUtil.isServiceRunning(context, MQTTService.class)) {
+                    Logger.d("MQTT be killed, so restart it!");
+                    startService(new Intent(getApplicationContext(), MQTTService.class));
+                }
+            }
+        }
+    }
+
 
     // 监听网络状态变化的广播接收器
     public class NetworkStateBroadcastReceiver extends BroadcastReceiver
@@ -143,17 +170,25 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             {
                 if (!mLastEthConnected)
                 {
-                    startService(new Intent(getApplicationContext(), MQTTService.class));
+                    //由 mqtt service内部自己保证网络切换以后与服务器的连接
+                    //startService(new Intent(getApplicationContext(), MQTTService.class));
                 }
             }
             else if (wifiConnected)
             {
-
-                startService(new Intent(getApplicationContext(), MQTTService.class));
+                //由 mqtt service内部自己保证网络切换以后与服务器的连接
+                //startService(new Intent(getApplicationContext(), MQTTService.class));
             }
 
             mLastWifiConnected = wifiConnected;
             mLastEthConnected = ethConnected;
+
+            //每次网络通断的机会,检查服务是否被杀死,如果杀死则重启
+            if (!ServiceStatusUtil.isServiceRunning(context,MQTTService.class))
+            {
+                Logger.d("MQTT be killed, so restart it!");
+                startService(new Intent(getApplicationContext(), MQTTService.class));
+            }
         }
     }
 
@@ -192,6 +227,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     protected void onDestroy()
     {
         unregisterReceiver(mNetworkStatusReceiver);
+        unregisterReceiver(mMqttStatusReceiver);
         if (mFocusBorder != null)
         {
             mFocusBorder = null;
@@ -256,4 +292,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     {
         super.onPause();
     }
+
+
 }

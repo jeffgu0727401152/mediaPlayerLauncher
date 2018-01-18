@@ -28,11 +28,14 @@
     <string name="str_home_media">多媒体</string>
     <string name="str_home_sys">系统设置</string>
     <!-- 系统设置之设置引导页 -->
-    <string name="setup_title_language">请选择语言设置</string>
+    <string name="setup_title_language">语言设置</string>
+    <string name="setup_title_update">系统升级</string>
     <string name="setup_title_mode">请选择安装模式</string>
     <string name="setup_title_focuse">对焦</string>
     <string name="setup_title_trapezoidal">梯形校正</string>
     <string name="setup_title_net">网络设置</string>
+    <string name="setup_title_speed">网络测速</string>
+    <string name="setup_title_seo">一键优化</string>
     <string name="setup_title_wifi">无线网络</string>
     <string name="setup_title_login">注册登陆</string>
     <string name="setup_net_pass_info">选择跳过可直接跳转到主页面，但设备不被激活，是否跳过？</string>

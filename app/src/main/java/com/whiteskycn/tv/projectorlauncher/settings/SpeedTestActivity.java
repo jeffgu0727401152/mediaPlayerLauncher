@@ -1,6 +1,7 @@
 package com.whiteskycn.tv.projectorlauncher.settings;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,38 +24,22 @@ import java.util.List;
 
 public class SpeedTestActivity extends Activity implements OnClickListener
 {
-    private Button DidNotStart;// 未开始
-    
-    private Button InStart;// 已开始
-    
-    private Button StartAgain;// 再次开始
-    
-    private LinearLayout DidNotStartLayout;
-    
-    private LinearLayout InStartLayout;
-    
-    private LinearLayout StartAgainLayout;
-    
-    private long CurrenSpeed = 0;// 当前速度
-    
-    private long AverageSpeed = 0;// 平均速度
-    
-    private long SpeedTaital = 0;
-    
-    private byte[] FileData = null;
-    
-    private SpeedModel networkSpeedInfo = null;
-
-    private String URL = "http://gdown.baidu.com/data/wisegame/6546ec811c58770b/labixiaoxindamaoxian_8.apk";
-    
-    private List<Long> list = new ArrayList<Long>();
-    
     private final int PROGRESSCHANGE = 0;
-    
     private final int SPEEDUPDATE = 1;
-    
     private final int SPEED_FINISH = 2;
-    
+    private Button DidNotStart;// 未开始
+    private Button InStart;// 已开始
+    private Button StartAgain;// 再次开始
+    private LinearLayout DidNotStartLayout;
+    private LinearLayout InStartLayout;
+    private LinearLayout StartAgainLayout;
+    private long CurrenSpeed = 0;// 当前速度
+    private long AverageSpeed = 0;// 平均速度
+    private long SpeedTaital = 0;
+    private byte[] FileData = null;
+    private SpeedModel networkSpeedInfo = null;
+    private String URL = "http://gdown.baidu.com/data/wisegame/6546ec811c58770b/labixiaoxindamaoxian_8.apk";
+    private List<Long> list = new ArrayList<Long>();
     private ProgressBar SpeedProgressBar;
     
     private TextView Speed;
@@ -264,7 +249,15 @@ public class SpeedTestActivity extends Activity implements OnClickListener
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        SkinSettingManager mSettingManager = new SkinSettingManager(this, layout);
-        mSettingManager.initSkins();
+        layout.setBackgroundResource(R.drawable.img_background);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        Intent intent = new Intent(getApplicationContext(), SysSettingActivity.class);
+        startActivity(intent);
+        SpeedTestActivity.this.finish();
+        super.onBackPressed();
     }
 }

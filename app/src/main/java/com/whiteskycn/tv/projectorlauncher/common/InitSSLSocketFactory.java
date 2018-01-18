@@ -98,7 +98,6 @@ public class InitSSLSocketFactory extends Service
                 result.append(line);
             }
             Log.e(TAG, result.toString());
-            Log.d(TAG, "test SSLContext done!");
         }
         catch (Exception e)
         {

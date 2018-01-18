@@ -3,73 +3,165 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/ll_skin"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <com.whitesky.sdk.widget.TvHorizontalScrollView
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <SurfaceView
+                android:id="@+id/sv_media_playVideo"
+                android:layout_width="@dimen/x960"
+                android:layout_height="@dimen/x540" />
+
+            <ImageView
+                android:id="@+id/iv_media_playPicture"
+                android:layout_width="@dimen/x960"
+                android:layout_height="@dimen/x540"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/btn_media_netView"
+                android:layout_width="@dimen/x60"
+                android:layout_height="@dimen/x60"
+                android:layout_marginTop="@dimen/x20"
+                android:layout_marginLeft="@dimen/x20"
+                android:background="@drawable/img_media_net_view"/>
+
+            <Button
+                android:id="@+id/btn_media_grayView"
+                android:layout_width="@dimen/x60"
+                android:layout_height="@dimen/x60"
+                android:layout_marginTop="@dimen/x20"
+                android:layout_marginLeft="@dimen/x100"
+                android:background="@drawable/img_media_gray_view"/>
+
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/ll_media_playControlBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/x550"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/bt_media_playPrevious"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:layout_marginLeft="@dimen/x20"
+                    android:background="@drawable/img_media_previous"/>
+                <Button
+                    android:id="@+id/bt_media_play"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:layout_marginLeft="@dimen/x20"
+                    android:background="@drawable/img_media_play"/>
+
+                <TextView
+                    android:id="@+id/tv_media_playedTime"
+                    android:layout_width="@dimen/x140"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/x20"
+                    android:gravity="center"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"/>
+                <SeekBar
+                    android:id="@+id/sb_media_playProgress"
+                    android:layout_width="@dimen/x400"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center" />
+                <TextView
+                    android:id="@+id/tv_media_durationTime"
+                    android:layout_width="@dimen/x140"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="20sp" />
+                <Button
+                    android:id="@+id/bt_media_playNext"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_next"
+                    android:layout_marginLeft="@dimen/x20"/>
+                <Button
+                    android:id="@+id/bt_media_volume"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_volume"
+                    android:layout_marginLeft="@dimen/x20" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="@dimen/x20"
+            android:background="@drawable/border_red">
+
+            <com.whiteskycn.tv.projectorlauncher.media.DragListView
+                android:id="@+id/lv_media_playList"
+                android:layout_width="@dimen/x640"
+                android:layout_height="@dimen/x540"/>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/x10"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/bt_media_replayOne"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_replay_one"
+                    android:layout_marginLeft="@dimen/x10"/>
+                <Button
+                    android:id="@+id/bt_media_replayAll"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_replay_all"
+                    android:layout_marginLeft="@dimen/x10" />
+                <Button
+                    android:id="@+id/bt_media_replayShuffle"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_replay_shuffle"
+                    android:layout_marginLeft="@dimen/x10" />
+                <Button
+                    android:id="@+id/bt_media_replayList"
+                    android:layout_width="@dimen/x60"
+                    android:layout_height="@dimen/x60"
+                    android:background="@drawable/img_media_replay_list"
+                    android:layout_marginLeft="@dimen/x10" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-        <com.whitesky.sdk.widget.TvZorderRelativeLayout
-            android:id="@+id/rl_admin_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:clipToPadding="false"
-            android:focusable="false"
-            android:gravity="center"
-            android:paddingBottom="@dimen/x80"
-            android:paddingEnd="@dimen/x40"
-            android:paddingStart="@dimen/x40">
+        <ListView
+            android:id="@+id/lv_media_all_list"
+            android:layout_width="@dimen/x840"
+            android:layout_height="@dimen/x440"
+            android:background="@drawable/border_shape_with_border">
+        </ListView>
 
-            <com.whitesky.sdk.widget.RoundedFrameLayout
-                android:id="@+id/rf_admin_account"
-                android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x560"
-                android:layout_marginLeft="@dimen/x5"
-                android:layout_marginRight="@dimen/x5"
-                android:layout_marginTop="@dimen/x5"
-                android:background="@drawable/border_shape"
-                android:focusable="true"
-                app:radius="@dimen/x4">
-
-
-                <ImageView
-                    android:id="@+id/iv_admin_1"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="left|center_vertical"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/img_account" />
-
-
-            </com.whitesky.sdk.widget.RoundedFrameLayout>
-
-            <com.whitesky.sdk.widget.RoundedFrameLayout
-                android:id="@+id/rf_admin_device"
-                android:layout_width="@dimen/x420"
-                android:layout_height="@dimen/x560"
-                android:layout_alignBaseline="@+id/view"
-                android:layout_alignBottom="@+id/view"
-                android:layout_below="@+id/view4"
-                android:layout_gravity="bottom"
-                android:layout_marginLeft="@dimen/x5"
-                android:layout_marginRight="@dimen/x5"
-                android:layout_marginTop="@dimen/x5"
-                android:layout_toEndOf="@+id/rf_admin_account"
-                android:background="@drawable/border_shape"
-                android:focusable="true"
-                app:radius="@dimen/x4">
-
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="left|center_vertical"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/img_device" />
-
-            </com.whitesky.sdk.widget.RoundedFrameLayout>
-
-        </com.whitesky.sdk.widget.TvZorderRelativeLayout>
-    </com.whitesky.sdk.widget.TvHorizontalScrollView>
+    </LinearLayout>
 </LinearLayout>

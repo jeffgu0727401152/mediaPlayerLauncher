@@ -81,6 +81,12 @@ public class BaseActivity extends Activity implements MqttMessageCallback {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        this.unregisterReceiver(mMqttReceiver);
+        super.onDestroy();
+    }
+
     private class MqttRequestReceiver extends BroadcastReceiver {
         private MqttMessageCallback msgCallback;
 
@@ -95,11 +101,5 @@ public class BaseActivity extends Activity implements MqttMessageCallback {
         public void setMsgCallback(MqttMessageCallback callback) {
             this.msgCallback = callback;
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        this.unregisterReceiver(mMqttReceiver);
-        super.onDestroy();
     }
 }

@@ -14,7 +14,7 @@ import com.whitesky.sdk.widget.BorderView;
 import com.whitesky.sdk.widget.RoundedFrameLayout;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whiteskycn.tv.projectorlauncher.R;
-import com.whiteskycn.tv.projectorlauncher.settings.common.SkinSettingManager;
+import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
 
 
 /**
@@ -35,8 +35,6 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         border.setBackgroundResource(R.drawable.border_white2);
         ViewGroup list = (ViewGroup)findViewById(R.id.rl_settings_list);
         border.attachTo(list);
-        RoundedFrameLayout backgroundPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_bg);
-        backgroundPage.setOnClickListener(this);
         RoundedFrameLayout netPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_net);
         netPage.setOnClickListener(this);
         RoundedFrameLayout seoPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_seo);
@@ -59,43 +57,38 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
     {
         switch (v.getId())
         {
-            case R.id.rf_sys_bg:
-                Intent intentBackground = new Intent(getApplicationContext(), BackgroundActivity.class);
-                startActivity(intentBackground);
-                SysSettingActivity.this.finish();
-                break;
             case R.id.rf_sys_net:
                 Intent intentWifiSettings = new Intent("android.settings.WIFI_SETTINGS");
                 //Intent intentWifiSettings = new Intent("android.settings.ETHERNET_SETTINGS");
                 startActivity(intentWifiSettings);
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_seo:
                 Intent intentSeo = new Intent(getApplicationContext(), QuickenActivity.class);
                 startActivity(intentSeo);
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_speed:
                 Intent intentSpeed = new Intent(getApplicationContext(), SpeedTestActivity.class);
                 startActivity(intentSpeed);
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_update:
                 Intent intentUpdate = new Intent(getApplicationContext(), OTAActivity.class);
                 startActivity(intentUpdate);
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_display:
                 startActivity(new Intent(Settings.ACTION_DISPLAY_SETTINGS));
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_sound:
                 startActivity(new Intent(Settings.ACTION_SOUND_SETTINGS));
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_language:
                 startActivity(new Intent(Settings.ACTION_LOCALE_SETTINGS));
-                SysSettingActivity.this.finish();
+                //SysSettingActivity.this.finish();
                 break;
             default:
                 break;
@@ -107,8 +100,7 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        SkinSettingManager mSettingManager = new SkinSettingManager(this, layout);
-        mSettingManager.initSkins();
+        layout.setBackgroundResource(R.drawable.img_background);
     }
     
     private void initBorder(boolean isColorful)
@@ -126,8 +118,6 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         {
             switch (newFocus.getId())
             {
-                case R.id.rf_sys_bg:
-                    return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);
                 case R.id.rf_sys_net:
                     return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);
                 case R.id.rf_sys_seo:
@@ -148,5 +138,14 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
             focusBorder.setVisible(false);
         }
         return null;
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(intent);
+        SysSettingActivity.this.finish();
+        super.onBackPressed();
     }
 }

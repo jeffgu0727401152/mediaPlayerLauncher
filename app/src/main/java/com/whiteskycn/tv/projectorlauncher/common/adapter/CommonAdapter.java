@@ -55,7 +55,17 @@ public abstract class CommonAdapter<T> extends BaseAdapter
     {
         this.listDatas.add(item);
     }
-    
+
+    /**
+     * 添加单条数据项
+     *
+     * @param item
+     */
+    public void removeItem(T item)
+    {
+        this.listDatas.remove(item);
+    }
+
     /**
      * 设置数据源
      * 
@@ -65,7 +75,16 @@ public abstract class CommonAdapter<T> extends BaseAdapter
     {
         this.listDatas = data;
     }
-    
+
+    /**
+     * 取出数据源
+     *
+     */
+    public List<T> getListDatas()
+    {
+        return this.listDatas;
+    }
+
     /**
      * 清除数据源
      */

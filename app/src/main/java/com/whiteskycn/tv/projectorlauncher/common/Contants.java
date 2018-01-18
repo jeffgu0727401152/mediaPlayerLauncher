@@ -24,4 +24,6 @@ public class Contants
     public static final String TRAP_EDITOR = "TRAP_EDITOR";
     
     public static boolean isEditor = false;
+
+    public static final String IS_WIFI = "isWifi";
 }

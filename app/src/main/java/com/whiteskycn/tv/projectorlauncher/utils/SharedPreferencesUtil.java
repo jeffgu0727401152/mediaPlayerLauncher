@@ -3,8 +3,6 @@ package com.whiteskycn.tv.projectorlauncher.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.orhanobut.logger.Logger;
-
 /**
  * Created by mac on 17-6-2.
  *
@@ -12,6 +10,8 @@ import com.orhanobut.logger.Logger;
  */
 public class SharedPreferencesUtil
 {
+    private static final String TAG = SharedPreferencesUtil.class.getSimpleName();
+    
     private Context mContext;
     
     private SharedPreferences.Editor mEditor;
@@ -21,8 +21,6 @@ public class SharedPreferencesUtil
     private String mFileName = "";
     
     private int mMode = 0;
-    
-    private final String TAG = this.getClass().getSimpleName();
     
     /*
      * public SharedPreferencesUtil(Context context) { this.mContext = context; this.mPreferences =
@@ -38,7 +36,6 @@ public class SharedPreferencesUtil
         this.mEditor = this.mPreferences.edit();
         mFileName = fileName;
         mMode = Context.MODE_PRIVATE;
-        Logger.d(" create SharedPreferencesUtil; name : " + mFileName + "; mode : " + mMode);
     }
     
     public SharedPreferencesUtil(Context context, String fileName, int mode)
@@ -48,7 +45,6 @@ public class SharedPreferencesUtil
         this.mEditor = this.mPreferences.edit();
         mFileName = fileName;
         mMode = mode;
-        Logger.d(" create SharedPreferencesUtil; name : " + mFileName + "; mode : " + mMode);
     }
     
     // 读写配置文件
@@ -56,8 +52,6 @@ public class SharedPreferencesUtil
     {
         mEditor.putString(name, value);
         boolean result = mEditor.commit();
-
-        Logger.d(" put key : " + name + ", value : " + value + " to file : " + mFileName + " result: " + result);
         return result;
     }
     
@@ -65,8 +59,6 @@ public class SharedPreferencesUtil
     {
         mEditor.putLong(name, value);
         boolean result = mEditor.commit();
-
-        Logger.d(" put key : " + name + ", value : " + value + " to file : " + mFileName + " result: " + result);
         return result;
     }
     
@@ -74,8 +66,6 @@ public class SharedPreferencesUtil
     {
         mEditor.putInt(name, value);
         boolean result = mEditor.commit();
-
-        Logger.d(" put key : " + name + ", value : " + value + " to file : " + mFileName + " result: " + result);
         return result;
     }
     
@@ -83,8 +73,6 @@ public class SharedPreferencesUtil
     {
         mEditor.putBoolean(name, value);
         boolean result = mEditor.commit();
-
-        Logger.d(" put key : " + name + ", value : " + value + " to file : " + mFileName + " result: " + result);
         return result;
     }
     
@@ -92,8 +80,6 @@ public class SharedPreferencesUtil
     {
         mEditor.remove(name);
         boolean result = mEditor.commit();
-
-        Logger.d(" remove key : " + name + " from file : " + mFileName + " result: " + result);
         return result;
     }
     
@@ -101,8 +87,6 @@ public class SharedPreferencesUtil
     {
         mEditor.clear();
         boolean result = mEditor.commit();
-
-        Logger.d(" clear file : " + mFileName + " result: " + result);
         return result;
     }
     

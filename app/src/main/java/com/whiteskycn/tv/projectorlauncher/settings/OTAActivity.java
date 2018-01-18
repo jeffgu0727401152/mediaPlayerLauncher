@@ -84,8 +84,7 @@ public class OTAActivity extends Activity implements View.OnClickListener
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        SkinSettingManager mSettingManager = new SkinSettingManager(this, layout);
-        mSettingManager.initSkins();
+        layout.setBackgroundResource(R.drawable.img_background);
     }
     
     private void initBorder()
@@ -105,4 +104,15 @@ public class OTAActivity extends Activity implements View.OnClickListener
         }
         super.onDestroy();
     }
+
+
+    @Override
+    public void onBackPressed()
+    {
+        Intent intent = new Intent(getApplicationContext(), SysSettingActivity.class);
+        startActivity(intent);
+        OTAActivity.this.finish();
+        super.onBackPressed();
+    }
+
 }

@@ -5,11 +5,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.CLEAR_APP_CACHE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -34,8 +36,9 @@
         <activity
             android:name=".settings.QuickenActivity"
             android:theme="@style/transcutestyle" />
-        <activity android:name=".settings.BackgroundActivity" />
         <activity android:name=".settings.SysSettingActivity" />
+
+        <activity android:name=".media.MediaActivity" />
 
         <activity android:name=".admin.AdminActivity" />
         <activity android:name=".admin.AccountActivity" />

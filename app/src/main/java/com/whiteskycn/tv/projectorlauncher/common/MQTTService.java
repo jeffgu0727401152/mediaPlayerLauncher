@@ -38,15 +38,18 @@ public class MQTTService extends Service
     public final String TAG = this.getClass().getSimpleName();
     
     private MqttAndroidClient mMqttClient;
-        private MqttConnectOptions mConnectOpt;
+    private MqttConnectOptions mConnectOpt;
     
     private String protocol = "ssl://";
     private String host = "mqtt-sh1.whiteskycn.com";
     private String port = "1883";
-    private String userName = "";
-    private String passWord = "";
+    private String userName = null;
+    private String passWord = null;
     private String mMqttTopic = "whiteskycn";
     private String clientId = "whiteskyClient";
+
+    private boolean mMqttCleanSession = true;
+    private boolean mMqttMsgRetained = false;
     private int mMqttTimeout_s = 10;
     private int mMqttHeartBeat_s = 20;
     private int mMqttQos = 1;
@@ -78,7 +81,30 @@ public class MQTTService extends Service
         }
         doMqttConnect();
 
-        return super.onStartCommand(intent, flags, startId);
+        super.onStartCommand(intent, flags, startId);
+        return START_STICKY;//保证服务被意外杀死后会重启
+    }
+
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        Log.i(TAG, "onDestroy");
+        try
+        {
+            mMqttClient.disconnect();
+            mMqttClient = null;
+        }
+        catch (MqttException e)
+        {
+            e.printStackTrace();
+        }
+        super.onDestroy();
     }
 
     private void loadPropValue()
@@ -103,12 +129,21 @@ public class MQTTService extends Service
 
         mConnectOpt = new MqttConnectOptions();
         // 清除缓存
-        mConnectOpt.setCleanSession(true);
+        mConnectOpt.setCleanSession(mMqttCleanSession);
         // 设置超时时间，单位：秒
         mConnectOpt.setConnectionTimeout(mMqttTimeout_s);
         // 心跳包发送间隔，单位：秒
         mConnectOpt.setKeepAliveInterval(mMqttHeartBeat_s);
-        
+
+        // 用户名
+        if (userName != null) {
+            mConnectOpt.setUserName(userName);
+        }
+        // 密码
+        if (passWord != null) {
+            mConnectOpt.setPassword(passWord.toCharArray());
+        }
+
         if (protocol.contains("ssl"))
         {
             try
@@ -120,22 +155,16 @@ public class MQTTService extends Service
                 e.printStackTrace();
             }
         }
-        
-        // 用户名
-        // mConnectOpt.setUserName(userName);
-        // 密码
-        // mConnectOpt.setPassword(passWord.toCharArray());
-        
+
         // last will message
         long timeNow = System.currentTimeMillis() / 1000;
         String lastMessage = "This device is disconnected and the time when I connected successfully is " + timeNow;
-        Boolean retained = false;
         if (!lastMessage.isEmpty() && !mMqttTopic.isEmpty())
         {
             // 最后的遗嘱
             try
             {
-                mConnectOpt.setWill(mMqttTopic, lastMessage.getBytes(), mMqttQos, retained);
+                mConnectOpt.setWill(mMqttTopic, lastMessage.getBytes(), mMqttQos, mMqttMsgRetained);
             }
             catch (Exception e)
             {
@@ -144,27 +173,11 @@ public class MQTTService extends Service
             }
         }
     }
-    
-    @Override
-    public void onDestroy()
-    {
-        try
-        {
-            mMqttClient.disconnect();
-            mMqttClient = null;
-        }
-        catch (MqttException e)
-        {
-            e.printStackTrace();
-        }
-        super.onDestroy();
-    }
-    
+
     /** 连接MQTT服务器 */
     private void doMqttConnect()
     {
-        Log.i(TAG, "doMqttConnect");
-        if (!mMqttClient.isConnected() && isNetworkActive())
+        if (mMqttClient!=null && !mMqttClient.isConnected() && isNetworkActive())
         {
             try
             {
@@ -181,7 +194,6 @@ public class MQTTService extends Service
 
     private IMqttActionListener iMqttActionListener = new IMqttActionListener()
     {
-        
         @Override
         public void onSuccess(IMqttToken arg0)
         {
@@ -189,7 +201,7 @@ public class MQTTService extends Service
             try
             {
                 mMqttClient.subscribe(mMqttTopic, mMqttQos);
-                mMqttClient.publish(mMqttTopic, "The connection is successful!".getBytes(), mMqttQos, false);
+                mMqttClient.publish(mMqttTopic, "The connection is successful!".getBytes(), mMqttQos, mMqttMsgRetained);
             }
             catch (MqttException e)
             {
@@ -235,9 +247,8 @@ public class MQTTService extends Service
         @Override
         public void connectionLost(Throwable arg0)
         {
-            // 失去连接，重连
-            Log.e(TAG, "connectionLost:" + arg0.getMessage());
-            Log.e(TAG, arg0.getCause().toString() + arg0.getStackTrace());
+            //Log.e(TAG, "connectionLost:" + arg0.getMessage());
+            //Log.e(TAG, arg0.getCause().toString() + arg0.getStackTrace());
 
             Message msg = mqttHandler.obtainMessage();
             msg.what = MSG_MQTT_RECONNECT;
@@ -263,14 +274,64 @@ public class MQTTService extends Service
             return false;
         }
     }
-    
-    // @Nullable
-    @Override
-    public IBinder onBind(Intent intent)
-    {
-        return null;
+
+    public boolean publish(String topicName, byte[] payload, int qos) {
+        boolean flag = false;
+        if (mMqttClient != null && mMqttClient.isConnected()) {
+            Log.d(TAG,"Publishing to topic \"" + topicName + "\" qos " + qos);
+            // Create and configure a message
+            MqttMessage message = new MqttMessage(payload);
+            message.setQos(qos);
+            // Send the message to the server, control is not returned until
+            // it has been delivered to the server meeting the specified
+            // quality of service.
+            try {
+                mMqttClient.publish(topicName, message);
+                flag = true;
+            } catch (MqttException e) {
+            }
+        }
+        return flag;
     }
-    
+
+    public boolean publish(byte[] payload, int qos) {
+        boolean flag = false;
+        if (mMqttClient != null && mMqttClient.isConnected()) {
+            Log.d(TAG,"Publishing to topic \"" + mMqttTopic + "\" qos " + qos);
+            // Create and configure a message
+            MqttMessage message = new MqttMessage(payload);
+            message.setQos(qos);
+            // Send the message to the server, control is not returned until
+            // it has been delivered to the server meeting the specified
+            // quality of service.
+            try {
+                mMqttClient.publish(mMqttTopic, message);
+                flag = true;
+            } catch (MqttException e) {
+            }
+        }
+        return flag;
+    }
+
+    public boolean publish(String payload, int qos) {
+        boolean flag = false;
+        if (mMqttClient != null && mMqttClient.isConnected()) {
+            Log.d(TAG,"Publishing to topic \"" + mMqttTopic + "\" qos " + qos);
+            // Create and configure a message
+            MqttMessage message = new MqttMessage(payload.getBytes());
+            message.setQos(qos);
+            // Send the message to the server, control is not returned until
+            // it has been delivered to the server meeting the specified
+            // quality of service.
+            try {
+                mMqttClient.publish(mMqttTopic, message);
+                flag = true;
+            } catch (MqttException e) {
+            }
+        }
+        return flag;
+    }
+
     private void parserMqttMessage(String mqttMessage)
     {
         Message message = mqttHandler.obtainMessage();

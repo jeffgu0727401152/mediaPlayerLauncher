@@ -9,6 +9,21 @@ import android.os.Parcelable;
 
 public class LoginBean implements Parcelable
 {
+    public static final Creator<LoginBean> CREATOR = new Creator<LoginBean>()
+    {
+        @Override
+        public LoginBean createFromParcel(Parcel in)
+        {
+            return new LoginBean(in);
+        }
+        
+        @Override
+        public LoginBean[] newArray(int size)
+        {
+            return new LoginBean[size];
+        }
+    };
+    
     private String status;
     
     private String message;
@@ -36,34 +51,14 @@ public class LoginBean implements Parcelable
         return 0;
     }
     
-    public static final Creator<LoginBean> CREATOR = new Creator<LoginBean>()
-    {
-        @Override
-        public LoginBean createFromParcel(Parcel in)
-        {
-            return new LoginBean(in);
-        }
-        
-        @Override
-        public LoginBean[] newArray(int size)
-        {
-            return new LoginBean[size];
-        }
-    };
-    
-    public void setStatus(String status)
-    {
-        this.status = status;
-    }
-    
     public String getStatus()
     {
         return status;
     }
     
-    public void setMessage(String message)
+    public void setStatus(String status)
     {
-        this.message = message;
+        this.status = status;
     }
     
     public String getMessage()
@@ -71,14 +66,19 @@ public class LoginBean implements Parcelable
         return message;
     }
     
-    public void setResult(Result result)
+    public void setMessage(String message)
     {
-        this.result = result;
+        this.message = message;
     }
     
     public Result getResult()
     {
         return result;
+    }
+    
+    public void setResult(Result result)
+    {
+        this.result = result;
     }
     
 }
