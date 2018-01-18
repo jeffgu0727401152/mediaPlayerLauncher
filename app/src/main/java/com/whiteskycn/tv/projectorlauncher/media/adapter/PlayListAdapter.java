@@ -1,7 +1,6 @@
 package com.whiteskycn.tv.projectorlauncher.media.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 
 import com.orhanobut.logger.Logger;
@@ -28,54 +27,22 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, PlayListBean item)
-    {
+    public void convert(ViewHolder holder, final int position, PlayListBean item) {
         holder.setText(R.id.tv_media_name, item.getTitle());
-        holder.setImageResource(R.id.iv_media_ico,R.drawable.arrow);
+        holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
         holder.getButton(R.id.bt_media_remove).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Logger.i("playlist remove position "+position);
+                Logger.i("playlist remove position " + position);
                 removeItem(getItem(position));
                 refresh();
             }
         });
 
-        switch (item.getState())
-        {
-            case 0: // 绿色
-                //holder.setImageResource(R.id.img_project_state, R.mipmap.icon_user_default);
-                holder.getButton(R.id.bt_media_remove).setVisibility(View.VISIBLE);
-                break;
-            case 1:
-                holder.getButton(R.id.bt_media_remove).setVisibility(View.INVISIBLE);
-                break;
-        }
-        // switch (item.getCollect()){
-        // case 0:
-        // holder.setImageResource(R.id.img_project_collect, R.mipmap.collect_normal);
-        // break;
-        // case 1:
-        // holder.setImageResource(R.id.img_project_collect, R.mipmap.collect_selected);
-        // break;
-        // }
-        // final int collect = item.getCollect();
-        // holder.getImageView(R.id.img_project_collect).setOnClickListener(new View.OnClickListener() {
-        // @Override
-        // public void onClick(View v) {
-        // setSelect(collect, position);
-        // }
-        // });
+        holder.getButton(R.id.bt_media_remove).setVisibility(View.VISIBLE);
     }
 
-    // public void setSelect(int state, int position){
-    // if(state == 1){
-    // this.listDatas.get(position).setCollect(0);
-    // } else {
-    // this.listDatas.get(position).setCollect(1);
-    // }
-    // refresh();
-    // }
+
     public boolean exchange(int src, int dst) {
         if (src != INVALID_POSITION && dst != INVALID_POSITION) {
             Collections.swap(getListDatas(), src, dst);

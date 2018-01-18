@@ -114,39 +114,39 @@
             <com.whiteskycn.tv.projectorlauncher.media.DragListView
                 android:id="@+id/lv_media_playList"
                 android:layout_width="@dimen/x640"
-                android:layout_height="@dimen/x540"/>
+                android:layout_height="@dimen/x540"
+                android:divider="@drawable/itme_divider"/>
 
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
+            <RadioGroup
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/x10"
-                android:orientation="horizontal">
-                <Button
-                    android:id="@+id/bt_media_replayOne"
-                    android:layout_width="@dimen/x60"
-                    android:layout_height="@dimen/x60"
-                    android:background="@drawable/img_media_replay_one"
-                    android:layout_marginLeft="@dimen/x10"/>
-                <Button
-                    android:id="@+id/bt_media_replayAll"
-                    android:layout_width="@dimen/x60"
-                    android:layout_height="@dimen/x60"
-                    android:background="@drawable/img_media_replay_all"
-                    android:layout_marginLeft="@dimen/x10" />
-                <Button
-                    android:id="@+id/bt_media_replayShuffle"
-                    android:layout_width="@dimen/x60"
-                    android:layout_height="@dimen/x60"
-                    android:background="@drawable/img_media_replay_shuffle"
-                    android:layout_marginLeft="@dimen/x10" />
-                <Button
-                    android:id="@+id/bt_media_replayList"
-                    android:layout_width="@dimen/x60"
-                    android:layout_height="@dimen/x60"
-                    android:background="@drawable/img_media_replay_list"
-                    android:layout_marginLeft="@dimen/x10" />
-            </LinearLayout>
+                android:orientation="horizontal"
+                android:checkedButton="@+id/rb_media_replay_one">
+                <RadioButton
+                    android:id="@+id/rb_media_replay_one"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:gravity="center"
+                    android:button="@null"
+                    android:background="@drawable/selector_replay_one_rb" />
+                <RadioButton
+                    android:id="@+id/rb_media_replay_all"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:gravity="center"
+                    android:button="@null"
+                    android:background="@drawable/selector_replay_all_rb" />
+                <RadioButton
+                    android:id="@+id/rb_media_replay_shuffle"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:gravity="center"
+                    android:button="@null"
+                    android:background="@drawable/selector_replay_shuffle_rb" />
+            </RadioGroup>
         </LinearLayout>
     </LinearLayout>
 
@@ -160,6 +160,8 @@
             android:id="@+id/lv_media_all_list"
             android:layout_width="@dimen/x840"
             android:layout_height="@dimen/x440"
+            android:layout_marginTop="@dimen/x10"
+            android:layout_marginLeft="@dimen/x10"
             android:background="@drawable/border_shape_with_border">
         </ListView>
 

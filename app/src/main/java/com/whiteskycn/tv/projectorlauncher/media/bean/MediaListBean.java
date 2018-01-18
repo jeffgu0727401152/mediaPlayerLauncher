@@ -9,27 +9,28 @@ public class MediaListBean {
     private MediaFileBean mMediaData;
 
     private String title = "";
-
     private String description = "";
-
-     private int state = 0;
-
-    private int collect = 0;
+    private boolean selected = false;
 
     public MediaListBean() {
     }
 
-    /**
-     * @param title    标题
-     * @param description 描述
-     * @param state    图片状态：0-绿色；1-灰色；2-红色；
-     * @param collect  是否收藏：0-未收藏；1-收藏；
-     */
-    public MediaListBean(String title, String description, int state, int collect) {
+    public MediaListBean(MediaFileBean date) {
+        mMediaData = date;
+        title = date.getName();
+    }
+
+    public MediaListBean(String title, String description) {
         this.title = title;
         this.description = description;
-        this.state = state;
-        this.collect = collect;
+    }
+
+    public MediaFileBean getMediaData() {
+        return mMediaData;
+    }
+
+    public void setMediaData(MediaFileBean mediaData) {
+        this.mMediaData = mediaData;
     }
 
     public String getTitle() {
@@ -48,19 +49,11 @@ public class MediaListBean {
         this.description = description;
     }
 
-    public int getState() {
-        return state;
+    public boolean getSelected() {
+        return selected;
     }
 
-    public void setState(int state) {
-        this.state = state;
-    }
-
-    public int getCollect() {
-        return collect;
-    }
-
-    public void setCollect(int collect) {
-        this.collect = collect;
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

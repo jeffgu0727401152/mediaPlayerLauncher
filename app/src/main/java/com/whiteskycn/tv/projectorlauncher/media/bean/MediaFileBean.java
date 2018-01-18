@@ -22,6 +22,7 @@ public class MediaFileBean {
     }
 
     private String mUniqueID;       //所有媒体文件全局唯一的ID
+    private String mName;       //所有媒体文件全局唯一的ID
     private MediaTypeEnum mType;
     private MediaSourceEnum mSource;
     private boolean mIsDownloaded;  //是否已经从云端下载到本地
@@ -36,44 +37,60 @@ public class MediaFileBean {
         mFilePath = "";
     }
 
+    public MediaFileBean(String id, String name, MediaTypeEnum type, MediaSourceEnum source, boolean isDownloaded, String filePath) {
+        this.mUniqueID = id;
+        this.mName = name;
+        this.mType = type;
+        this.mSource = source;
+        this.mIsDownloaded = isDownloaded;
+        this.mFilePath = filePath;
+    }
 
-    public String getmUniqueID() {
+    public String getUniqueID() {
         return mUniqueID;
     }
 
-    public void setmUniqueID(String mUniqueID) {
+    public void setUniqueID(String mUniqueID) {
         this.mUniqueID = mUniqueID;
     }
 
-    public MediaTypeEnum getmType() {
+    public String getName() {
+        return mName;
+    }
+
+    public void setName(String mName) {
+        this.mName = mName;
+    }
+
+    public MediaTypeEnum getType() {
         return mType;
     }
 
-    public void setmType(MediaTypeEnum mType) {
+    public void setType(MediaTypeEnum mType) {
         this.mType = mType;
     }
 
-    public MediaSourceEnum getmSource() {
+    public MediaSourceEnum getSource() {
         return mSource;
     }
 
-    public void setmSource(MediaSourceEnum mSource) {
+    public void setSource(MediaSourceEnum mSource) {
         this.mSource = mSource;
     }
 
-    public boolean ismIsDownloaded() {
+    public boolean getIsDownloaded() {
         return mIsDownloaded;
     }
 
-    public void setmIsDownloaded(boolean mIsDownloaded) {
+    public void setIsDownloaded(boolean mIsDownloaded) {
         this.mIsDownloaded = mIsDownloaded;
     }
 
-    public String getmFilePath() {
+    public String getFilePath() {
         return mFilePath;
     }
 
-    public void setmFilePath(String mFilePath) {
+    public void setFilePath(String mFilePath) {
         this.mFilePath = mFilePath;
     }
 }

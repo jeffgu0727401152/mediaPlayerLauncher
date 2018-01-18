@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 public class MediaFileScanUtil {
 
-    public enum MediaType
+    public enum MediaTypeEnum
     {
         PICTURE,
         VIDEO,
@@ -84,7 +84,7 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaType.MUSIC,fileName, fileExtension, filePath);
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath);
                             }
                         }
 
@@ -94,7 +94,7 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaType.PICTURE, fileName, fileExtension, filePath);
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath);
                             }
                         }
 
@@ -104,7 +104,7 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaType.VIDEO, fileName, fileExtension, filePath);
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath);
                             }
                         }
                     }
@@ -187,7 +187,7 @@ public class MediaFileScanUtil {
          * @param extension     当前查找到媒体文件的扩展名
          * @param path          当前查找到媒体文件的路径
          */
-        void onFindMedia(MediaType type,String name,String extension,String path);
+        void onFindMedia(MediaTypeEnum type, String name, String extension, String path);
     }
 
     public MediaFileScanListener getmMediaFileScanListener() {

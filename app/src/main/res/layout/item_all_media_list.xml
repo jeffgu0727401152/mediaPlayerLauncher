@@ -1,38 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="@dimen/x50"
+    android:descendantFocusability="blocksDescendants">
+
+    <CheckBox
+        android:id="@+id/cb_media_selected"
+        android:layout_width="@dimen/x40"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x10"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center"
+        />
 
     <ImageView
         android:id="@+id/iv_media_ico"
-        android:layout_width="@dimen/x120"
-        android:layout_height="@dimen/x120"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x20"
         android:layout_centerVertical="true"
+        android:layout_gravity="center"
         android:scaleType="fitXY" />
 
     <TextView
         android:id="@+id/tv_media_name"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/x280"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_gravity="center"
-        android:layout_marginLeft="@dimen/x160"
-        android:layout_toEndOf="@+id/img_project_state"
-        android:gravity="center"
-        android:textAlignment="center"
+        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="left"
+        android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="24sp" />
+        android:textSize="20sp" />
 
     <ImageView
-        android:id="@+id/iv_media_state"
-        android:layout_width="@dimen/x120"
-        android:layout_height="@dimen/x120"
+        android:id="@+id/iv_media_source"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_gravity="center"
         android:layout_centerVertical="true"
         android:scaleType="fitXY" />
 
+    <TextView
+        android:id="@+id/tv_media_state"
+        android:layout_width="@dimen/x120"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:textAlignment="inherit"
+        android:textColor="@color/white"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/bt_media_download"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="center"
+        android:background="@drawable/img_media_download" />
+
     <Button
         android:id="@+id/bt_media_preview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="center"
+        android:background="@drawable/img_media_preview" />
+
+    <Button
+        android:id="@+id/bt_media_delete"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="center"
+        android:background="@drawable/img_media_delete" />
 </LinearLayout>

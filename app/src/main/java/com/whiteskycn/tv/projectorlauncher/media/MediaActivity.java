@@ -30,6 +30,7 @@ import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
 import com.whiteskycn.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
 import com.whiteskycn.tv.projectorlauncher.media.adapter.PlayListAdapter;
+import com.whiteskycn.tv.projectorlauncher.media.bean.MediaFileBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.MediaListBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.utils.MediaFileScanUtil;
@@ -41,6 +42,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
+
+import static android.widget.AdapterView.INVALID_POSITION;
 
 /**
  * Created by mac on 17-6-2.
@@ -64,11 +67,6 @@ public class MediaActivity extends Activity implements View.OnClickListener
     private Button mNetViewBtn;
     private Button mGrayViewBtn;
 
-    private Button mReplayOneBtn;
-    private Button mReplayAllBtn;
-    private Button mReplayListBtn;
-    private Button mReplayShuffleBtn;
-
     private Button mPreviousBtn;
     private Button mPlayBtn;
     private Button mNextBtn;
@@ -82,9 +80,15 @@ public class MediaActivity extends Activity implements View.OnClickListener
 
     private boolean mIsProgressBarChangingByUser = false;
 
-    private int mCurrentPosition = 0;
+    private int mListPlayPosition = INVALID_POSITION;
+    private boolean mNeedPause = false;
     private boolean mIsPlaying;
     private boolean mIsFullScreen;
+
+    private int mLastAllMediaListClickPosition = 0;
+    private long mLastAllMediaListClickTime;
+
+    private long mLastFullScreenClickTime;
 
     private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
     private PlayListAdapter mPlayListAdapter;
@@ -109,11 +113,6 @@ public class MediaActivity extends Activity implements View.OnClickListener
         mNetViewBtn = (Button)findViewById(R.id.btn_media_netView);
         mGrayViewBtn = (Button)findViewById(R.id.btn_media_grayView);
 
-        mReplayOneBtn = (Button)findViewById(R.id.bt_media_replayOne);
-        mReplayAllBtn =  (Button)findViewById(R.id.bt_media_replayAll);
-        mReplayListBtn = (Button)findViewById(R.id.bt_media_replayList);
-        mReplayShuffleBtn =  (Button)findViewById(R.id.bt_media_replayShuffle);
-
         mPlayBtn = (Button)findViewById(R.id.bt_media_play);
         mPreviousBtn = (Button)findViewById(R.id.bt_media_playPrevious);
         mNextBtn = (Button)findViewById(R.id.bt_media_playNext);
@@ -123,6 +122,8 @@ public class MediaActivity extends Activity implements View.OnClickListener
         mMediaPlayedTimeTextView = (TextView)findViewById(R.id.tv_media_playedTime);
         mMediaDurationTimeTextView = (TextView)findViewById(R.id.tv_media_durationTime);
 
+        mPicturePlayView.setOnClickListener(this);
+        mVideoPlaySurfaceView.setOnClickListener(this);
         mPreviousBtn.setOnClickListener(this);
         mPlayBtn.setOnClickListener(this);
         mNextBtn.setOnClickListener(this);
@@ -135,19 +136,28 @@ public class MediaActivity extends Activity implements View.OnClickListener
         mOriginSurfaceHeight = lp.height;
         mOriginSurfaceWidth = lp.width;
 
-        //设置播放时长为0
+        //设置播放时长为00:00:00
         setMediaPlayedTimeTextView(0);
         setMediaDurationTimeTextView(0);
 
-        //云端本地全媒体列表
+        //云端本地的全媒体列表
         mLvAllMediaList = (ListView)findViewById(R.id.lv_media_all_list);
         mAllMediaListAdapter = new AllMediaListAdapter(getApplicationContext(), mAllMediaListBeans);
         mLvAllMediaList.setAdapter(mAllMediaListAdapter);
         mLvAllMediaList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Logger.d("position = " + position + "; id = " + id);
-                showInfo();
+                // 如果是双击,1秒内连续点击判断为双击
+                if(position == mLastAllMediaListClickPosition
+                        && (Math.abs(mLastAllMediaListClickTime-System.currentTimeMillis()) < 800)){
+                    mLastAllMediaListClickPosition = -1;
+                    mLastAllMediaListClickTime = 0;
+                    addToPlayList(position);
+                }else {
+                    Logger.d("position = " + position + "; id = " + id);
+                    mLastAllMediaListClickPosition = position;
+                    mLastAllMediaListClickTime = System.currentTimeMillis();
+                }
             }
         });
 
@@ -163,7 +173,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
             @Override
             public boolean canDrag(View dragView, int x, int y) {
                 // 获取可拖拽的图标
-                View dragger = dragView.findViewById(R.id.iv_media_tab);
+                View dragger = dragView.findViewById(R.id.iv_media_spinner);
                 if (dragger == null || dragger.getVisibility() != View.VISIBLE) {
                     return false;
                 }
@@ -180,7 +190,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
             @Override
             public void beforeDrawingCache(View dragView) {
                 mIsSelected = dragView.isSelected();
-                View drag = dragView.findViewById(R.id.iv_media_tab);
+                View drag = dragView.findViewById(R.id.iv_media_spinner);
                 dragView.setSelected(true);
                 if (drag != null) {
                     drag.setSelected(true);
@@ -190,7 +200,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
             @Override
             public Bitmap afterDrawingCache(View dragView, Bitmap bitmap) {
                 dragView.setSelected(mIsSelected);
-                View drag = dragView.findViewById(R.id.iv_media_tab);
+                View drag = dragView.findViewById(R.id.iv_media_spinner);
                 if (drag != null) {
                     drag.setSelected(false);
                 }
@@ -204,13 +214,18 @@ public class MediaActivity extends Activity implements View.OnClickListener
             }
         });
 
+        //递归扫描sd卡根目录
         mMediaScanner = new MediaFileScanUtil();
         mMediaScanner.setmMediaFileScanListener(new MediaFileScanUtil.MediaFileScanListener() {
             @Override
-            public void onFindMedia(MediaFileScanUtil.MediaType type, String name, String extension, String path) {
+            public void onFindMedia(MediaFileScanUtil.MediaTypeEnum type, String name, String extension, String path) {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_ADD_TO_MEDIA_LIST;
-                msg.obj = name;
+                Bundle b = new Bundle();
+                b.putInt("type", type.ordinal());
+                b.putString("name", name);
+                b.putString("path", path);
+                msg.setData(b);
                 mHandler.sendMessage(msg);
             }
         });
@@ -230,9 +245,26 @@ public class MediaActivity extends Activity implements View.OnClickListener
                     setTimeTextView(mMediaPlayedTimeTextView,msg.arg1);
                     break;
                 case MSG_ADD_TO_MEDIA_LIST:
-                    String name = (String) msg.obj;
-                    mAllMediaListBeans.add(new MediaListBean(name, "歌曲", 1, 0));
-                    mPlayListAdapter.refresh();
+                    Bundle b = msg.getData();
+                    int type = b.getInt("type");
+                    String name = b.getString("name");
+                    String path = b.getString("path");
+
+                    MediaFileBean.MediaTypeEnum mediaType;
+                    if (type== MediaFileScanUtil.MediaTypeEnum.VIDEO.ordinal())
+                    {
+                        mediaType = MediaFileBean.MediaTypeEnum.VIDEO;
+                    }
+                    else if (type== MediaFileScanUtil.MediaTypeEnum.PICTURE.ordinal())
+                    {
+                        mediaType = MediaFileBean.MediaTypeEnum.PICTURE;
+                    }
+                    else
+                    {
+                        mediaType = MediaFileBean.MediaTypeEnum.UNKNOWN;
+                    }
+                    mAllMediaListBeans.add(new MediaListBean(new MediaFileBean("12345",name,mediaType,MediaFileBean.MediaSourceEnum.LOCAL,true,path)));
+                    mAllMediaListAdapter.refresh();
                     break;
             }
         }
@@ -244,9 +276,19 @@ public class MediaActivity extends Activity implements View.OnClickListener
     {
         switch (view.getId())
         {
+            case R.id.sv_media_playVideo:
+            case R.id.iv_media_playPicture:
+                if((Math.abs(mLastFullScreenClickTime-System.currentTimeMillis()) < 800)){
+                    mLastFullScreenClickTime = 0;
+                    fullScreenDisplaySwitch();
+                }else {
+                    mLastFullScreenClickTime = System.currentTimeMillis();
+                }
+                break;
             case R.id.bt_media_play:
                 if (!mIsPlaying) {
-                    mediaPlay(0);
+                    mListPlayPosition = 0;
+                    mediaPlay(mListPlayPosition);
                 } else {
                     mediaPause();
                 }
@@ -256,13 +298,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
             case R.id.bt_media_playPrevious:
                 break;
             case R.id.bt_media_volume:
-                LinearLayout controlBarLayout = (LinearLayout)findViewById(R.id.ll_media_playControlBar);
-                controlBarLayout.setVisibility(View.INVISIBLE);
-                ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
-                lp.height = R.dimen.x1920;
-                lp.width = R.dimen.x1080;
-                mVideoPlaySurfaceView.setLayoutParams(lp);
-                mIsFullScreen = true;
+                fullScreenDisplaySwitch();
                 break;
             default:
                 break;
@@ -275,18 +311,6 @@ public class MediaActivity extends Activity implements View.OnClickListener
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.img_background);
-
-        if (mPlayListBeans.isEmpty()) {
-            for (int i = 0; i < 10; i++) {
-                mPlayListBeans.add(new PlayListBean(String.valueOf(i), "歌曲", i%2, 0));
-            }
-        }
-
-        if (mAllMediaListBeans.isEmpty()) {
-            for (int i = 0; i < 10; i++) {
-                mAllMediaListBeans.add(new MediaListBean(String.valueOf(i), "歌曲", i%2, 0));
-            }
-        }
     }
 
     @Override
@@ -305,13 +329,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             // TODO Auto-generated method stub
-                            LinearLayout controlBarLayout = (LinearLayout)findViewById(R.id.ll_media_playControlBar);
-                            controlBarLayout.setVisibility(View.VISIBLE);
-                            ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
-                            lp.width = mOriginSurfaceWidth;
-                            lp.height = mOriginSurfaceHeight;
-                            mVideoPlaySurfaceView.setLayoutParams(lp);
-                            mIsFullScreen = false;
+                            fullScreenDisplaySwitch();
                         }
                     }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
                 @Override
@@ -331,20 +349,87 @@ public class MediaActivity extends Activity implements View.OnClickListener
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder 被销毁");
-            // 销毁SurfaceHolder的时候记录当前的播放位置并停止播放
-            if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-                mCurrentPosition = mMediaPlayer.getCurrentPosition();
-                mMediaPlayer.stop();
-            }
+            mediaStop();
         }
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder 被创建");
-            if (mCurrentPosition > 0) {
-                // 创建SurfaceHolder的时候，如果存在上次播放的位置，则按照上次播放位置进行播放
-                mediaPlay(mCurrentPosition);
-                mCurrentPosition = 0;
+            try {
+                mMediaPlayer = new MediaPlayer();
+                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mMediaPlayer.setDisplay(mVideoPlaySurfaceView.getHolder());
+
+                mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        Log.i(TAG, "装载完成");
+                        mMediaPlayer.start();
+                        // 按照初始位置播放
+                        //mMediaPlayer.seekTo(0);
+
+                        // 设置进度条的最大进度为视频流的最大播放时长
+                        mPlayProgressSeekBar.setMax(mMediaPlayer.getDuration());
+                        setMediaDurationTimeTextView(mMediaPlayer.getDuration());
+
+                        mIsPlaying = true;
+                        mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
+
+                        // 开线程更新进度条的刻度
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    while (mIsPlaying) {
+                                        int current = mMediaPlayer
+                                                .getCurrentPosition();
+                                        if (!mIsProgressBarChangingByUser) {
+                                            mPlayProgressSeekBar.setProgress(current);
+                                            setMediaPlayedTimeTextView(current);
+                                        }
+                                        sleep(500);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }.start();
+                    }
+                });
+
+                mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        // 在播放完毕被回调
+                        mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
+                    }
+                });
+
+                mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        // 发生错误停止播放
+                        mediaStop();
+                        return false;
+                    }
+                });
+
+                mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                    @Override
+                    public void onSeekComplete(MediaPlayer mp) {
+                        if (mNeedPause == true) {
+                            mHandler.postDelayed(new Runnable() {
+                                public void run() {
+                                    mMediaPlayer.pause();
+                                }
+                            }, 150);
+                            mMediaPlayer.pause();
+                        }
+                        mNeedPause = false;
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -364,6 +449,12 @@ public class MediaActivity extends Activity implements View.OnClickListener
             int progress = seekBar.getProgress();
             if (mMediaPlayer != null) {
                 // 设置当前播放的位置
+                if (!mMediaPlayer.isPlaying())
+                {
+                    //改进暂停时候的拖动,UI上不更新
+                    mMediaPlayer.start();
+                    mNeedPause = true;
+                }
                 mMediaPlayer.seekTo(progress);
             }
             mIsProgressBarChangingByUser = false;
@@ -387,89 +478,49 @@ public class MediaActivity extends Activity implements View.OnClickListener
     * 停止播放
      */
     protected void mediaStop() {
+        mIsPlaying = false;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
             mMediaPlayer.reset();
             mMediaPlayer.release();
             mMediaPlayer = null;
-            mIsPlaying = false;
         }
     }
 
     /**
      * 开始播放
      *
-     * @param msec 播放初始位置
+     * @param position 播放初始idx
      */
-    protected void mediaPlay(final int msec) {
+    protected void mediaPlay(int position) {
         // 获取视频文件地址
-        String path = "/mnt/sdcard/Movies/LaLaLa.mkv";
+        String path="";
+
+        if(position!=INVALID_POSITION && position<mPlayListBeans.size())
+        {
+            MediaFileBean fileBean = mPlayListBeans.get(position).getMediaData();
+            if (fileBean!=null)
+            {
+                path = fileBean.getFilePath();
+            }
+        }
+
+        if (path.isEmpty())
+        {
+            Log.i(TAG, "mediaPlay: path null");
+            path = "/mnt/sdcard/Movies/LaLaLa.mkv";
+        }
+
         File file = new File(path);
         if (!file.exists()) {
             ToastUtil.showToast(this, "视频文件路径错误");
             return;
         }
         try {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             // 设置播放的视频源
             mMediaPlayer.setDataSource(file.getAbsolutePath());
-            // 设置显示视频的SurfaceHolder
-            mMediaPlayer.setDisplay(mVideoPlaySurfaceView.getHolder());
             Log.i(TAG, "开始装载");
             mMediaPlayer.prepareAsync();
-            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    Log.i(TAG, "装载完成");
-                    mMediaPlayer.start();
-                    // 按照初始位置播放
-                    mMediaPlayer.seekTo(msec);
-
-                    // 设置进度条的最大进度为视频流的最大播放时长
-                    mPlayProgressSeekBar.setMax(mMediaPlayer.getDuration());
-                    setMediaDurationTimeTextView(mMediaPlayer.getDuration());
-
-                    mIsPlaying = true;
-                    mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
-
-                    // 开始线程，更新进度条的刻度
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                while (mIsPlaying) {
-                                    int current = mMediaPlayer
-                                            .getCurrentPosition();
-                                    if (!mIsProgressBarChangingByUser) {
-                                        mPlayProgressSeekBar.setProgress(current);
-                                        setMediaPlayedTimeTextView(current);
-                                    }
-                                    sleep(500);
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                }
-            });
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    // 在播放完毕被回调
-                    mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
-                }
-            });
-
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    // 发生错误停止播放
-                    mediaStop();
-                    return false;
-                }
-            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -486,7 +537,9 @@ public class MediaActivity extends Activity implements View.OnClickListener
             return;
         }
         mIsPlaying = false;
-        mediaPlay(0);
+        //todo play mode
+        mListPlayPosition++;
+        mediaPlay(mListPlayPosition);
     }
 
     /**
@@ -537,7 +590,39 @@ public class MediaActivity extends Activity implements View.OnClickListener
         }
     }
 
+    private void fullScreenDisplaySwitch()
+    {
+        if(!mIsFullScreen)
+        {
+            LinearLayout controlBarLayout = (LinearLayout)findViewById(R.id.ll_media_playControlBar);
+            controlBarLayout.setVisibility(View.INVISIBLE);
+            ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
+            lp.height = R.dimen.x1920;
+            lp.width = R.dimen.x1080;
+            mVideoPlaySurfaceView.setLayoutParams(lp);
+            mPicturePlayView.setLayoutParams(lp);
+            mIsFullScreen = true;
+        }
+        else
+        {
+            LinearLayout controlBarLayout = (LinearLayout)findViewById(R.id.ll_media_playControlBar);
+            controlBarLayout.setVisibility(View.VISIBLE);
+            ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
+            lp.width = mOriginSurfaceWidth;
+            lp.height = mOriginSurfaceHeight;
+            mVideoPlaySurfaceView.setLayoutParams(lp);
+            mPicturePlayView.setLayoutParams(lp);
+            mIsFullScreen = false;
+        }
+    }
 
+    private void addToPlayList(int position)
+    {
+        if (position!=INVALID_POSITION && position<mAllMediaListBeans.size()) {
+            mPlayListBeans.add(new PlayListBean(mAllMediaListBeans.get(position).getMediaData()));
+            mPlayListAdapter.refresh();
+        }
+    }
 
     private void showInfo(){
         new AlertDialog.Builder(this)

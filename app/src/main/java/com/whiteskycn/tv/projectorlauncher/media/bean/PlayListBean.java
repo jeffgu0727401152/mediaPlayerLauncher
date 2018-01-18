@@ -10,30 +10,37 @@ public class PlayListBean {
 
     private String title = "";
 
-    private String filePath = "";
-
     private String description = "";
 
     private int durationTime = 0;
 
-    private int state = 0;
-
-    private int collect = 0;
-
     public PlayListBean() {
     }
 
-    /**
-     * @param title    标题
-     * @param description 描述
-     * @param state    图片状态：0-绿色；1-灰色；2-红色；
-     * @param collect  是否收藏：0-未收藏；1-收藏；
-     */
-    public PlayListBean(String title, String description, int state, int collect) {
+    public PlayListBean(MediaFileBean date) {
+        mMediaData = date;
+        title = date.getName();
+    }
+
+    public PlayListBean(String title, String description) {
         this.title = title;
         this.description = description;
-        this.state = state;
-        this.collect = collect;
+    }
+
+    public MediaFileBean getMediaData() {
+        return mMediaData;
+    }
+
+    public void setMediaData(MediaFileBean mediaData) {
+        this.mMediaData = mediaData;
+    }
+
+    public int getDurationTime() {
+        return durationTime;
+    }
+
+    public void setDurationTime(int durationTime) {
+        this.durationTime = durationTime;
     }
 
     public String getTitle() {
@@ -44,35 +51,11 @@ public class PlayListBean {
         this.title = title;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public int getState() {
-        return state;
-    }
-
-    public void setState(int state) {
-        this.state = state;
-    }
-
-    public int getCollect() {
-        return collect;
-    }
-
-    public void setCollect(int collect) {
-        this.collect = collect;
     }
 }
