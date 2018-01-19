@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -59,6 +60,8 @@ public class MediaActivity extends Activity implements View.OnClickListener
 
     private final int MSG_ADD_TO_MEDIA_LIST = 10;
 
+    private final int MSG_MEDIA_PLAY_COMPLETE = 100;
+
     private MediaFileScanUtil mMediaScanner;
     private MediaPlayer mMediaPlayer;
     private SurfaceView mVideoPlaySurfaceView;
@@ -78,12 +81,19 @@ public class MediaActivity extends Activity implements View.OnClickListener
     private int mOriginSurfaceHeight = 0;
     private int mOriginSurfaceWidth = 0;
 
-    private boolean mIsProgressBarChangingByUser = false;
+    private boolean mDontUpdateSeekBar = false;
 
-    private int mListPlayPosition = INVALID_POSITION;
-    private boolean mNeedPause = false;
-    private boolean mIsPlaying;
+    private int mPlayPosition = INVALID_POSITION;
     private boolean mIsFullScreen;
+
+    private boolean mNeedPause = false;
+    private boolean mIsPlaying = false;
+
+    private boolean mIsPicturePlaying;
+    private boolean mIsPicturePause  = false;
+    private long mPicturePlayStartTime = 0;
+    private long mPictureLastUpdateSeekBarTime = 0;
+    private long mPicturePlayedTime = 0;
 
     private int mLastAllMediaListClickPosition = 0;
     private long mLastAllMediaListClickTime;
@@ -104,7 +114,7 @@ public class MediaActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media);
 
-        mIsPlaying = false;
+        mIsPicturePlaying = false;
         mIsFullScreen = false;
 
         mVideoPlaySurfaceView = (SurfaceView)findViewById(R.id.sv_media_playVideo);
@@ -266,6 +276,11 @@ public class MediaActivity extends Activity implements View.OnClickListener
                     mAllMediaListBeans.add(new MediaListBean(new MediaFileBean("12345",name,mediaType,MediaFileBean.MediaSourceEnum.LOCAL,true,path)));
                     mAllMediaListAdapter.refresh();
                     break;
+                case MSG_MEDIA_PLAY_COMPLETE:
+                    mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
+                    mediaStop();
+                    mediaPlay(updatePlayPosition(true));
+                    break;
             }
         }
     };
@@ -286,19 +301,28 @@ public class MediaActivity extends Activity implements View.OnClickListener
                 }
                 break;
             case R.id.bt_media_play:
-                if (!mIsPlaying) {
-                    mListPlayPosition = 0;
-                    mediaPlay(mListPlayPosition);
-                } else {
+                if (!mIsPlaying)
+                {
+                    mPlayPosition = 0;
+                    mediaPlay(mPlayPosition);
+                }
+                else
+                {
                     mediaPause();
                 }
                 break;
             case R.id.bt_media_playNext:
+                updatePlayPosition(true);
+                mediaStop();
+                mediaPlay(mPlayPosition);
                 break;
             case R.id.bt_media_playPrevious:
+                updatePlayPosition(false);
+                mediaStop();
+                mediaPlay(mPlayPosition);
                 break;
             case R.id.bt_media_volume:
-                fullScreenDisplaySwitch();
+                mediaPause();
                 break;
             default:
                 break;
@@ -316,7 +340,9 @@ public class MediaActivity extends Activity implements View.OnClickListener
     @Override
     protected void onDestroy()
     {
-        mediaStop();
+        mIsPlaying = false;
+        videoDestroy();
+        pictureStop();
         super.onDestroy();
     }
 
@@ -349,88 +375,13 @@ public class MediaActivity extends Activity implements View.OnClickListener
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder 被销毁");
-            mediaStop();
+            //todo 切换图片后被销毁
+            //videoDestroy();
         }
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder 被创建");
-            try {
-                mMediaPlayer = new MediaPlayer();
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mMediaPlayer.setDisplay(mVideoPlaySurfaceView.getHolder());
-
-                mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        Log.i(TAG, "装载完成");
-                        mMediaPlayer.start();
-                        // 按照初始位置播放
-                        //mMediaPlayer.seekTo(0);
-
-                        // 设置进度条的最大进度为视频流的最大播放时长
-                        mPlayProgressSeekBar.setMax(mMediaPlayer.getDuration());
-                        setMediaDurationTimeTextView(mMediaPlayer.getDuration());
-
-                        mIsPlaying = true;
-                        mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
-
-                        // 开线程更新进度条的刻度
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                try {
-                                    while (mIsPlaying) {
-                                        int current = mMediaPlayer
-                                                .getCurrentPosition();
-                                        if (!mIsProgressBarChangingByUser) {
-                                            mPlayProgressSeekBar.setProgress(current);
-                                            setMediaPlayedTimeTextView(current);
-                                        }
-                                        sleep(500);
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }.start();
-                    }
-                });
-
-                mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        // 在播放完毕被回调
-                        mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
-                    }
-                });
-
-                mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                    @Override
-                    public boolean onError(MediaPlayer mp, int what, int extra) {
-                        // 发生错误停止播放
-                        mediaStop();
-                        return false;
-                    }
-                });
-
-                mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                    @Override
-                    public void onSeekComplete(MediaPlayer mp) {
-                        if (mNeedPause == true) {
-                            mHandler.postDelayed(new Runnable() {
-                                public void run() {
-                                    mMediaPlayer.pause();
-                                }
-                            }, 150);
-                            mMediaPlayer.pause();
-                        }
-                        mNeedPause = false;
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
 
         @Override
@@ -447,17 +398,24 @@ public class MediaActivity extends Activity implements View.OnClickListener
         public void onStopTrackingTouch(SeekBar seekBar) {
             // 当进度条停止修改的时候触发
             int progress = seekBar.getProgress();
+
+            if (mIsPicturePlaying)
+            {
+                //todo seek picture
+                return;
+            }
+
             if (mMediaPlayer != null) {
                 // 设置当前播放的位置
                 if (!mMediaPlayer.isPlaying())
-                {
-                    //改进暂停时候的拖动,UI上不更新
+                {//如果没有在播放,默认seekTo调用后不更新surface上显示的图,这边取巧用播放暂停来更新
+                    //todo 改进暂停时候的拖动,UI更新不及时
                     mMediaPlayer.start();
                     mNeedPause = true;
                 }
                 mMediaPlayer.seekTo(progress);
             }
-            mIsProgressBarChangingByUser = false;
+            mDontUpdateSeekBar = false; //用户的拖动停止了,允许更新seekBar
         }
 
         @Override
@@ -469,16 +427,78 @@ public class MediaActivity extends Activity implements View.OnClickListener
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if (fromUser) {
                 setMediaPlayedTimeTextView(progress);
-                mIsProgressBarChangingByUser = true;
+                mDontUpdateSeekBar = true; //在拖动的时候,需要防止播放开的线程来改变seekBar的位置
             }
         }
     };
 
-    /*
-    * 停止播放
-     */
-    protected void mediaStop() {
-        mIsPlaying = false;
+    private void mediaStop()
+    {
+        if (mIsPicturePlaying)
+        {
+            pictureStop();
+        }
+        else
+        {
+            videoStop();
+        }
+    }
+
+    private void mediaPlay(int position)
+    {
+        mIsPlaying = true;
+        // 获取视频文件地址
+        String path="";
+        MediaFileBean.MediaTypeEnum type = MediaFileBean.MediaTypeEnum.UNKNOWN;
+        if(position!=INVALID_POSITION && position<mPlayListBeans.size())
+        {
+            MediaFileBean fileBean = mPlayListBeans.get(position).getMediaData();
+            if (fileBean!=null)
+            {
+                path = fileBean.getFilePath();
+                type = fileBean.getType();
+            }
+        }
+
+        Log.i(TAG, "!!!!!!!!~~~~~~~Play position" + position);
+
+        if (path.isEmpty())
+        {
+            Log.i(TAG, "videoPlay: path null");
+            path = "/mnt/sdcard/Movies/LaLaLa.mkv";
+            type = MediaFileBean.MediaTypeEnum.VIDEO;
+        }
+
+        ToastUtil.showToast(this, "play path="+path + ": pos="+position);
+
+        switch (type)
+        {
+            case VIDEO:
+                pictureStop();
+                videoPlay(path);
+                break;
+            case PICTURE:
+                videoStop();
+                picturePlay(path);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void mediaPause()
+    {
+        if (mIsPicturePlaying)
+        {
+            picturePause();
+        }
+        else
+        {
+            videoPause();
+        }
+    }
+
+    private void videoStop() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
             mMediaPlayer.reset();
@@ -487,65 +507,111 @@ public class MediaActivity extends Activity implements View.OnClickListener
         }
     }
 
-    /**
-     * 开始播放
-     *
-     * @param position 播放初始idx
-     */
-    protected void mediaPlay(int position) {
-        // 获取视频文件地址
-        String path="";
-
-        if(position!=INVALID_POSITION && position<mPlayListBeans.size())
-        {
-            MediaFileBean fileBean = mPlayListBeans.get(position).getMediaData();
-            if (fileBean!=null)
-            {
-                path = fileBean.getFilePath();
-            }
+    private void videoDestroy() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.reset();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
         }
+    }
 
-        if (path.isEmpty())
-        {
-            Log.i(TAG, "mediaPlay: path null");
-            path = "/mnt/sdcard/Movies/LaLaLa.mkv";
-        }
-
+    private void videoPlay(String path) {
+        mPicturePlayView.setVisibility(View.INVISIBLE);
+        mVideoPlaySurfaceView.setVisibility(View.VISIBLE);
+        mIsPicturePlaying = false;
         File file = new File(path);
         if (!file.exists()) {
             ToastUtil.showToast(this, "视频文件路径错误");
             return;
         }
+
         try {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer.setDisplay(mVideoPlaySurfaceView.getHolder());
+
             // 设置播放的视频源
             mMediaPlayer.setDataSource(file.getAbsolutePath());
             Log.i(TAG, "开始装载");
             mMediaPlayer.prepareAsync();
+
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    Log.i(TAG, "装载完成");
+                    mMediaPlayer.start();
+                    // 按照初始位置播放
+                    //mMediaPlayer.seekTo(0);
+
+                    // 设置进度条的最大进度为视频流的最大播放时长
+                    mPlayProgressSeekBar.setMax(mMediaPlayer.getDuration());
+                    setMediaDurationTimeTextView(mMediaPlayer.getDuration());
+
+                    mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
+
+                    // 开线程更新进度条的刻度
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                while (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+                                    int current = mMediaPlayer.getCurrentPosition();
+                                    if (!mDontUpdateSeekBar) {
+                                        mPlayProgressSeekBar.setProgress(current);
+                                        setMediaPlayedTimeTextView(current);
+                                    }
+                                    sleep(300);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                showInfo();
+                            }
+                        }
+                    }.start();
+                }
+            });
+
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    // 在播放完毕被回调
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = MSG_MEDIA_PLAY_COMPLETE;
+                    mHandler.sendMessage(msg);
+                }
+            });
+
+            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    // 发生错误停止播放
+                    videoStop();
+                    return false;
+                }
+            });
+
+            mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                @Override
+                public void onSeekComplete(MediaPlayer mp) {
+                    if (mNeedPause == true) {
+                        mHandler.postDelayed(new Runnable() {
+                            public void run() {
+                                mMediaPlayer.pause();
+                            }
+                        }, 250);
+                        mMediaPlayer.pause();
+                    }
+                    mNeedPause = false;
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
+            showInfo();
         }
     }
 
-    /**
-     * 重新开始播放
-     */
-    protected void mediaReplay() {
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            mMediaPlayer.seekTo(0);
-            ToastUtil.showToast(this, "重新播放");
-            mPlayBtn.setText("暂停");
-            return;
-        }
-        mIsPlaying = false;
-        //todo play mode
-        mListPlayPosition++;
-        mediaPlay(mListPlayPosition);
-    }
-
-    /**
-     * 暂停或继续
-     */
-    protected void mediaPause() {
+    private void videoPause() {
         if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
             mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
             mMediaPlayer.start();
@@ -554,6 +620,93 @@ public class MediaActivity extends Activity implements View.OnClickListener
             mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
             mMediaPlayer.pause();
             ToastUtil.showToast(this, "暂停播放");
+        }
+    }
+
+    private void pictureComplete()
+    {
+        mIsPicturePlaying = false;
+        mIsPicturePause = false;
+        mPicturePlayedTime = 0;
+
+        Message msg = mHandler.obtainMessage();
+        msg.what = MSG_MEDIA_PLAY_COMPLETE;
+        mHandler.sendMessage(msg);
+    }
+
+    private void pictureStop()
+    {
+        mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
+        mIsPicturePlaying = false;
+        mIsPicturePause = false;
+        mPicturePlayedTime = 0;
+    }
+
+    private void picturePlay(String path)
+    {
+        File file = new File(path);
+        if (!file.exists()) {
+            ToastUtil.showToast(this, "图片文件路径错误");
+            return;
+        }
+        mPicturePlayView.setVisibility(View.VISIBLE);
+        mVideoPlaySurfaceView.setVisibility(View.INVISIBLE);
+        mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
+
+        mPicturePlayView.setBackground(Drawable.createFromPath(path));
+        mPlayProgressSeekBar.setMax(4000);
+        setMediaDurationTimeTextView(4000);//todo play time
+
+        mIsPicturePlaying = true;
+        mIsPicturePause = false;
+        mPicturePlayedTime = 0;
+        mPicturePlayStartTime = System.currentTimeMillis();
+        mPictureLastUpdateSeekBarTime = mPicturePlayStartTime;
+        // 开线程更新进度条的刻度
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    while (mIsPicturePlaying) {
+                        long current = System.currentTimeMillis();
+                        if (!mIsPicturePause) {
+                            mPicturePlayedTime += Math.abs(current - mPictureLastUpdateSeekBarTime);
+                        }
+                        mPictureLastUpdateSeekBarTime = current;
+
+                        if (mPicturePlayedTime>4000)
+                        {//todo time change
+                            pictureComplete();
+                        }
+
+                        if (!mDontUpdateSeekBar && !mIsPicturePause) {
+                            mPlayProgressSeekBar.setProgress((int)mPicturePlayedTime);
+                            setMediaPlayedTimeTextView((int)mPicturePlayedTime);
+                        }
+                        sleep(300);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showInfo();
+                }
+            }
+        }.start();
+    }
+
+    private void picturePause()
+    {
+        if(mIsPicturePlaying) {
+            if (!mIsPicturePause) {
+                mIsPicturePause = true;
+                mPlayBtn.setBackgroundResource(R.drawable.img_media_play);
+                ToastUtil.showToast(this, "暂停播放");
+            }
+            else
+            {
+                mIsPicturePause = false;
+                mPlayBtn.setBackgroundResource(R.drawable.img_media_pause);
+                ToastUtil.showToast(this, "继续播放");
+            }
         }
     }
 
@@ -622,6 +775,31 @@ public class MediaActivity extends Activity implements View.OnClickListener
             mPlayListBeans.add(new PlayListBean(mAllMediaListBeans.get(position).getMediaData()));
             mPlayListAdapter.refresh();
         }
+    }
+
+    private int updatePlayPosition(boolean forward)
+    {
+        if (mPlayListBeans.size()==0)
+        {
+            mPlayPosition = INVALID_POSITION;
+            return mPlayPosition;
+        }
+
+        if (forward)
+        {
+            mPlayPosition++;
+            if (mPlayPosition >= mPlayListBeans.size()) {
+                mPlayPosition = 0;
+            }
+        }
+        else
+        {
+            mPlayPosition--;
+            if (mPlayPosition<0) {
+                mPlayPosition = mPlayListBeans.size()-1;
+            }
+        }
+        return mPlayPosition;
     }
 
     private void showInfo(){
