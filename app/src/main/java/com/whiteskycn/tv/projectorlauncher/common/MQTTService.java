@@ -53,7 +53,7 @@ public class MQTTService extends Service
     private int mMqttTimeout_s = 10;
     private int mMqttHeartBeat_s = 20;
     private int mMqttQos = 1;
-    private int mMqttReconnectDelay_ms = 10000;
+    private int mMqttReconnectDelay_ms = 100000;
 
     private final int MSG_NONE = 0;
 

@@ -4,25 +4,24 @@ package com.whiteskycn.tv.projectorlauncher.media.bean;
  * Created by jeff on 18-1-16.
  */
 
-public class PlayListBean {
+public class UsbMediaListBean {
 
     private MediaFileBean mMediaData;
 
     private String title = "";
-
     private String description = "";
+    private String duration = "";
+    private boolean selected = false;
 
-    private int duration = 0;
-
-    public PlayListBean() {
+    public UsbMediaListBean() {
     }
 
-    public PlayListBean(MediaFileBean date) {
-        mMediaData = date;
-        title = date.getName();
+    public UsbMediaListBean(MediaFileBean data) {
+        mMediaData = data;
+        title = data.getName();
     }
 
-    public PlayListBean(String title, String description) {
+    public UsbMediaListBean(String title, String description) {
         this.title = title;
         this.description = description;
     }
@@ -33,14 +32,6 @@ public class PlayListBean {
 
     public void setMediaData(MediaFileBean mediaData) {
         this.mMediaData = mediaData;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDurationTime(int durationTime) {
-        this.duration = durationTime;
     }
 
     public String getTitle() {
@@ -57,5 +48,13 @@ public class PlayListBean {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean getSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

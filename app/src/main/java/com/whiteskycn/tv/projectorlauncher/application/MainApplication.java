@@ -1,6 +1,7 @@
-package com.xiaoxuan.tv.application;
+package com.whiteskycn.tv.projectorlauncher.application;
 
 import android.app.Application;
+
 
 /**
  * Created by mac on 17-6-2.

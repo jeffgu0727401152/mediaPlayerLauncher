@@ -27,7 +27,7 @@ public class MediaFileBean {
     private MediaSourceEnum mSource;
     private boolean mIsDownloaded;  //是否已经从云端下载到本地
     private String mFilePath;       //文件的存储路径
-
+    private int mDuration;          //文件的时长
 
     public MediaFileBean() {
         mUniqueID = "";
@@ -37,13 +37,14 @@ public class MediaFileBean {
         mFilePath = "";
     }
 
-    public MediaFileBean(String id, String name, MediaTypeEnum type, MediaSourceEnum source, boolean isDownloaded, String filePath) {
+    public MediaFileBean(String id, String name, MediaTypeEnum type, MediaSourceEnum source, boolean isDownloaded, String filePath, int duration) {
         this.mUniqueID = id;
         this.mName = name;
         this.mType = type;
         this.mSource = source;
         this.mIsDownloaded = isDownloaded;
         this.mFilePath = filePath;
+        this.mDuration = duration;
     }
 
     public String getUniqueID() {
@@ -92,5 +93,13 @@ public class MediaFileBean {
 
     public void setFilePath(String mFilePath) {
         this.mFilePath = mFilePath;
+    }
+
+    public int getDuration() {
+        return mDuration;
+    }
+
+    public void setDuration(int duration) {
+        this.mDuration = duration;
     }
 }

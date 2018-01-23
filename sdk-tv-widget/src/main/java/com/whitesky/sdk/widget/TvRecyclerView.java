@@ -52,8 +52,6 @@ public class TvRecyclerView extends RecyclerView
     @Override
     protected int getChildDrawingOrder(int childCount, int i)
     {
-        // Logger.d("childCount-->" + childCount);
-        // Logger.d("i-->" + i);
         return mWidgetTvViewBring.getChildDrawingOrder(childCount, i);
     }
     

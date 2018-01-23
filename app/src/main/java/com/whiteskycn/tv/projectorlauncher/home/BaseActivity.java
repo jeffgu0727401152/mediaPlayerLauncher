@@ -8,11 +8,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
-import com.orhanobut.logger.Logger;
 import com.whiteskycn.tv.projectorlauncher.common.InitSSLSocketFactory;
 
 import static com.whiteskycn.tv.projectorlauncher.home.model.HomeModel.INTENT_EXTRA_LOGIN;
@@ -24,6 +23,8 @@ import static com.whiteskycn.tv.projectorlauncher.home.model.HomeModel.INTENT_LO
  * Created by xiaoxuan on 2017/12/12.
  */
 public class BaseActivity extends Activity implements MqttMessageCallback {
+    private final String TAG = this.getClass().getSimpleName();
+
     public final String IS_POWER_ON_PROPERTY = "whitesky.launcher.1stinit";
 
     public final String IS_TVAPK_OPENED_PROPERTY = "persist.whitesky.tvapk.isopened";
@@ -76,7 +77,7 @@ public class BaseActivity extends Activity implements MqttMessageCallback {
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         } else {
-            Logger.d("no case to handle " + msg);
+            Log.d(TAG,"no case to handle " + msg);
         }
 
     }

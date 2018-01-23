@@ -4,23 +4,24 @@ package com.whiteskycn.tv.projectorlauncher.media.bean;
  * Created by jeff on 18-1-16.
  */
 
-public class MediaListBean {
+public class AllMediaListBean {
 
     private MediaFileBean mMediaData;
 
     private String title = "";
     private String description = "";
+    private String duration = "";
     private boolean selected = false;
 
-    public MediaListBean() {
+    public AllMediaListBean() {
     }
 
-    public MediaListBean(MediaFileBean date) {
-        mMediaData = date;
-        title = date.getName();
+    public AllMediaListBean(MediaFileBean data) {
+        mMediaData = data;
+        title = data.getName();
     }
 
-    public MediaListBean(String title, String description) {
+    public AllMediaListBean(String title, String description) {
         this.title = title;
         this.description = description;
     }

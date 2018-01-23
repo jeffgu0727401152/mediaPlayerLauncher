@@ -15,10 +15,20 @@
         android:scaleType="fitXY" />
 
     <ImageView
+        android:id="@+id/iv_media_play_indicator"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x30"
+        android:layout_marginLeft="@dimen/x10"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center"
+        android:background="@drawable/img_arrow_right"
+        android:scaleType="fitXY" />
+
+    <ImageView
         android:id="@+id/iv_media_ico"
         android:layout_width="@dimen/x30"
         android:layout_height="@dimen/x30"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_marginLeft="@dimen/x10"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
         android:scaleType="fitXY"
@@ -26,39 +36,55 @@
 
     <TextView
         android:id="@+id/tv_media_name"
-        android:layout_width="@dimen/x280"
+        android:layout_width="@dimen/x200"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_gravity="left"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="left|center_vertical"
+        android:layout_marginLeft="@dimen/x10"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="20sp" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/tv_media_duration"
-        android:layout_width="@dimen/x220"
+        android:layout_width="@dimen/x100"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_gravity="left"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_gravity="left|center_vertical"
+        android:layout_marginLeft="@dimen/x10"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="20sp" />
+        android:textSize="16sp" />
 
-    <ImageView
-        android:id="@+id/iv_media_state"
-        android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
-        android:layout_centerVertical="true"
-        android:layout_gravity="center"
-        android:scaleType="fitXY" />
+    <TextView
+        android:id="@+id/tv_media_scale"
+        android:layout_width="@dimen/x80"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|center_vertical"
+        android:layout_marginLeft="@dimen/x40"
+        android:textAlignment="inherit"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:text = "16:9"/>
+
+    <TextView
+        android:id="@+id/tv_media_state"
+        android:layout_width="@dimen/x120"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|center_vertical"
+        android:layout_marginLeft="@dimen/x10"
+        android:textAlignment="inherit"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:text="下载中" />
 
     <Button
         android:id="@+id/bt_media_remove"
         android:layout_width="@dimen/x30"
         android:layout_height="@dimen/x30"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_marginLeft="@dimen/x60"
         android:layout_gravity="center"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY"
         android:background="@drawable/img_media_remove" />
 </LinearLayout>

@@ -4,11 +4,14 @@ package com.whiteskycn.tv.projectorlauncher.utils;
  * Created by jeff on 18-1-18.
  */
 
+import android.media.MediaPlayer;
 import android.util.Log;
 
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 
 
 public class MediaFileScanUtil {
@@ -20,16 +23,20 @@ public class MediaFileScanUtil {
         MUSIC
     }
 
+    private MediaPlayer mp;
+
     private final String TAG = this.getClass().getSimpleName();
 
     private MediaFileScanListener mMediaFileScanListener;
 
     public MediaFileScanUtil() {
         this.mMediaFileScanListener = null;
+        mp = new MediaPlayer();
     }
 
     public MediaFileScanUtil(MediaFileScanListener mMediaFileScanListener) {
         this.mMediaFileScanListener = mMediaFileScanListener;
+        mp = new MediaPlayer();
     }
 
     public void safeScanning(String path) {
@@ -82,9 +89,14 @@ public class MediaFileScanUtil {
                             // 初始化音乐文件......................
                             Log.e(TAG,"This file is Music File,fileName=" + fileName + "."
                                     + fileExtension + ",filePath=" + filePath);
+                            int musicDuration = 0;
+                            if (mp!=null)
+                            {
+                                musicDuration = getMediaDuration(filePath);
+                            }
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath);
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath, musicDuration);
                             }
                         }
 
@@ -94,7 +106,7 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath);
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath,PICTURE_DEFAULT_PLAY_DURATION_MS);
                             }
                         }
 
@@ -104,12 +116,18 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath);
+                                int videoDuration = 0;
+                                if (mp!=null)
+                                {
+                                    videoDuration = getMediaDuration(filePath);
+                                }
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath, videoDuration);
                             }
                         }
                     }
                 }
             }
+            mMediaFileScanListener.onMediaScanDone();
         }
     }
 
@@ -177,6 +195,28 @@ public class MediaFileScanUtil {
         return false;
     }
 
+    public int getMediaDuration(String path)
+    {
+        File file = new File(path);
+        if (!file.exists()) {
+            Log.e(TAG, "视频文件路径错误!!!");
+            return -1;
+        }
+
+        try {
+            mp.reset();
+            mp.setDataSource(file.getAbsolutePath());
+            mp.prepare();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e(TAG, "error!!!");
+        }
+
+        Log.i(TAG,"!!!!!getDuration "+ mp.getDuration());
+        return mp.getDuration();
+    }
+
+
     public interface MediaFileScanListener {
 
         /**
@@ -187,14 +227,15 @@ public class MediaFileScanUtil {
          * @param extension     当前查找到媒体文件的扩展名
          * @param path          当前查找到媒体文件的路径
          */
-        void onFindMedia(MediaTypeEnum type, String name, String extension, String path);
+        void onFindMedia(MediaTypeEnum type, String name, String extension, String path, int duration);
+        void onMediaScanDone();
     }
 
-    public MediaFileScanListener getmMediaFileScanListener() {
+    public MediaFileScanListener getMediaFileScanListener() {
         return mMediaFileScanListener;
     }
 
-    public void setmMediaFileScanListener(MediaFileScanListener mMediaFileScanListener) {
+    public void setMediaFileScanListener(MediaFileScanListener mMediaFileScanListener) {
         this.mMediaFileScanListener = mMediaFileScanListener;
     }
 }

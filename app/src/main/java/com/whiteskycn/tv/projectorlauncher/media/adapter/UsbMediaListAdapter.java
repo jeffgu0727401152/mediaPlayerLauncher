@@ -7,8 +7,7 @@ import android.view.View;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.common.adapter.CommonAdapter;
-import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
-
+import com.whiteskycn.tv.projectorlauncher.media.bean.UsbMediaListBean;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -21,17 +20,17 @@ import static android.widget.AdapterView.INVALID_POSITION;
  * Created by jeff on 18-1-16.
  */
 
-public class PlayListAdapter extends CommonAdapter<PlayListBean>
+public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
-    public PlayListAdapter(Context context, List<PlayListBean> data)
+    public UsbMediaListAdapter(Context context, List<UsbMediaListBean> data)
     {
-        super(context, data, R.layout.item_play_list);
+        super(context, data, R.layout.item_usb_media_list);
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, PlayListBean item) {
+    public void convert(ViewHolder holder, final int position, UsbMediaListBean item) {
         holder.setText(R.id.tv_media_name, item.getTitle());
 
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
@@ -40,16 +39,14 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         holder.setText(R.id.tv_media_duration, hms);
 
         holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
-        holder.getButton(R.id.bt_media_remove).setOnClickListener(new View.OnClickListener() {
+        holder.getButton(R.id.bt_media_copy_to_left).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"playlist remove position " + position);
-                removeItem(getItem(position));
+                Log.i(TAG,"copy to media list" + position);
+                //todo file copy
                 refresh();
             }
         });
-
-        holder.getButton(R.id.bt_media_remove).setVisibility(View.VISIBLE);
     }
 
 

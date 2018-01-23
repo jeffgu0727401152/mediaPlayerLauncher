@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.orhanobut.logger.Logger;
 import com.whitesky.sdk.widget.BorderView;
 import com.whitesky.sdk.widget.RoundedFrameLayout;
 import com.whitesky.sdk.widget.TvScrollTextView;
@@ -25,7 +24,6 @@ import com.whiteskycn.tv.projectorlauncher.admin.AdminActivity;
 import com.whiteskycn.tv.projectorlauncher.common.MQTTService;
 import com.whiteskycn.tv.projectorlauncher.media.MediaActivity;
 import com.whiteskycn.tv.projectorlauncher.settings.SysSettingActivity;
-import com.whiteskycn.tv.projectorlauncher.settings.common.SkinSettingManager;
 import com.whiteskycn.tv.projectorlauncher.utils.ServiceStatusUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
@@ -33,6 +31,7 @@ import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener, FocusBorder.OnFocusCallback
 {
+    private final String TAG = this.getClass().getSimpleName();
     private ImageView mEthConnectImg;
     private ImageView mWifiConnectImg;
 
@@ -118,7 +117,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
 
                 if (!ServiceStatusUtil.isServiceRunning(context, MQTTService.class)) {
-                    Logger.d("MQTT be killed, so restart it!");
+                    Log.d(TAG,"MQTT be killed, so restart it!");
                     startService(new Intent(getApplicationContext(), MQTTService.class));
                 }
             }
@@ -150,19 +149,19 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             {
                 mEthConnectImg.setVisibility(View.VISIBLE);
                 mWifiConnectImg.setVisibility(View.INVISIBLE);
-                Logger.v("use eth connect");
+                Log.v(TAG,"use eth connect");
             }
             else if (wifiConnected)
             {
                 mWifiConnectImg.setVisibility(View.VISIBLE);
                 mEthConnectImg.setVisibility(View.INVISIBLE);
-                Logger.v("use wifi connect");
+                Log.v(TAG,"use wifi connect");
             }
             else
             {
                 mEthConnectImg.setVisibility(View.INVISIBLE);
                 mWifiConnectImg.setVisibility(View.INVISIBLE);
-                Logger.v("no connect");
+                Log.v(TAG,"no connect");
             }
 
             //真值表推导的
@@ -186,7 +185,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             //每次网络通断的机会,检查服务是否被杀死,如果杀死则重启
             if (!ServiceStatusUtil.isServiceRunning(context,MQTTService.class))
             {
-                Logger.d("MQTT be killed, so restart it!");
+                Log.d(TAG,"MQTT be killed, so restart it!");
                 startService(new Intent(getApplicationContext(), MQTTService.class));
             }
         }
@@ -247,7 +246,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         {
             //Intent intent = new Intent("com.mstar.android.intent.action.TV_INPUT_BUTTON");
             //startActivity(intent);
-            Logger.v("onKeyDown egvent.getRepeatCount() " + event.getRepeatCount());
+            Log.v(TAG,"onKeyDown egvent.getRepeatCount() " + event.getRepeatCount());
             if (event.getRepeatCount() > 0)
             {
                 ToastUtil.showToast(getApplicationContext(), "ssss");
