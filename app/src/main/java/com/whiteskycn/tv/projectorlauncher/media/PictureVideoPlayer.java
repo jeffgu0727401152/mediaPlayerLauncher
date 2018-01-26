@@ -167,10 +167,9 @@ public class PictureVideoPlayer {
 
         if (path.isEmpty())
         {
-            Log.i(TAG,"******videoPlay: path null");
-            path = "/mnt/sdcard/Movies/LaLaLa.mkv";
-            type = MEDIA_VIDEO;
-            //todo error handle
+            ToastUtil.showToast(mAttachActivity, "play list is null!");
+            // todo 随机加几个到play list
+            return;
         }
 
         ToastUtil.showToast(mAttachActivity, "play path="+path + ": pos="+position +  ": time="+time);

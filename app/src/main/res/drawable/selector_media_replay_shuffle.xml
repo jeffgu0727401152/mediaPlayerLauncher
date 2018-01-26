@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/img_media_replay_shuffle" android:state_checked="true" />
+    <item android:drawable="@drawable/img_media_replay_shuffle_p" android:state_checked="false" />
+</selector>

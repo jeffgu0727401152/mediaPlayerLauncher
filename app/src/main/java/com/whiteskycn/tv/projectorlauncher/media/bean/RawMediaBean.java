@@ -23,7 +23,6 @@ public class RawMediaBean {
     private int type;
     private boolean isDownload;  //是否已经从云端下载到本地
     private int duration;          //文件的时长
-//    private String name;
 
     public RawMediaBean() {
         uniqueID = "";
@@ -33,9 +32,8 @@ public class RawMediaBean {
         filePath = "";
     }
 
-    public RawMediaBean(String id, String name, int type, int source, boolean isDownload, String filePath, int duration) {
+    public RawMediaBean(String id, int type, int source, boolean isDownload, String filePath, int duration) {
         this.uniqueID = id;
-//        this.name = name;
         this.type = type;
         this.source = source;
         this.isDownload = isDownload;
@@ -50,14 +48,6 @@ public class RawMediaBean {
     public void setUniqueID(String id) {
         this.uniqueID = id;
     }
-
-//    public String getName() {
-//        return name;
-//    }
-//
-//    public void setName(String name) {
-//        this.name = name;
-//    }
 
     public int getType() {
         return type;

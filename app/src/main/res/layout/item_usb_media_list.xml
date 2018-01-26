@@ -58,5 +58,5 @@
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
-        android:background="@drawable/img_media_multi_copy_to_left" />
+        android:background="@drawable/selector_media_copy_to_left_btn" />
 </LinearLayout>

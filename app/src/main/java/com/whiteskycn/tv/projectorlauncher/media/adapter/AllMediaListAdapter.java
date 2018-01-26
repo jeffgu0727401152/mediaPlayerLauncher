@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_CLOUD_FREE;
@@ -46,13 +47,16 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         switch (item.getMediaData().getType())
         {
             case MEDIA_PICTURE:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_picture);
                 break;
             case MEDIA_VIDEO:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
                 break;
+            case MEDIA_MUSIC:
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_music);
+                break;
             default:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_unknown);
                 break;
         }
 
@@ -65,10 +69,10 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             case SOURCE_CLOUD_PAY:
             case SOURCE_CLOUD_PRIVATE:
             case SOURCE_CLOUD_PUBLIC:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_source_cloud);
+                holder.setImageResource(R.id.iv_media_source, R.drawable.img_media_source_cloud);
                 break;
             default:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
+                holder.setImageResource(R.id.iv_media_source, R.drawable.img_media_pause);
                 break;
         }
 

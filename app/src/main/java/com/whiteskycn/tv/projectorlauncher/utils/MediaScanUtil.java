@@ -7,11 +7,14 @@ package com.whiteskycn.tv.projectorlauncher.utils;
 import android.media.MediaPlayer;
 import android.util.Log;
 
+import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
@@ -127,7 +130,7 @@ public class MediaScanUtil {
                                         Log.e(TAG,"get file size error!" + e);
                                     }
                                 }
-                                mMediaFileScanListener.onFindMedia(MEDIA_PICTURE, fileName, fileExtension, filePath,0, size);
+                                mMediaFileScanListener.onFindMedia(MEDIA_PICTURE, fileName, fileExtension, filePath, PICTURE_DEFAULT_PLAY_DURATION_MS, size);
                             }
                         }
 
@@ -162,6 +165,22 @@ public class MediaScanUtil {
         if (needReport && mMediaFileScanListener!=null)
         {
             mMediaFileScanListener.onMediaScanDone();
+        }
+    }
+
+    public static int getFileTypeFromPath(String filePath)
+    {
+        String ext = FileUtil.getFileExtension(filePath);
+
+        if (isVideo(ext))
+        {
+            return RawMediaBean.MEDIA_VIDEO;
+        } else if (isPicture(ext)) {
+            return RawMediaBean.MEDIA_PICTURE;
+        } else if (isMusic(ext)){
+            return RawMediaBean.MEDIA_MUSIC;
+        } else {
+            return RawMediaBean.MEDIA_UNKNOWN;
         }
     }
 

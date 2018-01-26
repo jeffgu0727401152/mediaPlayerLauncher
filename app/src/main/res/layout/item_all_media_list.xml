@@ -75,7 +75,7 @@
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
-        android:background="@drawable/img_media_preview" />
+        android:background="@drawable/selector_media_preview_btn" />
 
     <Button
         android:id="@+id/bt_media_delete"
@@ -83,5 +83,5 @@
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
-        android:background="@drawable/img_media_delete" />
+        android:background="@drawable/selector_media_delete_btn" />
 </LinearLayout>

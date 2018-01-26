@@ -5,13 +5,13 @@
     android:descendantFocusability="blocksDescendants">
 
     <ImageView
-        android:id="@+id/iv_media_spinner"
+        android:id="@+id/iv_media_playlist_move"
         android:layout_width="@dimen/x30"
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x10"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
-        android:background="@drawable/arrow"
+        android:background="@drawable/img_media_playlist_move"
         android:scaleType="fitXY" />
 
     <ImageView
@@ -21,7 +21,7 @@
         android:layout_marginLeft="@dimen/x10"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
-        android:background="@drawable/img_arrow_right"
+        android:background="@drawable/img_media_play_indicator"
         android:scaleType="fitXY" />
 
     <ImageView

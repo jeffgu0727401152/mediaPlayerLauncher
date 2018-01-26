@@ -35,7 +35,7 @@
                 android:layout_height="@dimen/x40"
                 android:layout_marginTop="@dimen/x20"
                 android:layout_marginLeft="@dimen/x20"
-                android:background="@drawable/img_media_net_view"/>
+                android:background="@drawable/selector_media_net_view_btn"/>
 
             <Button
                 android:id="@+id/btn_media_grayView"
@@ -43,7 +43,7 @@
                 android:layout_height="@dimen/x40"
                 android:layout_marginTop="@dimen/x20"
                 android:layout_marginLeft="@dimen/x80"
-                android:background="@drawable/img_media_gray_view"/>
+                android:background="@drawable/selector_media_gray_view_btn"/>
 
 
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -56,13 +56,13 @@
                     android:id="@+id/bt_media_playPrevious"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x40"
-                    android:background="@drawable/img_media_previous"/>
+                    android:background="@drawable/selector_media_previous_btn"/>
                 <Button
                     android:id="@+id/bt_media_play"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x40"
                     android:layout_marginLeft="@dimen/x10"
-                    android:background="@drawable/img_media_play"/>
+                    android:background="@drawable/selector_media_play_btn"/>
 
                 <TextView
                     android:id="@+id/tv_media_playedTime"
@@ -90,13 +90,13 @@
                     android:id="@+id/bt_media_playNext"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x40"
-                    android:background="@drawable/img_media_next"
+                    android:background="@drawable/selector_media_next_btn"
                     android:layout_marginLeft="@dimen/x10"/>
                 <Button
                     android:id="@+id/bt_media_volume"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x40"
-                    android:background="@drawable/img_media_volume"
+                    android:background="@drawable/selector_media_volume_btn"
                     android:layout_marginLeft="@dimen/x10" />
             </LinearLayout>
         </FrameLayout>
@@ -208,28 +208,28 @@
                 android:orientation="horizontal">
                 <RadioButton
                     android:id="@+id/rb_media_replay_one"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x30"
                     android:layout_marginLeft="@dimen/x10"
                     android:layout_gravity="center"
                     android:button="@null"
-                    android:background="@drawable/selector_replay_one_rb" />
+                    android:background="@drawable/selector_media_replay_one" />
                 <RadioButton
                     android:id="@+id/rb_media_replay_all"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x30"
                     android:layout_marginLeft="@dimen/x10"
                     android:layout_gravity="center"
                     android:button="@null"
-                    android:background="@drawable/selector_replay_all_rb" />
+                    android:background="@drawable/selector_media_replay_all" />
                 <RadioButton
                     android:id="@+id/rb_media_replay_shuffle"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x30"
                     android:layout_marginLeft="@dimen/x10"
                     android:layout_gravity="center"
                     android:button="@null"
-                    android:background="@drawable/selector_replay_shuffle_rb" />
+                    android:background="@drawable/selector_media_replay_shuffle" />
             </RadioGroup>
         </LinearLayout>
     </LinearLayout>
@@ -253,13 +253,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/x40"
                 android:orientation="horizontal">
-                <Button
-                    android:id="@+id/bt_media_all_list_refresh"
-                    android:layout_width="@dimen/x30"
+                <CheckBox
+                    android:id="@+id/cb_media_all_list_check"
+                    android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
-                    android:layout_marginLeft="@dimen/x20"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/img_media_add"/>
+                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"/>
                 <TextView
                     android:id="@+id/tv_media_all_list_name"
                     android:layout_width="@dimen/x100"
@@ -271,11 +271,18 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:text="@string/str_media_list_cloud"/>
+                <Button
+                    android:id="@+id/bt_media_all_list_refresh"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x28"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/selector_media_refresh_btn"/>
                 <TextView
                     android:id="@+id/tv_media_all_list_capacity"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x500"
+                    android:layout_marginLeft="@dimen/x450"
                     android:layout_gravity="right|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -305,24 +312,24 @@
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
                 android:layout_marginTop="@dimen/x20"
-                android:background="@drawable/img_media_add"/>
+                android:background="@drawable/selector_media_add_btn"/>
             <Button
                 android:id="@+id/bt_media_multi_delete"
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
                 android:layout_marginTop="@dimen/x20"
-                android:background="@drawable/img_media_delete"/>
+                android:background="@drawable/selector_media_delete_btn"/>
             <Button
                 android:id="@+id/bt_media_multi_copy_to_right"
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
-                android:background="@drawable/img_media_multi_copy_to_right"
+                android:background="@drawable/selector_media_copy_to_right_btn"
                 android:layout_marginTop="@dimen/x20"/>
             <Button
                 android:id="@+id/bt_media_multi_download"
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
-                android:background="@drawable/img_media_download"
+                android:background="@drawable/selector_media_download_btn"
                 android:layout_marginTop="@dimen/x20" />
         </LinearLayout>
 
@@ -338,7 +345,7 @@
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
                 android:layout_marginTop="@dimen/x20"
-                android:background="@drawable/img_media_multi_copy_to_left"/>
+                android:background="@drawable/selector_media_copy_to_left_btn"/>
         </LinearLayout>
 
         <!--USB媒体列表-->
@@ -355,13 +362,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/x40">
 
-                <Button
-                    android:id="@+id/bt_media_usb_list_refresh"
-                    android:layout_width="@dimen/x30"
+                <CheckBox
+                    android:id="@+id/cb_media_usb_list_check"
+                    android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="@dimen/x20"
-                    android:background="@drawable/img_media_add" />
+                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center" />
 
                 <TextView
                     android:id="@+id/tv_media_usb_list_name"
@@ -379,7 +386,7 @@
                     android:id="@+id/sp_media_usb_partition_spinner"
                     android:layout_width="@dimen/x200"
                     android:layout_height="@dimen/x40"
-                    android:layout_gravity="left|bottom"
+                    android:layout_gravity="left|top"
                     android:popupBackground="@drawable/spinner_drawable" />
 
                 <TextView

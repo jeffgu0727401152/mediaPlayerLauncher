@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
 
@@ -41,13 +42,16 @@ public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
         switch (item.getType())
         {
             case MEDIA_PICTURE:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_picture);
                 break;
             case MEDIA_VIDEO:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
                 break;
+            case MEDIA_MUSIC:
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_music);
+                break;
             default:
-                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_add);
+                holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_unknown);
                 break;
         }
 
