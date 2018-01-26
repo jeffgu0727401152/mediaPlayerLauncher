@@ -104,7 +104,7 @@ public class PictureVideoPlayer {
         void onMediaUpdateSeekBar(int msec);
     }
 
-    public void setOnCompletionListener(OnMediaEventListener listener)
+    public void setOnMediaEventListener(OnMediaEventListener listener)
     {
         mOnMediaEventListener = listener;
     }
@@ -334,7 +334,7 @@ public class PictureVideoPlayer {
                                         sleep(mUpdateSeekBarThreadSleep_ms);
                                     }
                                 } catch (Exception e) {
-                                    e.printStackTrace();
+                                    Log.e(TAG, "error mSeekBarUpdateService execute!", e);
                                 }
                             }
                         });
@@ -377,7 +377,7 @@ public class PictureVideoPlayer {
                 }
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "error in video play!", e);
         }
     }
 
@@ -459,7 +459,7 @@ public class PictureVideoPlayer {
                         sleep(mUpdateSeekBarThreadSleep_ms);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "error mSeekBarUpdateService execute!", e);
                 }
             }
         });

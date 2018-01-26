@@ -11,7 +11,8 @@ public class AllMediaListBean {
     private String title = "";
     private String description = "";
     private String duration = "";
-    private boolean selected = false;
+
+    private boolean isSelected = false;
 
     public AllMediaListBean() {
     }
@@ -50,11 +51,11 @@ public class AllMediaListBean {
         this.description = description;
     }
 
-    public boolean getSelected() {
-        return selected;
+    public boolean isSelected() {
+        return isSelected;
     }
 
     public void setSelected(boolean selected) {
-        this.selected = selected;
+        this.isSelected = selected;
     }
 }

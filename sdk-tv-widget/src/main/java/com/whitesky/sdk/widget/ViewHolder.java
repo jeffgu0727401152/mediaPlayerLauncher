@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -103,7 +104,18 @@ public class ViewHolder
     {
         return (Button)getView(viewid);
     }
-    
+
+    /**
+     * 获取CheckBox控件
+     *
+     * @param viewid 控件ID
+     * @return
+     */
+    public CheckBox getCheckBox(int viewid)
+    {
+        return (CheckBox)getView(viewid);
+    }
+
     /**
      * 获取ImageView控件
      * 

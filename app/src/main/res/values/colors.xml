@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="test">#50000000</color>
     <color name="switch_color">#079ffe</color>
     <color name="gray_light">#e7e5e5</color>
     <color name="alertdialog_line">#c6c6c6</color>

@@ -196,7 +196,8 @@
                 android:id="@+id/lv_media_playList"
                 android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x420"
-                android:divider="@drawable/itme_divider"
+                android:divider="@drawable/item_divider"
+                android:listSelector="@drawable/selecter_draglistview_item"
                 android:background="@drawable/border_shape_with_border"/>
 
             <!--播放模式按钮-->
@@ -280,7 +281,7 @@
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:text="3.2GB/1TB"/>
+                    android:text="--GB/--GB"/>
             </LinearLayout>
 
             <!--全部媒体列表数据-->
@@ -315,7 +316,7 @@
                 android:id="@+id/bt_media_multi_copy_to_right"
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
-                android:background="@drawable/img_media_copy_to_right"
+                android:background="@drawable/img_media_multi_copy_to_right"
                 android:layout_marginTop="@dimen/x20"/>
             <Button
                 android:id="@+id/bt_media_multi_download"
@@ -337,7 +338,7 @@
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
                 android:layout_marginTop="@dimen/x20"
-                android:background="@drawable/img_media_copy_to_left"/>
+                android:background="@drawable/img_media_multi_copy_to_left"/>
         </LinearLayout>
 
         <!--USB媒体列表-->
@@ -352,37 +353,46 @@
             <!--USB媒体列表表头-->
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/x40"
-                android:orientation="horizontal">
+                android:layout_height="@dimen/x40">
+
                 <Button
                     android:id="@+id/bt_media_usb_list_refresh"
                     android:layout_width="@dimen/x30"
                     android:layout_height="@dimen/x30"
-                    android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="center_vertical"
-                    android:background="@drawable/img_media_add"/>
+                    android:layout_marginLeft="@dimen/x20"
+                    android:background="@drawable/img_media_add" />
+
                 <TextView
                     android:id="@+id/tv_media_usb_list_name"
-                    android:layout_width="@dimen/x100"
+                    android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
                     android:layout_gravity="left|center_vertical"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:text="@string/str_media_list_usb"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:text="@string/str_media_list_usb"/>
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/sp_media_usb_partition_spinner"
+                    android:layout_width="@dimen/x200"
+                    android:layout_height="@dimen/x40"
+                    android:layout_gravity="left|bottom"
+                    android:popupBackground="@drawable/spinner_drawable" />
+
                 <TextView
                     android:id="@+id/tv_media_usb_list_capacity"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x500"
                     android:layout_gravity="right|center_vertical"
+                    android:layout_marginLeft="@dimen/x200"
+                    android:text="--GB/--GB"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:text="3.2GB/500GB"/>
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!--USB媒体列表数据-->

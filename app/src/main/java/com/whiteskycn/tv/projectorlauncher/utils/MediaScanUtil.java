@@ -8,57 +8,62 @@ import android.media.MediaPlayer;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 
-
-public class MediaFileScanUtil {
-
+public class MediaScanUtil {
+    private final String TAG = this.getClass().getSimpleName();
     public enum MediaTypeEnum
     {
         PICTURE,
         VIDEO,
-        MUSIC
+        MUSIC,
+        UNKNOWN
     }
 
     private MediaPlayer mp;
-
-    private final String TAG = this.getClass().getSimpleName();
-
     private MediaFileScanListener mMediaFileScanListener;
+    private boolean isNeedDuration = false;
+    private boolean isNeedSize = false;
 
-    public MediaFileScanUtil() {
-        this.mMediaFileScanListener = null;
+    public MediaScanUtil() {
+        mMediaFileScanListener = null;
         mp = new MediaPlayer();
     }
 
-    public MediaFileScanUtil(MediaFileScanListener mMediaFileScanListener) {
-        this.mMediaFileScanListener = mMediaFileScanListener;
+    public MediaScanUtil(MediaFileScanListener mediaFileScanListener) {
+        this.mMediaFileScanListener = mediaFileScanListener;
         mp = new MediaPlayer();
     }
 
     public void safeScanning(String path) {
         final File folder = new File(path);
+
+        if (mMediaFileScanListener!=null)
+        {
+            mMediaFileScanListener.onMediaScanBegin();
+        }
+
         if (!folder.exists()) {
-            Log.e(TAG,"path not exist!");
+            Log.i(TAG,"path not exist!");
             return;
         }
         new Thread(new Runnable() {
             public void run() {
-                scanning(folder);
+                scanning(folder,true);
             }
         }).start();
     }
-
 
     /**
      * 遍历指定文件夹下的资源文件
      *
      * @param folder 文件
+     * @param needReport scan完需要回报
      */
-    private void scanning(File folder) {
+    private void scanning(File folder, boolean needReport) {
         //指定正则表达式
         Pattern mPattern = Pattern.compile("([^\\.]*)\\.([^\\.]*)");
         // 当前目录下的所有文件
@@ -67,16 +72,16 @@ public class MediaFileScanUtil {
         //final String folderName = folder.getName();
         // 当前目录的绝对路径
         //final String folderPath = folder.getAbsolutePath();
+
         if (filenames != null) {
             // 遍历当前目录下的所有文件
             for (String name : filenames) {
                 File file = new File(folder, name);
                 // 如果是文件夹则继续递归当前方法
                 if (file.isDirectory()) {
-                    scanning(file);
-                }
+                    scanning(file,false);
+                } else {
                 // 如果是文件则对文件进行相关操作
-                else {
                     Matcher matcher = mPattern.matcher(name);
                     if (matcher.matches()) {
                         // 文件名称
@@ -89,14 +94,24 @@ public class MediaFileScanUtil {
                             // 初始化音乐文件......................
                             Log.e(TAG,"This file is Music File,fileName=" + fileName + "."
                                     + fileExtension + ",filePath=" + filePath);
-                            int musicDuration = 0;
-                            if (mp!=null)
-                            {
-                                musicDuration = getMediaDuration(filePath);
-                            }
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath, musicDuration);
+                                int duration = 0;
+                                if (mp!=null && isNeedDuration)
+                                {
+                                    duration = getMediaDuration(filePath);
+                                }
+
+                                long size = 0;
+                                if (isNeedSize)
+                                {
+                                    try {
+                                        size = FileUtil.getFileSize(filePath);
+                                    } catch (Exception e) {
+                                        Log.e(TAG,"get file size error!" + e);
+                                    }
+                                }
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath, duration, size);
                             }
                         }
 
@@ -106,7 +121,16 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath,PICTURE_DEFAULT_PLAY_DURATION_MS);
+                                long size = 0;
+                                if (isNeedSize)
+                                {
+                                    try {
+                                        size = FileUtil.getFileSize(filePath);
+                                    } catch (Exception e) {
+                                        Log.e(TAG,"get file size error!" + e);
+                                    }
+                                }
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath,0, size);
                             }
                         }
 
@@ -116,17 +140,30 @@ public class MediaFileScanUtil {
                                     + fileExtension + ",filePath=" + filePath);
                             if (mMediaFileScanListener!=null)
                             {
-                                int videoDuration = 0;
-                                if (mp!=null)
+                                int duration = 0;
+                                if (mp!=null && isNeedDuration)
                                 {
-                                    videoDuration = getMediaDuration(filePath);
+                                    duration = getMediaDuration(filePath);
                                 }
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath, videoDuration);
+
+                                long size = 0;
+                                if (isNeedSize)
+                                {
+                                    try {
+                                        size = FileUtil.getFileSize(filePath);
+                                    } catch (Exception e) {
+                                        Log.e(TAG,"get file size error!" + e);
+                                    }
+                                }
+                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath, duration, size);
                             }
                         }
                     }
                 }
             }
+        }
+        if (needReport && mMediaFileScanListener!=null)
+        {
             mMediaFileScanListener.onMediaScanDone();
         }
     }
@@ -138,9 +175,12 @@ public class MediaFileScanUtil {
      * @return
      */
     public static boolean isMusic(String extension) {
+
         if (extension == null) {
             return false;
         }
+
+        extension=extension.replace(".","");
 
         final String ext = extension.toLowerCase();
         if (ext.equals("mp3") || ext.equals("m4a") || ext.equals("wav") || ext.equals("amr") || ext.equals("awb") ||
@@ -159,9 +199,12 @@ public class MediaFileScanUtil {
      * @return
      */
     public static boolean isPicture(String extension) {
+
         if (extension == null) {
             return false;
         }
+
+        extension=extension.replace(".","");
 
         final String ext = extension.toLowerCase();
         if (ext.endsWith("jpg") || ext.endsWith("jpeg") || ext.endsWith("gif") || ext.endsWith("png") ||
@@ -182,6 +225,8 @@ public class MediaFileScanUtil {
         if (extension == null) {
             return false;
         }
+
+        extension=extension.replace(".","");
 
         final String ext = extension.toLowerCase();
         if (ext.endsWith("mpeg") || ext.endsWith("mp4") || ext.endsWith("mov") || ext.endsWith("m4v") ||
@@ -207,18 +252,31 @@ public class MediaFileScanUtil {
             mp.reset();
             mp.setDataSource(file.getAbsolutePath());
             mp.prepare();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG, "error!!!");
+        } catch (IOException e) {
+            Log.e(TAG, "getMediaDuration error!" + e);
         }
 
-        Log.i(TAG,"!!!!!getDuration "+ mp.getDuration());
         return mp.getDuration();
     }
 
+    public boolean isNeedDuration() {
+        return isNeedDuration;
+    }
 
+    public void setNeedDuration(boolean needDuration) {
+        isNeedDuration = needDuration;
+    }
+
+    public boolean isNeedSize() {
+        return isNeedSize;
+    }
+
+    public void setNeedSize(boolean needSize) {
+        isNeedSize = needSize;
+    }
+
+    //内置存储设备用
     public interface MediaFileScanListener {
-
         /**
          * 查找到一个媒体文件的时候所需要进行的操作
          *
@@ -226,16 +284,14 @@ public class MediaFileScanUtil {
          * @param name          当前查找到媒体文件的名字
          * @param extension     当前查找到媒体文件的扩展名
          * @param path          当前查找到媒体文件的路径
+         * @param duration      当前查找到媒体文件的时间长度
          */
-        void onFindMedia(MediaTypeEnum type, String name, String extension, String path, int duration);
+        void onFindMedia(MediaTypeEnum type, String name, String extension, String path, int duration, long size);
+        void onMediaScanBegin();
         void onMediaScanDone();
     }
 
-    public MediaFileScanListener getMediaFileScanListener() {
-        return mMediaFileScanListener;
-    }
-
-    public void setMediaFileScanListener(MediaFileScanListener mMediaFileScanListener) {
-        this.mMediaFileScanListener = mMediaFileScanListener;
+    public void setMediaFileScanListener(MediaFileScanListener mediaFileScanListener) {
+        this.mMediaFileScanListener = mediaFileScanListener;
     }
 }

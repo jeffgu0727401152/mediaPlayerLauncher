@@ -25,6 +25,8 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
+    private OnAllMediaListItemEventListener mOnALlMediaListItemEventListener;
+
     public AllMediaListAdapter(Context context, List<AllMediaListBean> data)
     {
         super(context, data, R.layout.item_all_media_list);
@@ -35,7 +37,6 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         holder.setText(R.id.tv_media_name, item.getTitle());
 
         MediaFileBean.MediaTypeEnum type = item.getMediaData().getType();
-
         switch (type)
         {
             case PICTURE:
@@ -75,8 +76,10 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist remove position " + position);
-                removeItem(getItem(position));
-                refresh();
+                if (mOnALlMediaListItemEventListener !=null)
+                {
+                    mOnALlMediaListItemEventListener.doItemDelete(position);
+                }
             }
         });
 
@@ -84,6 +87,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist remove position " + position);
+                //to do preview
                 refresh();
             }
         });
@@ -92,10 +96,26 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist remove position " + position);
+                //to do download
                 refresh();
             }
         });
 
+        holder.getCheckBox(R.id.cb_media_selected).setChecked(item.isSelected());
+        holder.getCheckBox(R.id.cb_media_selected).setOnClickListener(new View.OnClickListener () {
+            @Override
+            public void onClick(View view) {
+                getListDatas().get(position).setSelected(!getListDatas().get(position).isSelected());
+            }
+        });
+    }
+
+    public interface OnAllMediaListItemEventListener {
+        public void doItemDelete(int position);
+    }
+
+    public void setOnALlMediaListItemListener(OnAllMediaListItemEventListener onAllMediaListItemEventListener) {
+        this.mOnALlMediaListItemEventListener = onAllMediaListItemEventListener;
     }
 
     public boolean exchange(int src, int dst) {

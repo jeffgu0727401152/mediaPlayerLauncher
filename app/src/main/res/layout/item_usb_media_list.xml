@@ -24,7 +24,7 @@
 
     <TextView
         android:id="@+id/tv_media_name"
-        android:layout_width="@dimen/x200"
+        android:layout_width="@dimen/x300"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
@@ -33,7 +33,17 @@
         android:textSize="16sp" />
 
     <TextView
-        android:id="@+id/tv_media_duration"
+        android:id="@+id/tv_media_size"
+        android:layout_width="@dimen/x100"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/x10"
+        android:layout_gravity="left|center_vertical"
+        android:textAlignment="inherit"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_media_state"
         android:layout_width="@dimen/x100"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
@@ -48,5 +58,5 @@
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
-        android:background="@drawable/img_media_add" />
+        android:background="@drawable/img_media_multi_copy_to_left" />
 </LinearLayout>
