@@ -1,7 +1,8 @@
 package com.whiteskycn.tv.projectorlauncher.media.bean;
 
-import com.github.mjdev.libaums.fs.UsbFile;
 import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
+
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_UNKNOWN;
 
 /**
  * Created by jeff on 18-1-16.
@@ -9,17 +10,14 @@ import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 
 public class UsbMediaListBean {
 
-    private UsbFile mediaFile;
-    private MediaScanUtil.MediaTypeEnum type = MediaScanUtil.MediaTypeEnum.UNKNOWN;
+    private int type = MEDIA_UNKNOWN;
     private String title = "";
     private String description = "";
-    private String name = "";
     private String path = "";
     private long size = 0;
     private boolean isSelected = false;
 
     public UsbMediaListBean() {
-        mediaFile = null;
         title = "";
         path = "";
         description = "";
@@ -27,22 +25,13 @@ public class UsbMediaListBean {
         isSelected = false;
     }
 
-    public UsbMediaListBean(MediaScanUtil.MediaTypeEnum type, String name, String path, long size) {
+    public UsbMediaListBean(int type, String title, String path, long size) {
         this.type = type;
-        this.name = name;
-        this.title = name;
+        this.title = title;
         description = "";
         this.size = size;
         this.path = path;
         isSelected = false;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getPath() {
@@ -81,11 +70,11 @@ public class UsbMediaListBean {
         isSelected = selected;
     }
 
-    public MediaScanUtil.MediaTypeEnum getType() {
+    public int getType() {
         return type;
     }
 
-    public void setType(MediaScanUtil.MediaTypeEnum type) {
+    public void setType(int type) {
         this.type = type;
     }
 }

@@ -281,7 +281,7 @@
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:text="--GB/--GB"/>
+                    android:text="--G/--G"/>
             </LinearLayout>
 
             <!--全部媒体列表数据-->
@@ -388,7 +388,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
                     android:layout_marginLeft="@dimen/x200"
-                    android:text="--GB/--GB"
+                    android:text="--G/--G"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
                     android:textSize="16sp"

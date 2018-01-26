@@ -7,7 +7,7 @@ import android.view.View;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.common.adapter.CommonAdapter;
-import com.whiteskycn.tv.projectorlauncher.media.bean.MediaFileBean;
+import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.AllMediaListBean;
 
 import java.text.SimpleDateFormat;
@@ -16,6 +16,13 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_CLOUD_FREE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_CLOUD_PAY;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_CLOUD_PRIVATE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_CLOUD_PUBLIC;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.SOURCE_LOCAL;
 
 /**
  * Created by jeff on 18-1-16.
@@ -36,13 +43,12 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
     public void convert(ViewHolder holder, final int position, AllMediaListBean item) {
         holder.setText(R.id.tv_media_name, item.getTitle());
 
-        MediaFileBean.MediaTypeEnum type = item.getMediaData().getType();
-        switch (type)
+        switch (item.getMediaData().getType())
         {
-            case PICTURE:
+            case MEDIA_PICTURE:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
                 break;
-            case VIDEO:
+            case MEDIA_VIDEO:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
                 break;
             default:
@@ -50,16 +56,15 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
                 break;
         }
 
-        MediaFileBean.MediaSourceEnum source = item.getMediaData().getSource();
-
-        switch (source)
+        switch (item.getMediaData().getSource())
         {
-            case LOCAL:
+            case SOURCE_LOCAL:
                 holder.setImageResource(R.id.iv_media_source, R.drawable.img_media_source_local);
                 break;
-            case CLOUD_FREE:
-            case CLOUD_PAY:
-            case CLOUD_PRIVATE:
+            case SOURCE_CLOUD_FREE:
+            case SOURCE_CLOUD_PAY:
+            case SOURCE_CLOUD_PRIVATE:
+            case SOURCE_CLOUD_PUBLIC:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_source_cloud);
                 break;
             default:

@@ -1,29 +1,22 @@
 package com.whiteskycn.tv.projectorlauncher.media.adapter;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.CheckBox;
 
-import com.github.mjdev.libaums.fs.UsbFile;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.common.adapter.CommonAdapter;
-import com.whiteskycn.tv.projectorlauncher.media.MediaActivity;
 import com.whiteskycn.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
-import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
 
 /**
  * Created by jeff on 18-1-16.
@@ -43,15 +36,14 @@ public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
     @Override
     public void convert(ViewHolder holder, final int position, UsbMediaListBean item) {
         holder.setText(R.id.tv_media_name, item.getTitle());
-        holder.setText(R.id.tv_media_size, FileUtil.covertFormatFileSize(item.getSize()));
+        holder.setText(R.id.tv_media_size, FileUtil.formatFileSize(item.getSize()));
 
-        MediaScanUtil.MediaTypeEnum type = item.getType();
-        switch (type)
+        switch (item.getType())
         {
-            case PICTURE:
+            case MEDIA_PICTURE:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_pause);
                 break;
-            case VIDEO:
+            case MEDIA_VIDEO:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
                 break;
             default:
@@ -87,10 +79,6 @@ public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
         this.mOnUsbItemCopyListener = onUsbItemCopyListener;
     }
 
-    /**
-     * Class to compare {@link UsbFile}s. If the {@link UsbFile} is an directory
-     * it is rated lower than an file, ie. directories come first when sorting.
-     */
     private Comparator<UsbMediaListBean> comparator = new Comparator<UsbMediaListBean>() {
 
         @Override

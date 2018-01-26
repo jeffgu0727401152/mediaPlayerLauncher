@@ -144,7 +144,7 @@ public class FileUtil
      * @param path
      * @return
      */
-    static public long getAvailableCapacity(String path) {
+    public static long getAvailableCapacity(String path) {
         StatFs stat = new StatFs(path);
         return stat.getAvailableBytes();
     }
@@ -154,7 +154,7 @@ public class FileUtil
      * @param path
      * @return
      */
-    static public long getTotalCapacity(String path) {
+    public static long getTotalCapacity(String path) {
         StatFs stat = new StatFs(path);
         return stat.getTotalBytes();
     }
@@ -164,7 +164,7 @@ public class FileUtil
      * @param path
      * @return
      */
-    static public long getBlockSize(String path) {
+    public static long getBlockSize(String path) {
         StatFs stat = new StatFs(path);
         return stat.getBlockSizeLong();
     }
@@ -174,12 +174,12 @@ public class FileUtil
      * @param filePath
      * @return
      */
-    public String getFilePrefix(String filePath){
+    public static String getFilePrefix(String filePath){
 
         int start=filePath.lastIndexOf(File.separator);
         int end=filePath.lastIndexOf(".");
-        if(start!=-1 && end!=-1){
-            return filePath.substring(start+1,end);
+        if(end!=-1){
+            return filePath.substring(start == -1 ? 0 : (start+1), end);
         }else{
             return null;
         }
@@ -190,7 +190,7 @@ public class FileUtil
      * @param filePath
      * @return
      */
-    public String getFileExtension(String filePath){
+    public static String getFileExtension(String filePath){
         int end=filePath.lastIndexOf(".");
         if(end!=-1){
             return filePath.substring(end);
@@ -249,7 +249,7 @@ public class FileUtil
         return size;
     }
 
-    public static String covertFormatFileSize(long sizeByte) {
+    public static String formatFileSize(long sizeByte) {
 
         DecimalFormat df = new DecimalFormat("#.0");
         String fileSizeString = "";

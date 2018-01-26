@@ -12,16 +12,13 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+
 
 public class MediaScanUtil {
     private final String TAG = this.getClass().getSimpleName();
-    public enum MediaTypeEnum
-    {
-        PICTURE,
-        VIDEO,
-        MUSIC,
-        UNKNOWN
-    }
 
     private MediaPlayer mp;
     private MediaFileScanListener mMediaFileScanListener;
@@ -111,7 +108,7 @@ public class MediaScanUtil {
                                         Log.e(TAG,"get file size error!" + e);
                                     }
                                 }
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.MUSIC,fileName, fileExtension, filePath, duration, size);
+                                mMediaFileScanListener.onFindMedia(MEDIA_MUSIC,fileName, fileExtension, filePath, duration, size);
                             }
                         }
 
@@ -130,7 +127,7 @@ public class MediaScanUtil {
                                         Log.e(TAG,"get file size error!" + e);
                                     }
                                 }
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.PICTURE, fileName, fileExtension, filePath,0, size);
+                                mMediaFileScanListener.onFindMedia(MEDIA_PICTURE, fileName, fileExtension, filePath,0, size);
                             }
                         }
 
@@ -155,7 +152,7 @@ public class MediaScanUtil {
                                         Log.e(TAG,"get file size error!" + e);
                                     }
                                 }
-                                mMediaFileScanListener.onFindMedia(MediaTypeEnum.VIDEO, fileName, fileExtension, filePath, duration, size);
+                                mMediaFileScanListener.onFindMedia(MEDIA_VIDEO, fileName, fileExtension, filePath, duration, size);
                             }
                         }
                     }
@@ -286,7 +283,7 @@ public class MediaScanUtil {
          * @param path          当前查找到媒体文件的路径
          * @param duration      当前查找到媒体文件的时间长度
          */
-        void onFindMedia(MediaTypeEnum type, String name, String extension, String path, int duration, long size);
+        void onFindMedia(int type, String name, String extension, String path, int duration, long size);
         void onMediaScanBegin();
         void onMediaScanDone();
     }

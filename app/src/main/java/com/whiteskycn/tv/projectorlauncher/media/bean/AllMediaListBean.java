@@ -1,25 +1,30 @@
 package com.whiteskycn.tv.projectorlauncher.media.bean;
 
+import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
+
 /**
  * Created by jeff on 18-1-16.
  */
 
 public class AllMediaListBean {
 
-    private MediaFileBean mMediaData;
+    private RawMediaBean mMediaData;
 
     private String title = "";
     private String description = "";
-    private String duration = "";
 
     private boolean isSelected = false;
 
     public AllMediaListBean() {
     }
 
-    public AllMediaListBean(MediaFileBean data) {
+    public AllMediaListBean(RawMediaBean data) {
         mMediaData = data;
-        title = data.getName();
+        if (mMediaData.getSource()==RawMediaBean.SOURCE_LOCAL) {
+            title = FileUtil.getFilePrefix(data.getFilePath());
+        } else {
+            title = "todo";
+        }
     }
 
     public AllMediaListBean(String title, String description) {
@@ -27,11 +32,11 @@ public class AllMediaListBean {
         this.description = description;
     }
 
-    public MediaFileBean getMediaData() {
+    public RawMediaBean getMediaData() {
         return mMediaData;
     }
 
-    public void setMediaData(MediaFileBean mediaData) {
+    public void setMediaData(RawMediaBean mediaData) {
         this.mMediaData = mediaData;
     }
 

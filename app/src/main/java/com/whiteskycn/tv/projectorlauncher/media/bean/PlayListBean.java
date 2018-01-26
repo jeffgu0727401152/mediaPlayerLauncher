@@ -1,12 +1,14 @@
 package com.whiteskycn.tv.projectorlauncher.media.bean;
 
+import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
+
 /**
  * Created by jeff on 18-1-16.
  */
 
 public class PlayListBean {
 
-    private MediaFileBean mMediaData;
+    private RawMediaBean mMediaData;
 
     private String title = "";
 
@@ -17,9 +19,13 @@ public class PlayListBean {
     public PlayListBean() {
     }
 
-    public PlayListBean(MediaFileBean date) {
-        mMediaData = date;
-        title = date.getName();
+    public PlayListBean(RawMediaBean data) {
+        mMediaData = data;
+        if (mMediaData.getSource()==RawMediaBean.SOURCE_LOCAL) {
+            title = FileUtil.getFilePrefix(data.getFilePath());
+        } else {
+            title = "todo";
+        }
     }
 
     public PlayListBean(String title, String description) {
@@ -27,11 +33,11 @@ public class PlayListBean {
         this.description = description;
     }
 
-    public MediaFileBean getMediaData() {
+    public RawMediaBean getMediaData() {
         return mMediaData;
     }
 
-    public void setMediaData(MediaFileBean mediaData) {
+    public void setMediaData(RawMediaBean mediaData) {
         this.mMediaData = mediaData;
     }
 

@@ -9,7 +9,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.whiteskycn.tv.projectorlauncher.media.bean.MediaFileBean;
+import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
@@ -28,6 +28,9 @@ import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.Media
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_UNKNOWN;
+import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
 
 /**
  * Created by jeff on 18-1-22.
@@ -149,11 +152,11 @@ public class PictureVideoPlayer {
     {
         // 获取视频文件地址
         String path="";
-        MediaFileBean.MediaTypeEnum type = MediaFileBean.MediaTypeEnum.UNKNOWN;
+        int type = MEDIA_UNKNOWN;
         int time = PICTURE_DEFAULT_PLAY_DURATION_MS; //播放图片用
         if(position!=INVALID_POSITION && position<mPlayList.size())
         {
-            MediaFileBean fileBean = mPlayList.get(position).getMediaData();
+            RawMediaBean fileBean = mPlayList.get(position).getMediaData();
             if (fileBean!=null)
             {
                 path = fileBean.getFilePath();
@@ -166,7 +169,7 @@ public class PictureVideoPlayer {
         {
             Log.i(TAG,"******videoPlay: path null");
             path = "/mnt/sdcard/Movies/LaLaLa.mkv";
-            type = MediaFileBean.MediaTypeEnum.VIDEO;
+            type = MEDIA_VIDEO;
             //todo error handle
         }
 
@@ -174,10 +177,10 @@ public class PictureVideoPlayer {
 
         switch (type)
         {
-            case VIDEO:
+            case MEDIA_VIDEO:
                 videoPlay(path);
                 break;
-            case PICTURE:
+            case MEDIA_PICTURE:
                 picturePlay(path, time);
                 break;
             default:
