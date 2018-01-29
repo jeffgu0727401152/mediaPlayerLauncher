@@ -105,6 +105,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="left|center_vertical"
                 android:scaleType="centerCrop"
+                android:focusable="false"
                 android:src="@drawable/img_2_media" />
 
             <com.whitesky.sdk.widget.LabelView
@@ -114,6 +115,7 @@
                 android:paddingLeft="@dimen/x5"
                 android:paddingRight="@dimen/x5"
                 android:visibility="invisible"
+                android:focusable="false"
                 lv:lv_fill_triangle="true"
                 lv:lv_gravity="TOP_RIGHT"
                 lv:lv_text_size="15sp" />
@@ -126,6 +128,7 @@
                 android:gravity="center"
                 android:padding="@dimen/x15"
                 android:text="@string/str_home_media"
+                android:focusable="false"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:visibility="visible" />

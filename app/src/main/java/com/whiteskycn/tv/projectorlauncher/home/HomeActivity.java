@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -29,7 +30,7 @@ import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
 
 
-public class HomeActivity extends BaseActivity implements View.OnClickListener, FocusBorder.OnFocusCallback
+public class HomeActivity extends BaseActivity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
     private final String TAG = this.getClass().getSimpleName();
     private ImageView mEthConnectImg;
@@ -46,7 +47,23 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
 
     public final int SCROLLING_MARQUEE_SPEED = 2;
     public final int SCROLLING_MARQUEE_TIMES = 1314;
+    private boolean focusableInTouchMode;
 
+    @Override
+    public boolean onHover(View v, MotionEvent event)
+    {
+        int what = event.getAction();
+        switch(what){
+            case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
+                v.setFocusable(true);
+                v.requestFocus();
+                break;
+            case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
+                //v.setFocusable(false);
+                break;
+        }
+        return true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,13 +80,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         filterTime.addAction(Intent.ACTION_TIME_TICK);
         registerReceiver(mMqttStatusReceiver,filterTime);
 
-        BorderView border = new BorderView(getApplicationContext());
-        initBorder();
-        border.setBackgroundResource(R.drawable.border_white2);
-        ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
-        border.attachTo(list);
-        mFocusBorder.boundGlobalFocusListener(this);
-
         mEthConnectImg = (ImageView)findViewById(R.id.iv_home2_net);
         mWifiConnectImg = (ImageView)findViewById(R.id.iv_home2_wifi);
 
@@ -80,18 +90,33 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         scrollingView.setTimes(SCROLLING_MARQUEE_TIMES);
 
         final RoundedFrameLayout mediaPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_media);
-        mediaPage.setOnClickListener(this);
-        RoundedFrameLayout peoplePage = (RoundedFrameLayout)findViewById(R.id.rf_home2_admin);
-        peoplePage.setOnClickListener(this);
-        RoundedFrameLayout sysPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_sys);
-        sysPage.setOnClickListener(this);
+        final RoundedFrameLayout peoplePage = (RoundedFrameLayout)findViewById(R.id.rf_home2_admin);
+        final RoundedFrameLayout sysPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_sys);
 
-        mediaPage.post(new Runnable()
-        {
+        //this.setFocusableInTouchMode(true);
+
+        mediaPage.setOnClickListener(this);
+        mediaPage.setOnHoverListener(this);
+        mediaPage.setFocusableInTouchMode(true);
+
+        peoplePage.setOnClickListener(this);
+        peoplePage.setOnHoverListener(this);
+        peoplePage.setFocusableInTouchMode(true);
+
+        sysPage.setOnClickListener(this);
+        sysPage.setOnHoverListener(this);
+        sysPage.setFocusableInTouchMode(true);
+
+        BorderView border = new BorderView(getApplicationContext());
+        initBorder();
+        border.setBackgroundResource(R.drawable.border_white2);
+        ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
+        border.attachTo(list);
+        mFocusBorder.boundGlobalFocusListener(this);
+
+        mediaPage.post(new Runnable() {
             @Override
-            public void run()
-            {
-                // 什么鬼，焦点顺序不是按照我想的，索性使用大宝剑给解决了 >>> * <<<
+            public void run() {
                 mediaPage.setFocusable(true);
                 mediaPage.requestFocus();
             }
@@ -106,6 +131,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.img_background);
+    }
+
+    public void setFocusableInTouchMode(boolean focusableInTouchMode) {
+        this.focusableInTouchMode = focusableInTouchMode;
     }
 
 
@@ -235,7 +264,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event)
+    final public boolean onKeyDown(int keyCode, KeyEvent event)
     {
         // 主页面屏蔽返回键，就是不让你返回，怎么地吧 ^ * ^
         if (keyCode == KeyEvent.KEYCODE_BACK)
@@ -266,7 +295,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     @Override
-    public FocusBorder.Options onFocus(View oldFocus, View newFocus)
+    final public FocusBorder.Options onFocus(View oldFocus, View newFocus)
     {
         if (newFocus != null && oldFocus != null)
         {

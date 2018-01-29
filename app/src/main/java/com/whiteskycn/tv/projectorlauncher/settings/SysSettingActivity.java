@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -21,7 +22,7 @@ import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
  * Created by xiaoxuan on 2017/7/26.
  */
 
-public class SysSettingActivity extends Activity implements View.OnClickListener, FocusBorder.OnFocusCallback
+public class SysSettingActivity extends Activity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
     private FocusBorder focusBorder;
     
@@ -35,20 +36,42 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         border.setBackgroundResource(R.drawable.border_white2);
         ViewGroup list = (ViewGroup)findViewById(R.id.rl_settings_list);
         border.attachTo(list);
+
         RoundedFrameLayout netPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_net);
         netPage.setOnClickListener(this);
+        netPage.setOnHoverListener(this);
+        netPage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout seoPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_seo);
         seoPage.setOnClickListener(this);
+        seoPage.setOnHoverListener(this);
+        seoPage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout dispalyPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_display);
         dispalyPage.setOnClickListener(this);
+        dispalyPage.setOnHoverListener(this);
+        dispalyPage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout soundPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_sound);
         soundPage.setOnClickListener(this);
+        soundPage.setOnHoverListener(this);
+        soundPage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout languagePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_language);
         languagePage.setOnClickListener(this);
+        languagePage.setOnHoverListener(this);
+        languagePage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout speedPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_speed);
         speedPage.setOnClickListener(this);
+        speedPage.setOnHoverListener(this);
+        speedPage.setFocusableInTouchMode(true);
+
         RoundedFrameLayout updatePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_update);
         updatePage.setOnClickListener(this);
+        updatePage.setOnHoverListener(this);
+        updatePage.setFocusableInTouchMode(true);
+
         focusBorder.boundGlobalFocusListener(this);
     }
     
@@ -147,5 +170,20 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         startActivity(intent);
         SysSettingActivity.this.finish();
         super.onBackPressed();
+    }
+
+    @Override
+    public boolean onHover(View v, MotionEvent event) {
+        int what = event.getAction();
+        switch(what){
+            case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
+                v.setFocusable(true);
+                v.requestFocus();
+                break;
+            case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
+                //v.setFocusable(false);
+                break;
+        }
+        return true;
     }
 }
