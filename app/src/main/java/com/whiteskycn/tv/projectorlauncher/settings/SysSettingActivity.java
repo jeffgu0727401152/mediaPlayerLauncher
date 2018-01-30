@@ -40,37 +40,30 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         RoundedFrameLayout netPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_net);
         netPage.setOnClickListener(this);
         netPage.setOnHoverListener(this);
-        netPage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout seoPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_seo);
         seoPage.setOnClickListener(this);
         seoPage.setOnHoverListener(this);
-        seoPage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout dispalyPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_display);
         dispalyPage.setOnClickListener(this);
         dispalyPage.setOnHoverListener(this);
-        dispalyPage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout soundPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_sound);
         soundPage.setOnClickListener(this);
         soundPage.setOnHoverListener(this);
-        soundPage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout languagePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_language);
         languagePage.setOnClickListener(this);
         languagePage.setOnHoverListener(this);
-        languagePage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout speedPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_speed);
         speedPage.setOnClickListener(this);
         speedPage.setOnHoverListener(this);
-        speedPage.setFocusableInTouchMode(true);
 
         RoundedFrameLayout updatePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_update);
         updatePage.setOnClickListener(this);
         updatePage.setOnHoverListener(this);
-        updatePage.setFocusableInTouchMode(true);
 
         focusBorder.boundGlobalFocusListener(this);
     }
@@ -177,8 +170,8 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         int what = event.getAction();
         switch(what){
             case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
-                v.setFocusable(true);
-                v.requestFocus();
+                v.setFocusableInTouchMode(true);
+                v.requestFocusFromTouch();
                 break;
             case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
                 //v.setFocusable(false);

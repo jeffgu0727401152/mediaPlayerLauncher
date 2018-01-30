@@ -13,6 +13,8 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -55,11 +57,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         int what = event.getAction();
         switch(what){
             case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
-                v.setFocusable(true);
-                v.requestFocus();
+                v.setFocusableInTouchMode(true);
+                v.requestFocusFromTouch();
                 break;
             case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
-                //v.setFocusable(false);
                 break;
         }
         return true;
@@ -93,19 +94,14 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         final RoundedFrameLayout peoplePage = (RoundedFrameLayout)findViewById(R.id.rf_home2_admin);
         final RoundedFrameLayout sysPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_sys);
 
-        //this.setFocusableInTouchMode(true);
-
         mediaPage.setOnClickListener(this);
         mediaPage.setOnHoverListener(this);
-        mediaPage.setFocusableInTouchMode(true);
 
         peoplePage.setOnClickListener(this);
         peoplePage.setOnHoverListener(this);
-        peoplePage.setFocusableInTouchMode(true);
 
         sysPage.setOnClickListener(this);
         sysPage.setOnHoverListener(this);
-        sysPage.setFocusableInTouchMode(true);
 
         BorderView border = new BorderView(getApplicationContext());
         initBorder();
@@ -113,14 +109,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
-
-        mediaPage.post(new Runnable() {
-            @Override
-            public void run() {
-                mediaPage.setFocusable(true);
-                mediaPage.requestFocus();
-            }
-        });
 
         startService(new Intent(getApplicationContext(), MQTTService.class));
     }

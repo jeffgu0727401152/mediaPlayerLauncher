@@ -48,19 +48,9 @@ public class AdminActivity extends Activity implements View.OnClickListener , Vi
         final RoundedFrameLayout mAccount = (RoundedFrameLayout)findViewById(R.id.rf_admin_account);
         final RoundedFrameLayout mInfo = (RoundedFrameLayout)findViewById(R.id.rf_admin_device);
         mAccount.setOnClickListener(this);
-        mAccount.setFocusableInTouchMode(true);
         mAccount.setOnHoverListener(this);
         mInfo.setOnClickListener(this);
-        mInfo.setFocusableInTouchMode(true);
         mInfo.setOnHoverListener(this);
-
-        mAccount.post(new Runnable() {
-            @Override
-            public void run() {
-                mAccount.setFocusable(true);
-                mAccount.requestFocus();
-            }
-        });
     }
 
     private void initBorder()
@@ -113,8 +103,8 @@ public class AdminActivity extends Activity implements View.OnClickListener , Vi
         int what = event.getAction();
         switch(what){
             case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
-                v.setFocusable(true);
-                v.requestFocus();
+                v.setFocusableInTouchMode(true);
+                v.requestFocusFromTouch();
                 break;
             case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
                 //v.setFocusable(false);
