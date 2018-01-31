@@ -15,8 +15,8 @@
 
     <ImageView
         android:id="@+id/iv_media_ico"
-        android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
+        android:layout_width="@dimen/x20"
+        android:layout_height="@dimen/x20"
         android:layout_marginLeft="@dimen/x20"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
@@ -24,7 +24,7 @@
 
     <TextView
         android:id="@+id/tv_media_name"
-        android:layout_width="@dimen/x300"
+        android:layout_width="@dimen/x200"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
@@ -44,9 +44,9 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x100"
+        android:layout_width="@dimen/x150"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x10"
+        android:layout_marginLeft="@dimen/x50"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
@@ -55,8 +55,8 @@
     <Button
         android:id="@+id/bt_media_copy_to_left"
         android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_height="@dimen/x28"
+        android:layout_marginLeft="@dimen/x160"
         android:layout_gravity="center"
         android:background="@drawable/selector_media_copy_to_left_btn" />
 </LinearLayout>

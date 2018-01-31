@@ -15,8 +15,8 @@
             android:id="@+id/fl_media_player"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/x20"
-            android:layout_marginTop="@dimen/x20">
+            android:layout_marginLeft="@dimen/x40"
+            android:layout_marginTop="@dimen/x40">
 
             <SurfaceView
                 android:id="@+id/sv_media_playVideo"
@@ -107,26 +107,65 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginLeft="@dimen/x20"
-            android:layout_marginTop="@dimen/x20"
-            android:background="@drawable/border_red">
+            android:layout_marginTop="@dimen/x40" >
             <TextView
-                android:id="@+id/tv_media_play_info_format"
+                android:id="@+id/tv_media_play_info_1"
                 android:layout_width="@dimen/x200"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left|center_vertical"
                 android:textAlignment="inherit"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="italic"
                 android:text="@string/str_media_file_title"/>
             <TextView
-                android:id="@+id/tv_media_play_info_speed"
+                android:id="@+id/tv_media_play_info_2"
                 android:layout_width="@dimen/x200"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left|center_vertical"
                 android:textAlignment="inherit"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:text="@string/str_media_file_duration"/>
+            <TextView
+                android:id="@+id/tv_media_play_info_3"
+                android:layout_width="@dimen/x200"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:textAlignment="inherit"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:text="@string/str_media_file_title"/>
+            <TextView
+                android:id="@+id/tv_media_play_info_4"
+                android:layout_width="@dimen/x200"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:textAlignment="inherit"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:text="@string/str_media_file_duration"/>
+            <TextView
+                android:id="@+id/tv_media_play_info_5"
+                android:layout_width="@dimen/x200"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:textAlignment="inherit"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:text="@string/str_media_file_title"/>
+            <TextView
+                android:id="@+id/tv_media_play_info_6"
+                android:layout_width="@dimen/x200"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:textAlignment="inherit"
+                android:textColor="@color/white"
+                android:textSize="14sp"
                 android:textStyle="italic"
                 android:text="@string/str_media_file_duration"/>
         </LinearLayout>
@@ -137,19 +176,23 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginLeft="@dimen/x20"
-            android:layout_marginTop="@dimen/x20"
-            android:background="@drawable/border_red">
+            android:layout_marginTop="@dimen/x40"
+            android:background="@drawable/img_media_list_boarder">
 
             <!--播放列表表头-->
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="@dimen/x40"
-                android:orientation="horizontal">
+                android:layout_marginTop="@dimen/x1"
+                android:layout_marginLeft="@dimen/x2"
+                android:layout_marginRight="@dimen/x2"
+                android:orientation="horizontal"
+                android:background="@drawable/img_media_list_title" >
                 <TextView
-                    android:id="@+id/tv_media_play_list_file_title"
-                    android:layout_width="@dimen/x210"
+                    android:id="@+id/tv_media_play_list_file_name"
+                    android:layout_width="@dimen/x190"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x110"
+                    android:layout_marginLeft="@dimen/x100"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -169,7 +212,7 @@
                     android:text="@string/str_media_file_duration"/>
                 <TextView
                     android:id="@+id/tv_media_play_list_file_scale"
-                    android:layout_width="@dimen/x140"
+                    android:layout_width="@dimen/x110"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="left|center_vertical"
@@ -195,17 +238,20 @@
             <com.whiteskycn.tv.projectorlauncher.media.DragListView
                 android:id="@+id/lv_media_playList"
                 android:layout_width="@dimen/x800"
-                android:layout_height="@dimen/x420"
+                android:layout_height="@dimen/x410"
                 android:divider="@drawable/item_divider"
-                android:listSelector="@drawable/selecter_draglistview_item"
-                android:background="@drawable/border_shape_with_border"/>
+                android:listSelector="@drawable/selecter_draglistview_item" />
 
             <!--播放模式按钮-->
             <RadioGroup
                 android:id="@+id/rg_media_replay_mode"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="@dimen/x50"
-                android:orientation="horizontal">
+                android:layout_marginBottom="@dimen/x1"
+                android:layout_marginLeft="@dimen/x2"
+                android:layout_marginRight="@dimen/x2"
+                android:orientation="horizontal"
+                android:background="@drawable/img_media_list_footer" >
                 <RadioButton
                     android:id="@+id/rb_media_replay_one"
                     android:layout_width="@dimen/x30"
@@ -244,22 +290,33 @@
             android:layout_width="@dimen/x840"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/x20"
-            android:layout_marginLeft="@dimen/x20"
+            android:layout_marginLeft="@dimen/x40"
             android:orientation="vertical"
-            android:background="@drawable/border_red">
+            android:background="@drawable/img_media_list_boarder">
 
             <!--全部媒体列表表头-->
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/x40"
-                android:orientation="horizontal">
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x50"
+                android:layout_marginTop="@dimen/x1"
+                android:layout_marginLeft="@dimen/x2"
+                android:layout_marginRight="@dimen/x2"
+                android:orientation="horizontal"
+                android:background="@drawable/img_media_list_title" >
                 <CheckBox
                     android:id="@+id/cb_media_all_list_check"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
-                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x8"
                     android:layout_centerVertical="true"
                     android:layout_gravity="center"/>
+                <Button
+                    android:id="@+id/bt_media_all_list_refresh"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x28"
+                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/selector_media_refresh_btn"/>
                 <TextView
                     android:id="@+id/tv_media_all_list_name"
                     android:layout_width="@dimen/x100"
@@ -271,13 +328,6 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:text="@string/str_media_list_cloud"/>
-                <Button
-                    android:id="@+id/bt_media_all_list_refresh"
-                    android:layout_width="@dimen/x30"
-                    android:layout_height="@dimen/x28"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/selector_media_refresh_btn"/>
                 <TextView
                     android:id="@+id/tv_media_all_list_capacity"
                     android:layout_width="@dimen/x200"
@@ -295,8 +345,7 @@
             <ListView
                 android:id="@+id/lv_media_all_list"
                 android:layout_width="@dimen/x840"
-                android:layout_height="@dimen/x440"
-                android:background="@drawable/border_shape_with_border">
+                android:layout_height="@dimen/x420" >
             </ListView>
         </LinearLayout>
 
@@ -345,7 +394,7 @@
                 android:layout_width="@dimen/x30"
                 android:layout_height="@dimen/x30"
                 android:layout_marginTop="@dimen/x20"
-                android:background="@drawable/selector_media_copy_to_left_btn"/>
+                android:background="@drawable/selector_media_copy_multi_to_left_btn"/>
         </LinearLayout>
 
         <!--USB媒体列表-->
@@ -355,18 +404,22 @@
             android:layout_marginTop="@dimen/x20"
             android:layout_marginLeft="@dimen/x20"
             android:orientation="vertical"
-            android:background="@drawable/border_red">
+            android:background="@drawable/img_media_list_boarder">
 
             <!--USB媒体列表表头-->
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/x40">
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x50"
+                android:layout_marginTop="@dimen/x1"
+                android:layout_marginLeft="@dimen/x2"
+                android:layout_marginRight="@dimen/x2"
+                android:background="@drawable/img_media_list_title" >
 
                 <CheckBox
                     android:id="@+id/cb_media_usb_list_check"
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
-                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x8"
                     android:layout_centerVertical="true"
                     android:layout_gravity="center" />
 
@@ -375,7 +428,7 @@
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
                     android:layout_gravity="left|center_vertical"
-                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x20"
                     android:text="@string/str_media_list_usb"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -385,7 +438,7 @@
                 <Spinner
                     android:id="@+id/sp_media_usb_partition_spinner"
                     android:layout_width="@dimen/x200"
-                    android:layout_height="@dimen/x40"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="left|top"
                     android:popupBackground="@drawable/spinner_drawable" />
 
@@ -394,7 +447,7 @@
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
-                    android:layout_marginLeft="@dimen/x200"
+                    android:layout_marginLeft="@dimen/x180"
                     android:text="--G/--G"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -406,8 +459,7 @@
             <ListView
                 android:id="@+id/lv_media_usb_list"
                 android:layout_width="@dimen/x840"
-                android:layout_height="@dimen/x440"
-                android:background="@drawable/border_shape_with_border">
+                android:layout_height="@dimen/x420" >
             </ListView>
         </LinearLayout>
     </LinearLayout>

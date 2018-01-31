@@ -15,8 +15,8 @@
 
     <ImageView
         android:id="@+id/iv_media_ico"
-        android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
+        android:layout_width="@dimen/x20"
+        android:layout_height="@dimen/x20"
         android:layout_marginLeft="@dimen/x20"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
@@ -44,8 +44,8 @@
 
     <ImageView
         android:id="@+id/iv_media_source"
-        android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
+        android:layout_width="@dimen/x20"
+        android:layout_height="@dimen/x20"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="center"
         android:layout_centerVertical="true"
@@ -63,16 +63,16 @@
 
     <Button
         android:id="@+id/bt_media_download"
-        android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
-        android:layout_marginLeft="@dimen/x80"
+        android:layout_width="@dimen/x26"
+        android:layout_height="@dimen/x28"
+        android:layout_marginLeft="@dimen/x100"
         android:layout_gravity="center"
         android:background="@drawable/img_media_download" />
 
     <Button
         android:id="@+id/bt_media_preview"
         android:layout_width="@dimen/x30"
-        android:layout_height="@dimen/x30"
+        android:layout_height="@dimen/x22"
         android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
         android:background="@drawable/selector_media_preview_btn" />
