@@ -70,6 +70,7 @@ import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.Media
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil.getFileTypeFromPath;
@@ -149,6 +150,8 @@ public class MediaActivity extends Activity
 
     private int mOriginSurfaceHeight = 0;
     private int mOriginSurfaceWidth = 0;
+    private int mOriginPlayerMarginTop = 0;
+    private int mOriginPlayerMarginLeft = 0;
     private boolean mDontUpdateSeekBar = false;
     private boolean mIsFullScreen;                      //是否在全屏播放标志
     private long mLastFullScreenClickTime;              //双击最大化功能
@@ -317,9 +320,13 @@ public class MediaActivity extends Activity
 
         mIsFullScreen = false;
         mVideoPlaySurfaceView.getHolder().addCallback(svCallback);
-        ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
-        mOriginSurfaceHeight = lp.height;
-        mOriginSurfaceWidth = lp.width;
+        FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams)mVideoPlaySurfaceView.getLayoutParams();
+        mOriginSurfaceHeight = flp.height;
+        mOriginSurfaceWidth = flp.width;
+
+        LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams)mPlayerPanel.getLayoutParams();
+        mOriginPlayerMarginTop = llp.topMargin;
+        mOriginPlayerMarginLeft = llp.leftMargin;
 
         mPlayProgressSeekBar.setOnSeekBarChangeListener(mSeekbarChange);
 
@@ -1042,21 +1049,36 @@ public class MediaActivity extends Activity
         if (!mIsFullScreen) {
             LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_media_playControlBar);
             controlBarLayout.setVisibility(View.INVISIBLE);
-            ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
-            lp.height = R.dimen.x1920;
-            lp.width = R.dimen.x1080;
-            mVideoPlaySurfaceView.setLayoutParams(lp);
-            //mVideoPlaySurfaceView.getHolder().setFixedSize(1920,1080);
-            mPicturePlayView.setLayoutParams(lp);
+            mGrayViewBtn.setVisibility(View.INVISIBLE);
+            mNetViewBtn.setVisibility(View.INVISIBLE);
+            FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams)mVideoPlaySurfaceView.getLayoutParams();
+            flp.width = getResources().getDimensionPixelSize(R.dimen.x1920);
+            flp.height = getResources().getDimensionPixelSize(R.dimen.x1080);
+            mVideoPlaySurfaceView.setLayoutParams(flp);
+            mPicturePlayView.setLayoutParams(flp);
+
+            LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams)mPlayerPanel.getLayoutParams();
+            llp.topMargin = 0;
+            llp.leftMargin = 0;
+            mPlayerPanel.setLayoutParams(llp);
+
             mIsFullScreen = true;
         } else {
             LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_media_playControlBar);
             controlBarLayout.setVisibility(View.VISIBLE);
-            ViewGroup.LayoutParams lp = mVideoPlaySurfaceView.getLayoutParams();
-            lp.width = mOriginSurfaceWidth;
-            lp.height = mOriginSurfaceHeight;
-            mVideoPlaySurfaceView.setLayoutParams(lp);
-            mPicturePlayView.setLayoutParams(lp);
+            mGrayViewBtn.setVisibility(View.VISIBLE);
+            mNetViewBtn.setVisibility(View.VISIBLE);
+
+            LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams)mPlayerPanel.getLayoutParams();
+            llp.topMargin = mOriginPlayerMarginTop;
+            llp.leftMargin = mOriginPlayerMarginLeft;
+            mPlayerPanel.setLayoutParams(llp);
+
+            FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams)mVideoPlaySurfaceView.getLayoutParams();
+            flp.width = mOriginSurfaceWidth;
+            flp.height = mOriginSurfaceHeight;
+            mVideoPlaySurfaceView.setLayoutParams(flp);
+            mPicturePlayView.setLayoutParams(flp);
             mIsFullScreen = false;
         }
     }
@@ -1152,7 +1174,12 @@ public class MediaActivity extends Activity
                         msg.what = MSG_UPDATE_LOCAL_MEDIA_LIST;
                         Bundle b = new Bundle();
                         b.putInt("type", getFileTypeFromPath(sourcePath));
-                        b.putInt("duration", mLocalMediaScanner.getMediaDuration(toFile.getPath()));
+                        if (b.getInt("type")==RawMediaBean.MEDIA_PICTURE)
+                        {
+                            b.putInt("duration", PICTURE_DEFAULT_PLAY_DURATION_MS);
+                        } else {
+                            b.putInt("duration", mLocalMediaScanner.getMediaDuration(toFile.getPath()));
+                        }
                         b.putString("path", toFile.getPath());
                         msg.setData(b);
                         mHandler.sendMessage(msg);
