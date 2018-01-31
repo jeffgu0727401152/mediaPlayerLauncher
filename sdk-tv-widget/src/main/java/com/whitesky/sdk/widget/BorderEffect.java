@@ -489,7 +489,6 @@ public class BorderEffect implements BorderView.Effect
             lastFocus = newFocus;
             oldLastFocus = oldFocus;
             mTarget = target;
-            Log.d(TAG, "onFocusChanged:111111111" + oldFocus + "=" + newFocus);
             
             VisibleScope scope = checkVisibleScope(oldFocus, newFocus);
             if (!scope.isVisible)
@@ -505,7 +504,6 @@ public class BorderEffect implements BorderView.Effect
             
             if (isScrolling || newFocus == null || newFocus.getWidth() <= 0 || newFocus.getHeight() <= 0)
                 return;
-            Log.d(TAG, "onFocusChanged:2222222222" + oldFocus + "=" + newFocus);
             
             mAnimatorList.clear();
             
