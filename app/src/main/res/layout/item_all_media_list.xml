@@ -53,19 +53,21 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x120"
+        android:layout_width="@dimen/x140"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x10"
-        android:layout_gravity="left"
+        android:layout_marginLeft="@dimen/x80"
+        android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="20sp" />
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:text = "下载中" />
 
     <Button
         android:id="@+id/bt_media_download"
         android:layout_width="@dimen/x26"
         android:layout_height="@dimen/x28"
-        android:layout_marginLeft="@dimen/x100"
+        android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="center"
         android:background="@drawable/img_media_download" />
 

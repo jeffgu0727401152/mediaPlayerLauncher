@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/img_media_remove_p" android:state_pressed="true" />
+    <item android:drawable="@drawable/img_media_remove" />
+</selector>

@@ -31,8 +31,7 @@
         android:layout_marginLeft="@dimen/x10"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
-        android:scaleType="fitXY"
-        android:background="@drawable/img_media_type_video"/>
+        android:scaleType="fitXY" />
 
     <TextView
         android:id="@+id/tv_media_name"
@@ -75,7 +74,8 @@
         android:layout_marginLeft="@dimen/x50"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="12sp"
+        android:textStyle="italic"
         android:text="下载中" />
 
     <Button
@@ -86,5 +86,5 @@
         android:layout_gravity="center"
         android:layout_centerVertical="true"
         android:scaleType="fitXY"
-        android:background="@drawable/img_media_remove" />
+        android:background="@drawable/selector_media_remove_btn" />
 </LinearLayout>

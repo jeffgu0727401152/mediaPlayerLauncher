@@ -16,6 +16,8 @@ public class PlayListBean {
 
     private int duration = 0;
 
+    private boolean isPlaying = false;
+
     public PlayListBean() {
     }
 
@@ -63,5 +65,13 @@ public class PlayListBean {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public void setPlaying(boolean playing) {
+        isPlaying = playing;
     }
 }

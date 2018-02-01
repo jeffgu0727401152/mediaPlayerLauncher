@@ -56,13 +56,18 @@
     <string name="title_memory_footprint">内存占用:</string>
     <string name="title_already_cleanup">已清理</string>
     <!--media页-->
-
     <string name="str_media_file_title">文件名</string>
     <string name="str_media_file_duration">时长</string>
     <string name="str_media_display_scale">比例</string>
     <string name="str_media_file_state">状态</string>
     <string name="str_media_list_cloud">云分区</string>
     <string name="str_media_list_usb">移动盘</string>
+
+    <string name="str_media_info_name">文件名:</string>
+    <string name="str_media_info_type">文件类型:</string>
+    <string name="str_media_info_wh">宽高:</string>
+    <string name="str_media_info_size">大小:</string>
+    <string name="str_media_info_bps">码率:</string>
 
 
     <string-array name="str_arr_trapezoid_vals">

@@ -84,7 +84,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         holder.getButton(R.id.bt_media_delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"playlist remove position " + position);
+                Log.i(TAG,"media list remove position " + position);
                 if (mOnALlMediaListItemEventListener !=null)
                 {
                     mOnALlMediaListItemEventListener.doItemDelete(position);
@@ -95,18 +95,22 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         holder.getButton(R.id.bt_media_preview).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"playlist remove position " + position);
-                //to do preview
-                refresh();
+                Log.i(TAG,"media list preview position " + position);
+                if (mOnALlMediaListItemEventListener !=null)
+                {
+                    mOnALlMediaListItemEventListener.doItemPreview(position);
+                }
             }
         });
 
         holder.getButton(R.id.bt_media_download).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"playlist remove position " + position);
-                //to do download
-                refresh();
+                Log.i(TAG,"media list download position " + position);
+                if (mOnALlMediaListItemEventListener !=null)
+                {
+                    mOnALlMediaListItemEventListener.doItemDownLoad(position);
+                }
             }
         });
 
@@ -121,6 +125,8 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 
     public interface OnAllMediaListItemEventListener {
         public void doItemDelete(int position);
+        public void doItemPreview(int position);
+        public void doItemDownLoad(int position);
     }
 
     public void setOnALlMediaListItemListener(OnAllMediaListItemEventListener onAllMediaListItemEventListener) {

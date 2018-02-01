@@ -168,7 +168,7 @@ public class MediaScanUtil {
         }
     }
 
-    public static int getFileTypeFromPath(String filePath)
+    public static int getMediaTypeFromPath(String filePath)
     {
         String ext = FileUtil.getFileExtension(filePath);
 
@@ -262,6 +262,20 @@ public class MediaScanUtil {
         if (!file.exists()) {
             Log.e(TAG, "视频文件路径错误!!!");
             return -1;
+        }
+
+        switch(getMediaTypeFromPath(path))
+        {
+            case RawMediaBean.MEDIA_PICTURE:
+            case RawMediaBean.MEDIA_UNKNOWN:
+                return PICTURE_DEFAULT_PLAY_DURATION_MS;
+
+            case RawMediaBean.MEDIA_VIDEO:
+            case RawMediaBean.MEDIA_MUSIC:
+                break;
+
+            default:
+                break;
         }
 
         try {
