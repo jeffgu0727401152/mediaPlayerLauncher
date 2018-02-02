@@ -234,9 +234,9 @@
                 android:background="@drawable/img_media_list_title" >
                 <TextView
                     android:id="@+id/tv_media_play_list_file_name"
-                    android:layout_width="@dimen/x190"
+                    android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x100"
+                    android:layout_marginLeft="@dimen/x70"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -245,9 +245,9 @@
                     android:text="@string/str_media_file_title"/>
                 <TextView
                     android:id="@+id/tv_media_play_list_file_duration"
-                    android:layout_width="@dimen/x120"
+                    android:layout_width="@dimen/x100"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_marginLeft="@dimen/x100"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -256,9 +256,9 @@
                     android:text="@string/str_media_file_duration"/>
                 <TextView
                     android:id="@+id/tv_media_play_list_file_scale"
-                    android:layout_width="@dimen/x110"
+                    android:layout_width="@dimen/x80"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_marginLeft="@dimen/x40"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -376,7 +376,7 @@
                     android:id="@+id/tv_media_all_list_capacity"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x450"
+                    android:layout_marginLeft="@dimen/x430"
                     android:layout_gravity="right|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"

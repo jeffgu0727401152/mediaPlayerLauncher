@@ -23,6 +23,7 @@ public class PlayListBean {
 
     public PlayListBean(RawMediaBean data) {
         mMediaData = data;
+        duration = data.getDuration();
         if (mMediaData.getSource()==RawMediaBean.SOURCE_LOCAL) {
             title = FileUtil.getFilePrefix(data.getFilePath());
         } else {
@@ -47,8 +48,8 @@ public class PlayListBean {
         return duration;
     }
 
-    public void setDurationTime(int durationTime) {
-        this.duration = durationTime;
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public String getTitle() {

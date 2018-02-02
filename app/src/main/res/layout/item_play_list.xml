@@ -42,7 +42,19 @@
         android:layout_marginLeft="@dimen/x10"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:singleLine="true"
+        android:ellipsize="middle" />
+
+    <Button
+        android:id="@+id/bt_media_time_minus"
+        android:layout_width="@dimen/x30"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY"
+        android:background="@drawable/selector_media_duration_minus"
+        android:visibility="invisible"/>
 
     <TextView
         android:id="@+id/tv_media_duration"
@@ -55,9 +67,19 @@
         android:textColor="@color/white"
         android:textSize="16sp" />
 
+    <Button
+        android:id="@+id/bt_media_time_add"
+        android:layout_width="@dimen/x30"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY"
+        android:background="@drawable/selector_media_duration_add"
+        android:visibility="invisible"/>
+
     <TextView
         android:id="@+id/tv_media_scale"
-        android:layout_width="@dimen/x80"
+        android:layout_width="@dimen/x60"
         android:layout_height="wrap_content"
         android:layout_gravity="left|center_vertical"
         android:layout_marginLeft="@dimen/x40"
@@ -68,21 +90,22 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x150"
+        android:layout_width="@dimen/x120"
         android:layout_height="wrap_content"
         android:layout_gravity="left|center_vertical"
-        android:layout_marginLeft="@dimen/x50"
+        android:layout_marginLeft="@dimen/x40"
         android:textAlignment="inherit"
         android:textColor="@color/white"
         android:textSize="12sp"
         android:textStyle="italic"
+        android:singleLine="true"
+        android:ellipsize="middle"
         android:text="下载中" />
 
     <Button
         android:id="@+id/bt_media_remove"
         android:layout_width="@dimen/x30"
         android:layout_height="@dimen/x30"
-        android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
         android:layout_centerVertical="true"
         android:scaleType="fitXY"

@@ -216,7 +216,7 @@ public class PictureVideoPlayer {
             {
                 path = fileBean.getFilePath();
                 type = fileBean.getType();
-                time = fileBean.getDuration();
+                time = mPlayList.get(position).getDuration();
             }
         }
 

@@ -45,16 +45,20 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-        String hms = formatter.format(item.getMediaData().getDuration());
+        String hms = formatter.format(item.getDuration());
         holder.setText(R.id.tv_media_duration, hms);
 
         switch (item.getMediaData().getType())
         {
             case MEDIA_PICTURE:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_picture);
+                holder.getView(R.id.bt_media_time_add).setVisibility(View.VISIBLE);
+                holder.getView(R.id.bt_media_time_minus).setVisibility(View.VISIBLE);
                 break;
             case MEDIA_VIDEO:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_video);
+                holder.getView(R.id.bt_media_time_add).setVisibility(View.INVISIBLE);
+                holder.getView(R.id.bt_media_time_minus).setVisibility(View.INVISIBLE);
                 break;
             case MEDIA_MUSIC:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_music);
@@ -76,7 +80,29 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             }
         });
 
-        holder.getButton(R.id.bt_media_remove).setVisibility(View.VISIBLE);
+        holder.getButton(R.id.bt_media_time_add).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG,"playlist add time");
+                int duration = getItem(position).getDuration();
+                getItem(position).setDuration(duration + 5000);
+                saveToConfig();
+                refresh();
+            }
+        });
+
+        holder.getButton(R.id.bt_media_time_minus).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG,"playlist minus time" + position);
+                int duration = getItem(position).getDuration();
+                if (duration > 10000) {
+                    getItem(position).setDuration(duration - 5000);
+                }
+                saveToConfig();
+                refresh();
+            }
+        });
     }
 
 

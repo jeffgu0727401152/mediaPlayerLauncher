@@ -41,7 +41,9 @@
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:singleLine="true"
+        android:ellipsize="middle"/>
 
     <TextView
         android:id="@+id/tv_media_size"
@@ -55,7 +57,7 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x140"
+        android:layout_width="@dimen/x260"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x30"
         android:layout_gravity="left|center_vertical"
@@ -63,13 +65,15 @@
         android:textColor="@color/white"
         android:textSize="12sp"
         android:textStyle="italic"
+        android:singleLine="true"
+        android:ellipsize="middle"
         android:text = "下载中" />
 
     <Button
         android:id="@+id/bt_media_copy_to_left"
         android:layout_width="@dimen/x30"
         android:layout_height="@dimen/x28"
-        android:layout_marginLeft="@dimen/x140"
+        android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="center"
         android:background="@drawable/selector_media_copy_to_left_btn" />
 </LinearLayout>
