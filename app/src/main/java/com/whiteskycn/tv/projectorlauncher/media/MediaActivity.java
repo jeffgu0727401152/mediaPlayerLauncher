@@ -34,8 +34,6 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.common.Contants;
 import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
@@ -60,7 +58,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -193,13 +190,13 @@ public class MediaActivity extends Activity
     private CheckBox mUsbMediaListCheckBox;
 
     private TextView mUsbListTitle;
-    private Deque<String> mUsbMediaCopyDeque = new ArrayDeque<String>(); //将需要复制的文件的路径加入队列中
+    private Deque<String> mUsbMediaCopyDeque = new ArrayDeque<String>();           //将需要复制的文件的路径加入队列中
     private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();  //将需要删除的文件加入队列中
 
     private TextView mUsbCapacityTextView;
     private TextView mLocalCapacityTextView;
     ExecutorService mUsbCapacityUpdateService;          //专门用于更新U盘容量的线程
-    ExecutorService mLocalCapacityUpdateService;          //专门用于更新本地硬盘容量的线程
+    ExecutorService mLocalCapacityUpdateService;        //专门用于更新本地硬盘容量的线程
 
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;

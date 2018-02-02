@@ -43,6 +43,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
     @Override
     public void convert(ViewHolder holder, final int position, AllMediaListBean item) {
         holder.setText(R.id.tv_media_name, item.getTitle());
+        holder.setText(R.id.tv_media_list_pos, String.valueOf(position + 1) + ".");
 
         switch (item.getMediaData().getType())
         {
@@ -118,7 +119,14 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         holder.getCheckBox(R.id.cb_media_selected).setOnClickListener(new View.OnClickListener () {
             @Override
             public void onClick(View view) {
-                getListDatas().get(position).setSelected(!getListDatas().get(position).isSelected());
+                listDatas.get(position).setSelected(!getListDatas().get(position).isSelected());
+                for(AllMediaListBean data:listDatas)
+                {
+                    if (data.isSelected())
+                    {
+                        // todo set true
+                    }
+                }
             }
         });
     }

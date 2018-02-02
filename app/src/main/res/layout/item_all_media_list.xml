@@ -13,11 +13,22 @@
         android:layout_gravity="center"
         />
 
+    <TextView
+        android:id="@+id/tv_media_list_pos"
+        android:layout_width="@dimen/x50"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/x10"
+        android:layout_gravity="left|center_vertical"
+        android:gravity="center"
+        android:textAlignment="inherit"
+        android:textColor="@color/white"
+        android:textSize="12sp" />
+
     <ImageView
         android:id="@+id/iv_media_ico"
         android:layout_width="@dimen/x20"
         android:layout_height="@dimen/x20"
-        android:layout_marginLeft="@dimen/x20"
+        android:layout_marginLeft="@dimen/x10"
         android:layout_centerVertical="true"
         android:layout_gravity="center"
         android:scaleType="fitXY" />
@@ -55,7 +66,7 @@
         android:id="@+id/tv_media_state"
         android:layout_width="@dimen/x140"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x80"
+        android:layout_marginLeft="@dimen/x50"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
