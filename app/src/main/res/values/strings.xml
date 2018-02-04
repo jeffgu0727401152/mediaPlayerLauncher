@@ -63,6 +63,26 @@
     <string name="str_media_list_cloud">云分区</string>
     <string name="str_media_list_usb">移动盘</string>
 
+    <string name="str_media_play_pause">暂停播放</string>
+    <string name="str_media_play_resume">继续播放</string>
+    <string name="str_media_play_path_error">媒体文件路径错误</string>
+    <string name="str_media_play_list_empty">请先添加文件到播放列表</string>
+
+    <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>
+    <string name="str_media_usb_device_plug_out_toast">usb设备拔出:</string>
+    <string name="str_media_wait_capacity">--G/--G</string>
+
+    <string name="str_media_file_copy_toast">拷贝文件:</string>
+    <string name="str_media_file_delete_toast">删除文件:</string>
+    <string name="str_media_file_copy_process_dialog_title">拷贝文件</string>
+    <string name="str_media_file_delete_dialog_title">您是否要删除文件?</string>
+    <string name="str_media_file_copy_process_dialog_prompt">正在拷贝文件,请耐心等待,不要退出或插拔usb设备!</string>
+
+
+    <string name="str_media_full_screen_quite">您是否要退出全屏？</string>
+    <string name="str_media_dialog_button_ok">确定</string>
+    <string name="str_media_dialog_button_cancel">取消</string>
+
     <string name="str_media_info_name">文件名:</string>
     <string name="str_media_info_type">文件类型:</string>
     <string name="str_media_info_wh">宽高:</string>

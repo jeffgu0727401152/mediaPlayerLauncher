@@ -1,9 +1,8 @@
 package com.whiteskycn.tv.projectorlauncher.media.bean;
 
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
-import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_UNKNOWN;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 
 /**
  * Created by jeff on 18-1-16.
@@ -26,12 +25,12 @@ public class UsbMediaListBean {
         isSelected = false;
     }
 
-    public UsbMediaListBean(int type, String path, long size) {
+    public UsbMediaListBean(String title, int type, String path, long size) {
         this.type = type;
         description = "";
         this.size = size;
         this.path = path;
-        title = FileUtil.getFilePrefix(path);
+        this.title = title;
         isSelected = false;
     }
 

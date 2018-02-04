@@ -40,10 +40,11 @@ import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
 import com.whiteskycn.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
 import com.whiteskycn.tv.projectorlauncher.media.adapter.PlayListAdapter;
 import com.whiteskycn.tv.projectorlauncher.media.adapter.UsbMediaListAdapter;
-import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.AllMediaListBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.UsbMediaListBean;
+import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
+import com.whiteskycn.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -71,8 +72,8 @@ import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.Media
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil.getMediaTypeFromPath;
 
 /**
@@ -87,21 +88,24 @@ public class MediaActivity extends Activity
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
     private final int MSG_USB_PARTITION_SWITCH = 2;
-    private final int MSG_UPDATE_USB_DEVICE_CAPACITY = 3;
-    private final int MSG_UPDATE_LOCAL_CAPACITY = 4;
+    private final int MSG_USB_DEVICE_CAPACITY_UPDATE = 3;
+    private final int MSG_LOCAL_CAPACITY_UPDATE = 4;
 
-    private final int MSG_UPDATE_LOCAL_MEDIA_LIST = 10;
-    private final int MSG_CLEAN_LOCAL_MEDIA_LIST = 11;
-    private final int MSG_UPDATE_USB_MEDIA_LIST = 12;
-    private final int MSG_CLEAN_USB_MEDIA_LIST = 13;
+    private final int MSG_LOCAL_MEDIA_DATABASE_UPDATE = 10;
+    private final int MSG_LOCAL_MEDIA_LIST_CLEAN = 11;
+    private final int MSG_USB_MEDIA_LIST_UPDATE = 12;
+    private final int MSG_USB_MEDIA_LIST_CLEAN = 13;
 
-    private final int MSG_LOCAL_MEDIA_SCAN_DONE = 20;
+    private final int MSG_LOCAL_MEDIA_DATABASE_UI_SYNC = 20;
     private final int MSG_USB_MEDIA_SCAN_DONE = 21;
 
     private final int MSG_USB_COPY_TO_INTERNAL = 40;
-    private final int MSG_DELETE_MEDIA_LIST_ITEM = 41;
-    private final int MSG_PREVIEW_MEDIA_LIST_ITEM = 42;
-    private final int MSG_DOWNLOAD_MEDIA_LIST_ITEM = 43;
+    private final int MSG_MEDIA_LIST_ITEM_DELETE = 41;
+    private final int MSG_MEDIA_LIST_ITEM_PREVIEW = 42;
+    private final int MSG_MEDIA_LIST_ITEM_DOWNLOAD = 43;
+
+    private final int MSG_USB_LIST_SELECTED_CHANGE = 44;
+    private final int MSG_MEDIA_LIST_SELECTED_CHANGE = 45;
 
     // 媒体播放事件
     private final int MSG_MEDIA_PLAY_COMPLETE = 100;
@@ -109,16 +113,35 @@ public class MediaActivity extends Activity
     private final int MSG_UPDATE_DURATION_TIME = 102;
     private final int MSG_UPDATE_MEDIA_INFO = 103;
 
+    private static final String BUNDLE_KEY_STORAGE_PATH = "storagePath";
+
+    private static final String BUNDLE_KEY_MEDIA_TYPE = "type";
+    private static final String BUNDLE_KEY_MEDIA_SIZE = "size";
+    private static final String BUNDLE_KEY_MEDIA_DURATION = "duration";
+    private static final String BUNDLE_KEY_MEDIA_PATH = "path";
+    private static final String BUNDLE_KEY_MEDIA_NAME = "name";
+
+    private static final String BUNDLE_KEY_INFO_NAME = "name";
+    private static final String BUNDLE_KEY_INFO_TYPE = "type";
+    private static final String BUNDLE_KEY_INFO_SIZE = "size";
+    private static final String BUNDLE_KEY_INFO_WIDTH = "width";
+    private static final String BUNDLE_KEY_INFO_HEIGHT = "height";
+    private static final String BUNDLE_KEY_INFO_BPS = "bitRate";
+
+
     private static final String CONFIG_PLAYMODE = "playMode";
 
-    private static final String LOCAL_PATH = "/mnt/sdcard";
-    private static final String USB_DEFAULT_MEDIA_PATH = "media";
-    private static final String COPY_TO_USB_MEDIA_PATH = "export";
-    private static final String COPY_TO_INTERNAL_MEDIA_PATH = "import";
+    private static final String LOCAL_PATH = "/mnt/sdcard";  // todo 修改为硬盘的路径
+    private static final String CLOUD_IMPORT_FOLDER = "cloud";
+    private static final String USB_IMPORT_FOLDER = "local";
+
+    private static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";
+    private static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";
+
     private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0"}; // 排除在外的挂载目录,非移动硬盘
 
-    private final int DOUBLE_TAP_DELAY_MS = 800;
-    private final int USB_COPY_BUFFER_SIZE = 1024 * 10;
+    private final int DOUBLE_TAP_DELAY_MS = 800;            // 双击间隔时间,可调参数
+    private final int USB_COPY_BUFFER_SIZE = 1024 * 10;     // 拷贝文件缓冲区长度,可调参数
 
     private MediaScanUtil mLocalMediaScanner;
     private MediaScanUtil mUsbMediaScanner;
@@ -143,6 +166,8 @@ public class MediaActivity extends Activity
     private Button mMediaMultiDownloadBtn;
     private Button mMediaMultiCopyToRightBtn;
 
+    private Button mMediaListUpdateBtn;
+
     private FrameLayout mPlayerPanel;
 
     private SeekBar mPlayProgressSeekBar;
@@ -164,14 +189,15 @@ public class MediaActivity extends Activity
     private int mOriginSurfaceWidth = 0;
     private int mOriginPlayerMarginTop = 0;
     private int mOriginPlayerMarginLeft = 0;
-    private boolean mDontUpdateSeekBar = false;
+
+    private boolean mDoNotUpdateSeekBar = false;        //用户在拖动seekbar期间,系统不去更改seekbar位置
     private boolean mIsFullScreen;                      //是否在全屏播放标志
-    private long mLastFullScreenClickTime;              //双击最大化功能
+    private long mLastFullScreenClickTime;              //双击最大化
 
     private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
     private PlayListAdapter mPlayListAdapter;
     private DragListView mDragPlayListView;
-    private int mLastPlayListClickPosition = 0;     //双击直接播放
+    private int mLastPlayListClickPosition = 0;       //双击直接播放
     private long mLastPlayListClickTime;
 
     private List<AllMediaListBean> mAllMediaListBeans = new ArrayList<AllMediaListBean>();
@@ -183,7 +209,7 @@ public class MediaActivity extends Activity
     private List<UsbMediaListBean> mUsbMediaListBeans = new ArrayList<UsbMediaListBean>();
     private UsbMediaListAdapter mUsbMediaListAdapter;
     private ListView mUsbMediaListView;
-    private int mLastUsbMediaListClickPosition = 0;     //usb双击预留
+    private int mLastUsbMediaListClickPosition = 0;     //usb media list item的双击功能尚未启用,但是预留code
     private long mLastUsbMediaListClickTime;
 
     private CheckBox mAllMediaListCheckBox;
@@ -210,20 +236,20 @@ public class MediaActivity extends Activity
                 Message msg = new Message();
                 msg.what = MSG_USB_PLUG_IN;
                 Bundle bundle = new Bundle();
-                bundle.putString("storagePath", intent.getData().getPath());
+                bundle.putString(BUNDLE_KEY_STORAGE_PATH, intent.getData().getPath());
                 msg.setData(bundle);
                 mHandler.sendMessageDelayed(msg, 500);
-                ToastUtil.showToast(context, "mount! path = " + intent.getData().getPath());
+                ToastUtil.showToast(context, getResources().getString(R.string.str_media_usb_device_plug_in_toast) + intent.getData().getPath());
 
             } else if (action.equals(Intent.ACTION_MEDIA_REMOVED) || action.equals(Intent.ACTION_MEDIA_UNMOUNTED)) {
                 mHandler.removeMessages(MSG_USB_PLUG_OUT);
                 Message msg = new Message();
                 msg.what = MSG_USB_PLUG_OUT;
                 Bundle bundle = new Bundle();
-                bundle.putString("storagePath", intent.getData().getPath());
+                bundle.putString(BUNDLE_KEY_STORAGE_PATH, intent.getData().getPath());
                 msg.setData(bundle);
                 mHandler.sendMessageDelayed(msg, 500);
-                ToastUtil.showToast(context, "unMount! path = " + intent.getData().getPath());
+                ToastUtil.showToast(context, getResources().getString(R.string.str_media_usb_device_plug_out_toast) + intent.getData().getPath());
             }
         }
     };
@@ -294,7 +320,7 @@ public class MediaActivity extends Activity
 
     @Override
     public void onMediaUpdateSeekBar(int msec) {
-        if (!mDontUpdateSeekBar) {
+        if (!mDoNotUpdateSeekBar) {
             setMediaPlayedTime(msec);
         }
     }
@@ -324,6 +350,8 @@ public class MediaActivity extends Activity
         mMediaMultiDownloadBtn.setOnClickListener(this);
         mMediaMultiCopyToRightBtn.setOnClickListener(this);
 
+        mMediaListUpdateBtn.setOnClickListener(this);
+
         mReplayModeRadioGroup.setOnCheckedChangeListener(this);
 
         mUsbPartitionSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
@@ -344,9 +372,6 @@ public class MediaActivity extends Activity
 
         mPlayer = new PictureVideoPlayer(this, mVideoPlaySurfaceView, mPicturePlayView, mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
-
-        // 为保证播放模式可以被设置,加载配置必须在mPlayer被new出以后做
-        loadConfiguration();
 
         mUsbCapacityUpdateService = Executors.newSingleThreadExecutor();
         mLocalCapacityUpdateService = Executors.newSingleThreadExecutor();
@@ -372,14 +397,14 @@ public class MediaActivity extends Activity
                 mMediaDeleteDeque.clear();
                 mMediaDeleteDeque.push(mAllMediaListAdapter.getItem(position));
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_DELETE_MEDIA_LIST_ITEM;
+                msg.what = MSG_MEDIA_LIST_ITEM_DELETE;
                 mHandler.sendMessage(msg);
             }
 
             @Override
             public void doItemPreview(int position) {
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_PREVIEW_MEDIA_LIST_ITEM;
+                msg.what = MSG_MEDIA_LIST_ITEM_PREVIEW;
                 msg.obj = mAllMediaListAdapter.getItem(position).getMediaData();
                 mHandler.sendMessage(msg);
             }
@@ -387,8 +412,20 @@ public class MediaActivity extends Activity
             @Override
             public void doItemDownLoad(int position) {
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_DOWNLOAD_MEDIA_LIST_ITEM;
+                msg.what = MSG_MEDIA_LIST_ITEM_DOWNLOAD;
                 msg.obj = mAllMediaListAdapter.getItem(position).getMediaData();
+                mHandler.sendMessage(msg);
+            }
+
+            @Override
+            public void itemSelectedChange() {
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_MEDIA_LIST_SELECTED_CHANGE;
+                if (mAllMediaListAdapter.hasItemSelected()) {
+                    msg.arg1 = 1;
+                } else {
+                    msg.arg1 = 0;
+                }
                 mHandler.sendMessage(msg);
             }
         });
@@ -472,6 +509,7 @@ public class MediaActivity extends Activity
                     mLastPlayListClickPosition = -1;
                     mLastPlayListClickTime = 0;
                     Log.i(TAG, "double click play list!");
+                    mPlayer.mediaStop();
                     mPlayer.mediaPlay(position);
                 } else {
                     mLastPlayListClickPosition = position;
@@ -486,13 +524,25 @@ public class MediaActivity extends Activity
 
         //Usb设备媒体列表设置
         mUsbMediaListAdapter = new UsbMediaListAdapter(getApplicationContext(), mUsbMediaListBeans);
-        mUsbMediaListAdapter.setOnUsbItemCopyListener(new UsbMediaListAdapter.OnUsbItemCopyListener() {
+        mUsbMediaListAdapter.setOnUsbItemCopyListener(new UsbMediaListAdapter.OnUsbItemEventListener() {
             @Override
             public void doItemCopy(int position) {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_USB_COPY_TO_INTERNAL;
                 mUsbMediaCopyDeque.clear();
                 mUsbMediaCopyDeque.push(mUsbMediaListAdapter.getItem(position).getPath());
+                mHandler.sendMessage(msg);
+            }
+
+            @Override
+            public void itemSelectedChange() {
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_USB_LIST_SELECTED_CHANGE;
+                if (mUsbMediaListAdapter.hasItemSelected()) {
+                    msg.arg1 = 1;
+                } else {
+                    msg.arg1 = 0;
+                }
                 mHandler.sendMessage(msg);
             }
         });
@@ -523,7 +573,7 @@ public class MediaActivity extends Activity
             public void onMediaScanBegin() {
                 Log.i(TAG, "local media scan begin!");
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_CLEAN_LOCAL_MEDIA_LIST;
+                msg.what = MSG_LOCAL_MEDIA_LIST_CLEAN;
                 mHandler.sendMessage(msg);
             }
 
@@ -532,11 +582,13 @@ public class MediaActivity extends Activity
                 if (type == MEDIA_PICTURE ||
                         type == MEDIA_VIDEO) {
                     Message msg = mHandler.obtainMessage();
-                    msg.what = MSG_UPDATE_LOCAL_MEDIA_LIST;
+                    msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                     Bundle b = new Bundle();
-                    b.putInt("type", type);
-                    b.putInt("duration", duration);
-                    b.putString("path", path);
+                    b.putInt(BUNDLE_KEY_MEDIA_TYPE, type);
+                    b.putLong(BUNDLE_KEY_MEDIA_SIZE, size);
+                    b.putInt(BUNDLE_KEY_MEDIA_DURATION, duration);
+                    b.putString(BUNDLE_KEY_MEDIA_PATH, path);
+                    b.putString(BUNDLE_KEY_MEDIA_NAME, name);
                     msg.setData(b);
                     mHandler.sendMessage(msg);
                 }
@@ -546,7 +598,7 @@ public class MediaActivity extends Activity
             public void onMediaScanDone() {
                 Log.i(TAG, "local media scan done!");
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_LOCAL_MEDIA_SCAN_DONE;
+                msg.what = MSG_LOCAL_MEDIA_DATABASE_UI_SYNC;
                 mHandler.sendMessage(msg);
             }
         });
@@ -559,7 +611,7 @@ public class MediaActivity extends Activity
             public void onMediaScanBegin() {
                 Log.i(TAG, "usb media scan begin!");
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_CLEAN_USB_MEDIA_LIST;
+                msg.what = MSG_USB_MEDIA_LIST_CLEAN;
                 mHandler.sendMessage(msg);
             }
 
@@ -568,12 +620,12 @@ public class MediaActivity extends Activity
                 if (type == MEDIA_PICTURE ||
                         type == MEDIA_VIDEO) {
                     Message msg = mHandler.obtainMessage();
-                    msg.what = MSG_UPDATE_USB_MEDIA_LIST;
+                    msg.what = MSG_USB_MEDIA_LIST_UPDATE;
                     Bundle b = new Bundle();
-                    b.putInt("type", type);
-                    b.putString("name", name);
-                    b.putString("path", path);
-                    b.putLong("size", size);
+                    b.putInt(BUNDLE_KEY_MEDIA_TYPE, type);
+                    b.putString(BUNDLE_KEY_MEDIA_NAME, name);
+                    b.putString(BUNDLE_KEY_MEDIA_PATH, path);
+                    b.putLong(BUNDLE_KEY_MEDIA_SIZE, size);
                     msg.setData(b);
                     mHandler.sendMessage(msg);
                 }
@@ -581,7 +633,7 @@ public class MediaActivity extends Activity
 
             @Override
             public void onMediaScanDone() {
-                Log.i(TAG, "media scan done!");
+                Log.i(TAG, "usb media scan done!");
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_USB_MEDIA_SCAN_DONE;
                 mHandler.sendMessage(msg);
@@ -599,12 +651,8 @@ public class MediaActivity extends Activity
         // 主动枚举一次usb设备加入usb spinner中
         discoverUsbMountDevice();
 
-        // 扫描一次本地媒体文件
-        // todo 使用数据库储存
-        mLocalMediaScanner.safeScanning(LOCAL_PATH);
-
         // 开线程去查询容量
-        mUsbCapacityUpdateService.execute(
+        mLocalCapacityUpdateService.execute(
                 new Thread() {
                     @Override
                     public void run() {
@@ -614,11 +662,10 @@ public class MediaActivity extends Activity
                             String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(LOCAL_PATH));
                             updateLocalCapacity(fsUsed + "/" + fsCapacity);
                         } catch (Exception e) {
-                            Log.e(TAG, "mLocalCapacityUpdateService error!" + e);
+                            Log.e(TAG, "error in mLocalCapacityUpdateService!" + e);
                         }
                     }
                 });
-
     }
 
     private void initView() {
@@ -641,6 +688,8 @@ public class MediaActivity extends Activity
         mMediaMultiAddToPlayListBtn = (Button) findViewById(R.id.bt_media_multi_add);
         mMediaMultiDownloadBtn = (Button) findViewById(R.id.bt_media_multi_download);
         mMediaMultiCopyToRightBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_right);
+
+        mMediaListUpdateBtn = (Button) findViewById(R.id.bt_media_all_list_refresh);
 
         mPlayerPanel = (FrameLayout) findViewById(R.id.fl_media_player);
         mPlayProgressSeekBar = (SeekBar) findViewById(R.id.sb_media_playProgress);
@@ -672,17 +721,46 @@ public class MediaActivity extends Activity
         mAllMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_all_list_check);
         mUsbMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_usb_list_check);
 
-        //设置播放时长为00:00:00
-        setMediaPlayedTime(0);
-        setMediaDurationTimeUI(0);
     }
 
-    private void loadConfiguration() {
+    private void loadPersistData() {
         // 加载播放模式,如果没有配置,则默认为全部循环
         SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
         int playMode = config.getInt(CONFIG_PLAYMODE, mReplayAllRadioButton.getId());
         mReplayModeRadioGroup.check(playMode);
         onCheckedChanged(null,playMode);
+
+        //设置播放时长为00:00:00
+        setMediaPlayedTime(0);
+        setMediaDurationTimeUI(0);
+
+        mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
+
+        if (mAllMediaListAdapter.hasItemSelected()) {
+            mMediaMultiCopyToRightBtn.setEnabled(true);
+            mMediaMultiAddToPlayListBtn.setEnabled(true);
+            mMediaMultiDeleteBtn.setEnabled(true);
+            mMediaMultiDownloadBtn.setEnabled(true);
+        } else {
+            mMediaMultiCopyToRightBtn.setEnabled(false);
+            mMediaMultiAddToPlayListBtn.setEnabled(false);
+            mMediaMultiDeleteBtn.setEnabled(false);
+            mMediaMultiDownloadBtn.setEnabled(false);
+        }
+
+        // 初始化本地媒体列表
+        if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
+        {   // 如果数据库为空,则扫描一次本地媒体文件
+            mLocalMediaScanner.safeScanning(LOCAL_PATH);
+        } else {
+            // 如果有数据库,则从数据库获取
+            for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
+            {
+                mAllMediaListBeans.add(new AllMediaListBean(m));
+                Log.d(TAG,m.toString());
+            }
+            mAllMediaListAdapter.refresh();
+        }
     }
 
     private Handler mHandler = new Handler() {
@@ -691,7 +769,7 @@ public class MediaActivity extends Activity
             super.handleMessage(msg);
             switch (msg.what) {
                 case MSG_USB_PLUG_IN:
-                    String storagePath = msg.getData().getString("storagePath");
+                    String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
                     //先remove后add,防止插入两个一样的
                     mUsbPartitionAdapter.remove(storagePath);
                     mUsbPartitionAdapter.add(storagePath);
@@ -701,7 +779,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_USB_PLUG_OUT:
-                    storagePath = msg.getData().getString("storagePath");
+                    storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
                     mUsbPartitionAdapter.remove(storagePath);
                     mUsbPartitionAdapter.notifyDataSetChanged();
 
@@ -722,12 +800,12 @@ public class MediaActivity extends Activity
 
                 case MSG_USB_PARTITION_SWITCH:
                     // 首先将容量信息消除,等待线程查询成功后再发消息更新
-                    mUsbCapacityTextView.setText("--G" + "/" + "--G");
+                    mUsbCapacityTextView.setText(getResources().getString(R.string.str_media_wait_capacity));
 
                     if (msg.arg1 < mUsbPartitionAdapter.getCount() && msg.arg1 >= 0) {
 
                         final String currentPath = (String) msg.obj;
-                        mUsbListTitle.setText(currentPath);
+                        //mUsbListTitle.setText(currentPath);
 
                         // 开线程去查询容量
                         mUsbCapacityUpdateService.execute(
@@ -746,21 +824,21 @@ public class MediaActivity extends Activity
                                 });
 
                         // 由扫描来更新usb media列表
-                        mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEFAULT_MEDIA_PATH);
+                        mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
 
                     } else if (msg.arg1 == -1) {
 
-                        mUsbListTitle.setText("无USB设备");
+                        //mUsbListTitle.setText("无USB设备");
                         mUsbMediaListAdapter.clear();
                         mUsbMediaListAdapter.refresh();
                     }
                     break;
 
-                case MSG_UPDATE_USB_DEVICE_CAPACITY:
+                case MSG_USB_DEVICE_CAPACITY_UPDATE:
                     mUsbCapacityTextView.setText((String) msg.obj);
                     break;
 
-                case MSG_UPDATE_LOCAL_CAPACITY:
+                case MSG_LOCAL_CAPACITY_UPDATE:
                     mLocalCapacityTextView.setText((String) msg.obj);
                     break;
 
@@ -774,42 +852,45 @@ public class MediaActivity extends Activity
 
                 case MSG_UPDATE_MEDIA_INFO:
                     Bundle b = msg.getData();
-                    String nameInfo = b.getString("name");
-                    String typeInfo = b.getString("type");
-                    int widthInfo = b.getInt("width");
-                    int heightInfo = b.getInt("height");
-                    long sizeInfo = b.getLong("size");
-                    int bpsInfo = b.getInt("bitRate");
+                    String nameInfo = b.getString(BUNDLE_KEY_INFO_NAME);
+                    String typeInfo = b.getString(BUNDLE_KEY_INFO_TYPE);
+                    int widthInfo = b.getInt(BUNDLE_KEY_INFO_WIDTH);
+                    int heightInfo = b.getInt(BUNDLE_KEY_INFO_HEIGHT);
+                    long sizeInfo = b.getLong(BUNDLE_KEY_INFO_SIZE);
+                    int bpsInfo = b.getInt(BUNDLE_KEY_INFO_BPS);
                     setMediaInfoUI(nameInfo,typeInfo,widthInfo,heightInfo,sizeInfo,bpsInfo);
                     break;
 
-                case MSG_UPDATE_LOCAL_MEDIA_LIST:
+                case MSG_LOCAL_MEDIA_DATABASE_UPDATE:
                     b = msg.getData();
-                    int type = b.getInt("type");
-                    int duration = b.getInt("duration");
-                    String path = b.getString("path");
+                    int type = b.getInt(BUNDLE_KEY_MEDIA_TYPE);
+                    String name = b.getString(BUNDLE_KEY_MEDIA_NAME);
+                    String path = b.getString(BUNDLE_KEY_MEDIA_PATH);
+                    int duration = b.getInt(BUNDLE_KEY_MEDIA_DURATION);
+                    long size = b.getLong(BUNDLE_KEY_MEDIA_SIZE);
 
-                    mAllMediaListBeans.add(new AllMediaListBean(new RawMediaBean("12345", type, RawMediaBean.SOURCE_LOCAL, true, path, duration)));
-                    mAllMediaListAdapter.refresh();
+                    MediaBean data = new MediaBean(name, type, MediaBean.SOURCE_LOCAL, path, duration, size, true);
+                    new MediaBeanDao(MediaActivity.this).insert(data);
                     break;
 
-                case MSG_UPDATE_USB_MEDIA_LIST:
+                case MSG_USB_MEDIA_LIST_UPDATE:
                     b = msg.getData();
-                    type = b.getInt("type");
-                    long size = b.getLong("size");
-                    path = b.getString("path");
+                    name = b.getString(BUNDLE_KEY_MEDIA_NAME);
+                    type = b.getInt(BUNDLE_KEY_MEDIA_TYPE);
+                    size = b.getLong(BUNDLE_KEY_MEDIA_SIZE);
+                    path = b.getString(BUNDLE_KEY_MEDIA_PATH);
 
-                    UsbMediaListBean UsbMedia = new UsbMediaListBean(type, path, size);
+                    UsbMediaListBean UsbMedia = new UsbMediaListBean(name, type, path, size);
                     mUsbMediaListAdapter.addItem(UsbMedia);
                     mUsbMediaListAdapter.refresh();
                     break;
 
-                case MSG_CLEAN_USB_MEDIA_LIST:
+                case MSG_USB_MEDIA_LIST_CLEAN:
                     mUsbMediaListAdapter.clear();
                     mUsbMediaListAdapter.refresh();
                     break;
 
-                case MSG_CLEAN_LOCAL_MEDIA_LIST:
+                case MSG_LOCAL_MEDIA_LIST_CLEAN:
                     mAllMediaListAdapter.clear();
                     mAllMediaListAdapter.refresh();
                     break;
@@ -820,28 +901,69 @@ public class MediaActivity extends Activity
                     }
                     break;
 
-                case MSG_DELETE_MEDIA_LIST_ITEM:
+                case MSG_USB_LIST_SELECTED_CHANGE:
+                    if (msg.arg1==1) {
+                        mMediaMultiCopyToLeftBtn.setEnabled(true);
+                    } else {
+                        mMediaMultiCopyToLeftBtn.setEnabled(false);
+                    }
+                    break;
+
+                case MSG_MEDIA_LIST_SELECTED_CHANGE:
+                    if (msg.arg1==1) {
+                        mMediaMultiCopyToRightBtn.setEnabled(true);
+                        mMediaMultiAddToPlayListBtn.setEnabled(true);
+                        mMediaMultiDeleteBtn.setEnabled(true);
+                        mMediaMultiDownloadBtn.setEnabled(true);
+                    } else {
+                        mMediaMultiCopyToRightBtn.setEnabled(false);
+                        mMediaMultiAddToPlayListBtn.setEnabled(false);
+                        mMediaMultiDeleteBtn.setEnabled(false);
+                        mMediaMultiDownloadBtn.setEnabled(false);
+                    }
+                    break;
+
+
+                case MSG_MEDIA_LIST_ITEM_DELETE:
                     if (!mMediaDeleteDeque.isEmpty()) {
                         deleteInternalMediaFile();
                     }
                     break;
 
-                case MSG_DOWNLOAD_MEDIA_LIST_ITEM:
+                case MSG_MEDIA_LIST_ITEM_DOWNLOAD:
 //todo download
-                    Log.i(TAG, "MSG_DOWNLOAD_MEDIA_LIST_ITEM wait implement!");
                     break;
 
-                case MSG_PREVIEW_MEDIA_LIST_ITEM:
-                    RawMediaBean previewItem = (RawMediaBean)msg.obj;
+                case MSG_MEDIA_LIST_ITEM_PREVIEW:
+                    MediaBean previewItem = (MediaBean)msg.obj;
+                    mPlayer.mediaStop();
                     mPlayer.mediaPreview(previewItem);
                     break;
 
-                case MSG_LOCAL_MEDIA_SCAN_DONE:
-                    Log.i(TAG, "media scan done in handler!");
+                case MSG_LOCAL_MEDIA_DATABASE_UI_SYNC:
+                    mAllMediaListAdapter.clear();
+                    for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
+                    {
+                        mAllMediaListAdapter.addItem(new AllMediaListBean(m));
+                        Log.d(TAG,m.toString());
+                    }
+                    mAllMediaListAdapter.refresh();
+
+                    if (mAllMediaListAdapter.hasItemSelected()) {
+                        mMediaMultiCopyToRightBtn.setEnabled(true);
+                        mMediaMultiAddToPlayListBtn.setEnabled(true);
+                        mMediaMultiDeleteBtn.setEnabled(true);
+                        mMediaMultiDownloadBtn.setEnabled(true);
+                    } else {
+                        mMediaMultiCopyToRightBtn.setEnabled(false);
+                        mMediaMultiAddToPlayListBtn.setEnabled(false);
+                        mMediaMultiDeleteBtn.setEnabled(false);
+                        mMediaMultiDownloadBtn.setEnabled(false);
+                    }
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
-                    Log.i(TAG, "usb media scan done in handler!");
+                    mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
                     break;
 
                 case MSG_MEDIA_PLAY_COMPLETE:
@@ -894,17 +1016,39 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.btn_media_netView:
-                // todo
+                mMaskView.setBackgroundResource(R.drawable.img_media_net_mask);
+                if (mMaskView.getVisibility()==View.INVISIBLE) {
+                    mMaskView.setVisibility(View.VISIBLE);
+                } else {
+                    mMaskView.setVisibility(View.INVISIBLE);
+                }
                 break;
 
             case R.id.btn_media_grayView:
                 // todo
                 break;
 
+            case R.id.bt_media_all_list_refresh:
+                mLocalMediaScanner.safeScanning(LOCAL_PATH);
+                break;
+
             case R.id.cb_media_all_list_check:
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     data.setSelected(mAllMediaListCheckBox.isChecked());
                 }
+
+                if (mAllMediaListAdapter.hasItemSelected()) {
+                    mMediaMultiCopyToRightBtn.setEnabled(true);
+                    mMediaMultiAddToPlayListBtn.setEnabled(true);
+                    mMediaMultiDeleteBtn.setEnabled(true);
+                    mMediaMultiDownloadBtn.setEnabled(true);
+                } else {
+                    mMediaMultiCopyToRightBtn.setEnabled(false);
+                    mMediaMultiAddToPlayListBtn.setEnabled(false);
+                    mMediaMultiDeleteBtn.setEnabled(false);
+                    mMediaMultiDownloadBtn.setEnabled(false);
+                }
+
                 mAllMediaListAdapter.refresh();
                 break;
 
@@ -912,6 +1056,7 @@ public class MediaActivity extends Activity
                 for (UsbMediaListBean data : mUsbMediaListBeans) {
                     data.setSelected(mUsbMediaListCheckBox.isChecked());
                 }
+                mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
                 mUsbMediaListAdapter.refresh();
                 break;
 
@@ -923,8 +1068,6 @@ public class MediaActivity extends Activity
                         mUsbMediaCopyDeque.add(data.getPath());
                     }
                 }
-
-                ToastUtil.showToast(this, "will copy " + mUsbMediaCopyDeque.size() + " file(s)");
 
                 if (!mUsbMediaCopyDeque.isEmpty()) {
                     Message msg = mHandler.obtainMessage();
@@ -938,14 +1081,12 @@ public class MediaActivity extends Activity
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     if (data.isSelected()) {
                         mMediaDeleteDeque.push(data);
-                        // todo 删除播放列表中的数据
-                        // 检查在播放列中中的数据,要先停止播放,删除播放列表,再删除数据
+                        // 这边只加入等待删除的列表,从播放列表以及数据库删除记录的动作,在处理msg的地方做
                     }
                 }
-                ToastUtil.showToast(this, "will delete " + mMediaDeleteDeque.size() + " file(s)");
 
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_DELETE_MEDIA_LIST_ITEM;
+                msg.what = MSG_MEDIA_LIST_ITEM_DELETE;
                 mHandler.sendMessage(msg);
                 break;
 
@@ -966,11 +1107,9 @@ public class MediaActivity extends Activity
                 mUsbMediaCopyDeque.clear();
                 for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
                     if (data.isSelected()) {
-                        mUsbMediaCopyDeque.add(data.getMediaData().getFilePath());
+                        mUsbMediaCopyDeque.add(data.getMediaData().getPath());
                     }
                 }
-
-                ToastUtil.showToast(this, "need copy " + mUsbMediaCopyDeque.size() + " file(s)");
 
                 if (!mUsbMediaCopyDeque.isEmpty()) {
                     // 目前不存在点击单个item复制到u盘的情况,所以内部复制到U盘就不使用handler message了
@@ -988,6 +1127,9 @@ public class MediaActivity extends Activity
         super.onResume();
         LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.img_background);
+
+        // 为保证播放模式可以被设置,加载配置必须在mPlayer被new出以后做
+        loadPersistData();
     }
 
     @Override
@@ -1010,14 +1152,14 @@ public class MediaActivity extends Activity
     @Override
     public void onBackPressed() {
         if (mIsFullScreen) {
-            new AlertDialog.Builder(this).setIcon(R.drawable.pullup_icon_big)
-                    .setTitle("您是否要退出全屏？")
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            new AlertDialog.Builder(this).setIcon(R.drawable.img_media_delete_warning)
+                    .setTitle(getResources().getString(R.string.str_media_full_screen_quite))
+                    .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             fullScreenDisplaySwitch();
                         }
-                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    }).setNegativeButton(getResources().getString(R.string.str_media_dialog_button_cancel), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                 }
@@ -1056,7 +1198,7 @@ public class MediaActivity extends Activity
             // 当进度条停止修改的时候触发
             int progress = seekBar.getProgress();
             mPlayer.seekTo(progress);
-            mDontUpdateSeekBar = false; //用户的拖动停止了,允许更新seekBar
+            mDoNotUpdateSeekBar = false; //用户的拖动停止了,允许更新seekBar
         }
 
         @Override
@@ -1068,7 +1210,7 @@ public class MediaActivity extends Activity
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if (fromUser) {
                 setMediaPlayedTime(progress);
-                mDontUpdateSeekBar = true; //在拖动的时候,需要防止播放开的线程来改变seekBar的位置
+                mDoNotUpdateSeekBar = true; //在拖动的时候,需要防止播放开的线程来改变seekBar的位置
             }
         }
     };
@@ -1096,12 +1238,12 @@ public class MediaActivity extends Activity
             Message msg = mHandler.obtainMessage();
             msg.what = MSG_UPDATE_MEDIA_INFO;
             Bundle b = new Bundle();
-            b.putString("name", name);
-            b.putString("type", mimeType);
-            b.putInt("width", width);
-            b.putInt("height", height);
-            b.putLong("size", size);
-            b.putInt("bitRate", bps);
+            b.putString(BUNDLE_KEY_INFO_NAME, name);
+            b.putString(BUNDLE_KEY_INFO_TYPE, mimeType);
+            b.putInt(BUNDLE_KEY_INFO_WIDTH, width);
+            b.putInt(BUNDLE_KEY_INFO_HEIGHT, height);
+            b.putLong(BUNDLE_KEY_INFO_SIZE, size);
+            b.putInt(BUNDLE_KEY_INFO_BPS, bps);
             msg.setData(b);
             mHandler.sendMessage(msg);
         }
@@ -1140,7 +1282,7 @@ public class MediaActivity extends Activity
         } else {
             // 非UI主线程
             Message msg = mHandler.obtainMessage();
-            msg.what = MSG_UPDATE_USB_DEVICE_CAPACITY;
+            msg.what = MSG_USB_DEVICE_CAPACITY_UPDATE;
             msg.obj = text;
             mHandler.sendMessage(msg);
         }
@@ -1153,7 +1295,7 @@ public class MediaActivity extends Activity
         } else {
             // 非UI主线程
             Message msg = mHandler.obtainMessage();
-            msg.what = MSG_UPDATE_LOCAL_CAPACITY;
+            msg.what = MSG_LOCAL_CAPACITY_UPDATE;
             msg.obj = text;
             mHandler.sendMessage(msg);
         }
@@ -1170,6 +1312,7 @@ public class MediaActivity extends Activity
             flp.height = getResources().getDimensionPixelSize(R.dimen.x1080);
             mVideoPlaySurfaceView.setLayoutParams(flp);
             mPicturePlayView.setLayoutParams(flp);
+            mMaskView.setLayoutParams(flp);
 
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayerPanel.getLayoutParams();
             llp.topMargin = 0;
@@ -1193,6 +1336,7 @@ public class MediaActivity extends Activity
             flp.height = mOriginSurfaceHeight;
             mVideoPlaySurfaceView.setLayoutParams(flp);
             mPicturePlayView.setLayoutParams(flp);
+            mMaskView.setLayoutParams(flp);
             mIsFullScreen = false;
         }
     }
@@ -1211,6 +1355,7 @@ public class MediaActivity extends Activity
         static final int DIRECT_USB_TO_INTERNAL = 1;
         Deque<String> fromList = new ArrayDeque<String>();
         int direct;
+        int count;
         long totalSize;
     }
 
@@ -1221,8 +1366,8 @@ public class MediaActivity extends Activity
 
         public CopyTask() {
             dialog = new ProgressDialog(MediaActivity.this);
-            dialog.setTitle("Copying file");
-            dialog.setMessage("Copying a file to the internal storage, this can take some time!");
+            dialog.setTitle(getResources().getString(R.string.str_media_file_copy_process_dialog_title));
+            dialog.setMessage(getResources().getString(R.string.str_media_file_copy_process_dialog_prompt));
             dialog.setIndeterminate(false);
             dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             dialog.setCancelable(false);
@@ -1244,11 +1389,11 @@ public class MediaActivity extends Activity
                 if (param.direct == CopyTaskParam.DIRECT_USB_TO_INTERNAL) {
                     basePath = Environment.getExternalStorageDirectory().getAbsolutePath()
                             + File.separator + LOCAL_PATH
-                            + File.separator + COPY_TO_INTERNAL_MEDIA_PATH;
+                            + File.separator + USB_IMPORT_FOLDER;
                 } else {
                     basePath = mUsbPartitionSpinner.getSelectedItem().toString()
-                            + File.separator + USB_DEFAULT_MEDIA_PATH
-                            + File.separator + COPY_TO_USB_MEDIA_PATH;
+                            + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER
+                            + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
                 }
 
                 while (!param.fromList.isEmpty()) {
@@ -1266,7 +1411,7 @@ public class MediaActivity extends Activity
                     OutputStream out = new BufferedOutputStream(new FileOutputStream(toFile));
                     InputStream input = new BufferedInputStream(new FileInputStream(fromFile));
 
-                    Log.d(TAG, "Copy file with total length: " + param.totalSize);
+                    Log.i(TAG, "Copy file(s) total length: " + param.totalSize);
 
                     int count;
                     byte[] bytes = new byte[USB_COPY_BUFFER_SIZE];
@@ -1284,11 +1429,13 @@ public class MediaActivity extends Activity
                     if (param.direct == CopyTaskParam.DIRECT_USB_TO_INTERNAL) {
                         // todo 重复文件的处理,直接加上进度后continue
                         Message msg = mHandler.obtainMessage();
-                        msg.what = MSG_UPDATE_LOCAL_MEDIA_LIST;
+                        msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                         Bundle b = new Bundle();
-                        b.putInt("type", getMediaTypeFromPath(sourcePath));
-                        b.putInt("duration", mLocalMediaScanner.getMediaDuration(toFile.getPath()));
-                        b.putString("path", toFile.getPath());
+                        b.putString(BUNDLE_KEY_MEDIA_NAME, prefix);
+                        b.putInt(BUNDLE_KEY_MEDIA_TYPE, getMediaTypeFromPath(sourcePath));
+                        b.putInt(BUNDLE_KEY_MEDIA_DURATION, mLocalMediaScanner.getMediaDuration(toFile.getPath()));
+                        b.putString(BUNDLE_KEY_MEDIA_PATH, toFile.getPath());
+                        b.putLong(BUNDLE_KEY_MEDIA_SIZE, 0L);
                         msg.setData(b);
                         mHandler.sendMessage(msg);
                     }
@@ -1297,18 +1444,19 @@ public class MediaActivity extends Activity
                     input.close();
                 }
             } catch (IOException e) {
-                Log.e(TAG, "error copying!", e);
+                Log.e(TAG, "error in CopyTask!", e);
             }
 
-            Log.d(TAG, "total copy time: " + (System.currentTimeMillis() - time));
+            Log.i(TAG, "total copy time " + (System.currentTimeMillis() - time) + "ms");
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
             dialog.dismiss();
-            // 向外复制,在完成后刷新一次usb列表
+            ToastUtil.showToast(MediaActivity.this,getResources().getString(R.string.str_media_file_copy_toast) + param.count);
             if (param.direct == CopyTaskParam.DIRECT_INTERNAL_TO_USB) {
+                // 向外复制完成后,刷新一次usb列表
                 if (mUsbPartitionAdapter.getCount() > 0) {
                     Message newMsg = mHandler.obtainMessage();
                     newMsg.what = MSG_USB_PARTITION_SWITCH;
@@ -1316,6 +1464,11 @@ public class MediaActivity extends Activity
                     newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
                     mHandler.sendMessage(newMsg);
                 }
+            } else {
+                // 向内复制完成后,让UI与数据库 sync一次
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_LOCAL_MEDIA_DATABASE_UI_SYNC;
+                mHandler.sendMessage(msg);
             }
         }
 
@@ -1331,44 +1484,63 @@ public class MediaActivity extends Activity
     }
 
     private void copyUsbFileToInternal() {
-        //todo 重复文件检测
+        //todo 重复文件检测提示
         CopyTaskParam param = new CopyTaskParam();
         param.direct = CopyTaskParam.DIRECT_USB_TO_INTERNAL;
+        param.count = 0;
         while (!mUsbMediaCopyDeque.isEmpty()) {
             String path = mUsbMediaCopyDeque.pop();
             param.totalSize += FileUtil.getFileSize(path);
             param.fromList.push(path);
+            param.count++;
         }
-        new CopyTask().execute(param);
+
+        if (param.count>0) {
+            new CopyTask().execute(param);
+        }
     }
 
     private void copyInternalFileToUsb() {
-        //todo 重复文件检测
+        //todo 重复文件检测提示
         CopyTaskParam param = new CopyTaskParam();
         param.direct = CopyTaskParam.DIRECT_INTERNAL_TO_USB;
+        param.count = 0;
         while (!mUsbMediaCopyDeque.isEmpty()) {
             String path = mUsbMediaCopyDeque.pop();
             param.totalSize += FileUtil.getFileSize(path);
             param.fromList.push(path);
+            param.count++;
         }
-        new CopyTask().execute(param);
+
+        if (param.count>0) {
+            new CopyTask().execute(param);
+        }
     }
 
     private void deleteInternalMediaFile() {
-        new AlertDialog.Builder(this).setIcon(R.drawable.pullup_icon_big)
-                .setTitle("您是否要删除文件？")
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(this).setIcon(R.drawable.img_media_delete_warning)
+                .setTitle(getResources().getString(R.string.str_media_file_delete_dialog_title))
+                .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
                         while (!mMediaDeleteDeque.isEmpty()) {
                             AllMediaListBean data = mMediaDeleteDeque.pop();
-                            FileUtil.deleteFile(data.getMediaData().getFilePath());
+
+                            //从磁盘删除
+                            FileUtil.deleteFile(data.getMediaData().getPath());
+
+                            // 从列表显示中删除
                             mAllMediaListAdapter.removeItem(data);
+
+                            // 从数据库删除
+                            new MediaBeanDao(MediaActivity.this).delete(data.getMediaData());
+
+                            // todo 从播放列表删除
                         }
                         mAllMediaListAdapter.refresh();
+                        ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + mMediaDeleteDeque.size());
                     }
-                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                }).setNegativeButton(getResources().getString(R.string.str_media_dialog_button_cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
             }
@@ -1377,8 +1549,8 @@ public class MediaActivity extends Activity
 
     private void showInfo() {
         new AlertDialog.Builder(this)
-                .setTitle("我的listview")
-                .setMessage("介绍...")
+                .setTitle("test")
+                .setMessage("...")
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

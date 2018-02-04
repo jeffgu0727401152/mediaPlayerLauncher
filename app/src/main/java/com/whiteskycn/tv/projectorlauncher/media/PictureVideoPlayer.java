@@ -4,19 +4,17 @@ import android.app.Activity;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.ExifInterface;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.media.Metadata;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
-import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
+import com.whiteskycn.tv.projectorlauncher.R;
+import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
@@ -36,9 +34,10 @@ import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.Media
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_UNKNOWN;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.utils.FileUtil.getFileSize;
 
 /**
@@ -47,6 +46,11 @@ import static com.whiteskycn.tv.projectorlauncher.utils.FileUtil.getFileSize;
 
 public class PictureVideoPlayer {
     private final String TAG = this.getClass().getSimpleName();
+
+    public static final int MEDIA_SCALE_16_9 = 0;
+    public static final int MEDIA_SCALE_4_3 = 1;
+    public static final int MEDIA_SCALE_1_1 = 2;
+
     private final int mUpdateSeekBarThreadSleep_ms = 300;
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
 
@@ -151,22 +155,21 @@ public class PictureVideoPlayer {
     }
 
     // 媒体播放控制
-    public void mediaPreview(RawMediaBean mPreviewItem)
+    public void mediaPreview(MediaBean mPreviewItem)
     {
-        // 获取视频文件地址
         String path="";
         int type = MEDIA_UNKNOWN;
-        int time = PICTURE_DEFAULT_PLAY_DURATION_MS; //播放图片用
+        int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
         if (mPreviewItem!=null)
         {
-            path = mPreviewItem.getFilePath();
+            path = mPreviewItem.getPath();
             type = mPreviewItem.getType();
             time = mPreviewItem.getDuration();
         }
 
         if (path.isEmpty())
         {
-            ToastUtil.showToast(mAttachActivity, "preview item is null!");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_path_error);
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -205,24 +208,33 @@ public class PictureVideoPlayer {
 
     public void mediaPlay(int position)
     {
-        // 获取视频文件地址
         String path="";
         int type = MEDIA_UNKNOWN;
-        int time = PICTURE_DEFAULT_PLAY_DURATION_MS; //播放图片用
+        int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
+        int scale = MEDIA_SCALE_16_9;
         if(position!=INVALID_POSITION && position<mPlayList.size())
         {
-            RawMediaBean fileBean = mPlayList.get(position).getMediaData();
+            MediaBean fileBean = mPlayList.get(position).getMediaData();
             if (fileBean!=null)
             {
-                path = fileBean.getFilePath();
+                path = fileBean.getPath();
                 type = fileBean.getType();
-                time = mPlayList.get(position).getDuration();
+                time = fileBean.getDuration();
+                scale =  mPlayList.get(position).getPlayScale();
             }
+        } else {
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_list_empty);
+            mPlayState = MEDIA_IDLE;
+            if (mOnMediaEventListener!=null)
+            {
+                mOnMediaEventListener.onMediaPlayError();
+            }
+            return;
         }
 
         if (path.isEmpty())
         {
-            ToastUtil.showToast(mAttachActivity, "play list is null!");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_path_error);
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -233,15 +245,16 @@ public class PictureVideoPlayer {
 
         mIsPreview = false;
         mPlayPosition = position;
-        ToastUtil.showToast(mAttachActivity, "play path="+path + ": pos="+position);
+
+        //ToastUtil.showToast(mAttachActivity, "play path=" + path + ", pos=" + position);
 
         switch (type)
         {
             case MEDIA_VIDEO:
-                videoPlay(path);
+                videoPlay(path, scale);
                 break;
             case MEDIA_PICTURE:
-                picturePlay(path, time);
+                picturePlay(path, time, scale);
                 break;
             default:
                 break;
@@ -357,12 +370,20 @@ public class PictureVideoPlayer {
         }
     }
 
-    private void videoPlay(String path) {
+    private void videoPlay(String path)
+    {
+        videoPlay(path, MEDIA_SCALE_16_9);
+    }
+
+    private void videoPlay(String path, int scale) {
         mPictureView.setVisibility(View.INVISIBLE);
         mSurfaceView.setVisibility(View.VISIBLE);
+
+        // todo 根据scale调整surfaceview尺寸
+
         File file = new File(path);
         if (!file.exists()) {
-            ToastUtil.showToast(mAttachActivity, "视频文件路径错误");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_path_error);
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -407,13 +428,13 @@ public class PictureVideoPlayer {
                         Integer.parseInt(bitRate));
             }
 
-            Log.i(TAG,"video file prepare...");
+            Log.i(TAG,"media file prepare...");
             mMediaPlayer.prepareAsync();
 
             mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    Log.i(TAG, "装载完成");
+                    Log.i(TAG, "media file prepare done");
                     // 按照初始位置播放
                     mPlayState = MEDIA_PLAY_VIDEO;
                     mMediaPlayer.seekTo(0);
@@ -440,7 +461,7 @@ public class PictureVideoPlayer {
                                         sleep(mUpdateSeekBarThreadSleep_ms);
                                     }
                                 } catch (Exception e) {
-                                    Log.e(TAG, "error mSeekBarUpdateService execute!", e);
+                                    Log.e(TAG, "error in mSeekBarUpdateService execute!", e);
                                 }
                             }
                         });
@@ -491,7 +512,7 @@ public class PictureVideoPlayer {
         if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
             mPlayState = MEDIA_PAUSE_VIDEO;
-            ToastUtil.showToast(mAttachActivity, "暂停播放");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_pause);
         }
     }
 
@@ -499,7 +520,7 @@ public class PictureVideoPlayer {
         if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
             mPlayState = MEDIA_PLAY_VIDEO;
-            ToastUtil.showToast(mAttachActivity, "继续播放");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_resume);
         }
     }
 
@@ -512,9 +533,14 @@ public class PictureVideoPlayer {
 
     private void picturePlay(String path, int duration)
     {
+        picturePlay(path, duration, MEDIA_SCALE_16_9);
+    }
+
+    private void picturePlay(String path, int duration, int scale)
+    {
         File file = new File(path);
         if (!file.exists()) {
-            ToastUtil.showToast(mAttachActivity, "图片文件路径错误");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_path_error);
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -531,7 +557,7 @@ public class PictureVideoPlayer {
         BitmapFactory.decodeFile(path, options);
         String mimeType = options.outMimeType;
         if (TextUtils.isEmpty(mimeType)) {
-            mimeType = "unknown";
+            mimeType = "image/unknown";
         }
         long size = getFileSize(file);
 
@@ -544,8 +570,26 @@ public class PictureVideoPlayer {
 
         final int playDuration = duration;
         mPlayState = MEDIA_PLAY_PICTURE;
-        mPictureView.setBackground(Drawable.createFromPath(path));
+
+        switch(scale)
+        {
+            case MEDIA_SCALE_16_9:
+                mPictureView.setScaleType(ImageView.ScaleType.FIT_XY);
+                break;
+            case MEDIA_SCALE_4_3:
+                mPictureView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                break;
+            case MEDIA_SCALE_1_1:
+                mPictureView.setScaleType(ImageView.ScaleType.CENTER);
+                break;
+            default:
+                mPictureView.setScaleType(ImageView.ScaleType.FIT_XY);
+                break;
+        }
+
 // todo 使用bitmap factory加载后设置长宽比
+
+        mPictureView.setImageDrawable(Drawable.createFromPath(path));
 
         if(mOnMediaEventListener !=null)
         {
@@ -599,7 +643,7 @@ public class PictureVideoPlayer {
         if (!mIsPicturePause) {
             mIsPicturePause = true;
             mPlayState = MEDIA_PAUSE_PICTURE;
-            ToastUtil.showToast(mAttachActivity, "暂停播放");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_pause);
         }
     }
 
@@ -609,7 +653,7 @@ public class PictureVideoPlayer {
         {
             mPlayState = MEDIA_PLAY_PICTURE;
             mIsPicturePause = false;
-            ToastUtil.showToast(mAttachActivity, "继续播放");
+            ToastUtil.showToast(mAttachActivity, R.string.str_media_play_resume);
         }
     }
 

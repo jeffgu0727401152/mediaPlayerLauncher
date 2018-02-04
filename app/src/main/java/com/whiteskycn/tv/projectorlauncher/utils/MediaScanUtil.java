@@ -7,7 +7,7 @@ package com.whiteskycn.tv.projectorlauncher.utils;
 import android.media.MediaPlayer;
 import android.util.Log;
 
-import com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean;
+import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 
 
 public class MediaScanUtil {
@@ -48,6 +48,10 @@ public class MediaScanUtil {
 
         if (!folder.exists()) {
             Log.i(TAG,"path not exist!");
+            if (mMediaFileScanListener!=null)
+            {
+                mMediaFileScanListener.onMediaScanDone();
+            }
             return;
         }
         new Thread(new Runnable() {
@@ -174,13 +178,13 @@ public class MediaScanUtil {
 
         if (isVideo(ext))
         {
-            return RawMediaBean.MEDIA_VIDEO;
+            return MediaBean.MEDIA_VIDEO;
         } else if (isPicture(ext)) {
-            return RawMediaBean.MEDIA_PICTURE;
+            return MediaBean.MEDIA_PICTURE;
         } else if (isMusic(ext)){
-            return RawMediaBean.MEDIA_MUSIC;
+            return MediaBean.MEDIA_MUSIC;
         } else {
-            return RawMediaBean.MEDIA_UNKNOWN;
+            return MediaBean.MEDIA_UNKNOWN;
         }
     }
 
@@ -266,12 +270,12 @@ public class MediaScanUtil {
 
         switch(getMediaTypeFromPath(path))
         {
-            case RawMediaBean.MEDIA_PICTURE:
-            case RawMediaBean.MEDIA_UNKNOWN:
+            case MediaBean.MEDIA_PICTURE:
+            case MediaBean.MEDIA_UNKNOWN:
                 return PICTURE_DEFAULT_PLAY_DURATION_MS;
 
-            case RawMediaBean.MEDIA_VIDEO:
-            case RawMediaBean.MEDIA_MUSIC:
+            case MediaBean.MEDIA_VIDEO:
+            case MediaBean.MEDIA_MUSIC:
                 break;
 
             default:

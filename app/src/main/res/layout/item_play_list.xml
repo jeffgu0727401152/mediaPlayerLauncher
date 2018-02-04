@@ -34,7 +34,7 @@
         android:scaleType="fitXY" />
 
     <TextView
-        android:id="@+id/tv_media_name"
+        android:id="@+id/tv_media_title"
         android:layout_width="@dimen/x200"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -77,30 +77,28 @@
         android:background="@drawable/selector_media_duration_add"
         android:visibility="invisible"/>
 
-    <TextView
-        android:id="@+id/tv_media_scale"
-        android:layout_width="@dimen/x60"
+    <Spinner
+        android:id="@+id/sp_media_scale"
+        android:layout_width="@dimen/x100"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
-        android:layout_marginLeft="@dimen/x40"
-        android:textAlignment="inherit"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        android:text = "16:9"/>
+        android:popupBackground="@drawable/spinner_drawable"/>
 
     <TextView
         android:id="@+id/tv_media_state"
         android:layout_width="@dimen/x120"
         android:layout_height="wrap_content"
         android:layout_gravity="left|center_vertical"
-        android:layout_marginLeft="@dimen/x40"
+        android:layout_marginLeft="@dimen/x30"
         android:textAlignment="inherit"
         android:textColor="@color/white"
         android:textSize="12sp"
         android:textStyle="italic"
         android:singleLine="true"
         android:ellipsize="middle"
-        android:text="下载中" />
+        android:text="下载中"
+        android:visibility="invisible"/>
 
     <Button
         android:id="@+id/bt_media_remove"

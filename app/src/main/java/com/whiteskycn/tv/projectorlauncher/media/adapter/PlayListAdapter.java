@@ -1,8 +1,12 @@
 package com.whiteskycn.tv.projectorlauncher.media.adapter;
 
 import android.content.Context;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -21,9 +25,9 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_MUSIC;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_PICTURE;
-import static com.whiteskycn.tv.projectorlauncher.media.bean.RawMediaBean.MEDIA_VIDEO;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
+import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 
 /**
  * Created by jeff on 18-1-16.
@@ -41,11 +45,11 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
     @Override
     public void convert(ViewHolder holder, final int position, PlayListBean item) {
-        holder.setText(R.id.tv_media_name, item.getTitle());
+        holder.setText(R.id.tv_media_title, item.getMediaData().getTitle());
 
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-        String hms = formatter.format(item.getDuration());
+        String hms = formatter.format(item.getMediaData().getDuration());
         holder.setText(R.id.tv_media_duration, hms);
 
         switch (item.getMediaData().getType())
@@ -68,7 +72,27 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 break;
         }
 
+        // 歌曲播放位置指示
         holder.getImageView(R.id.iv_media_play_indicator).setVisibility(item.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+
+        //scale选择spinner
+        ArrayAdapter adapter = new ArrayAdapter<String>(mContext, R.layout.item_media_play_scale_spinner, R.id.tv_media_play_scale_idx);
+        adapter.add("16:9");
+        adapter.add("4:3");
+        adapter.add("1:1");
+        ((Spinner) holder.getView(R.id.sp_media_scale)).setAdapter(adapter);
+        ((Spinner) holder.getView(R.id.sp_media_scale)).setSelection(item.getPlayScale());
+        ((Spinner) holder.getView(R.id.sp_media_scale)).setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
+                getItem(position).setPlayScale(pos);
+                saveToConfig();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> arg0) {
+            }
+        });
 
         holder.getButton(R.id.bt_media_remove).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,8 +108,8 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist add time");
-                int duration = getItem(position).getDuration();
-                getItem(position).setDuration(duration + 5000);
+                int duration = getItem(position).getMediaData().getDuration();
+                getItem(position).getMediaData().setDuration(duration + 5000);
                 saveToConfig();
                 refresh();
             }
@@ -95,9 +119,9 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist minus time" + position);
-                int duration = getItem(position).getDuration();
+                int duration = getItem(position).getMediaData().getDuration();
                 if (duration > 10000) {
-                    getItem(position).setDuration(duration - 5000);
+                    getItem(position).getMediaData().setDuration(duration - 5000);
                 }
                 saveToConfig();
                 refresh();
