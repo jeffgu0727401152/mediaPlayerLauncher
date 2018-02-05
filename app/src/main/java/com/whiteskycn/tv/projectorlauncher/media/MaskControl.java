@@ -1,5 +1,6 @@
 package com.whiteskycn.tv.projectorlauncher.media;
 
+import android.app.Activity;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -19,23 +20,26 @@ public class MaskControl {
 
     private ImageView maskArea;
     private int maskState;
+    private Activity mAttachActivity;
 
-    public MaskControl(ImageView mask) {
+    public MaskControl(Activity attach, ImageView mask) {
         maskArea = mask;
+        maskArea.setScaleType(ImageView.ScaleType.FIT_XY);
+        mAttachActivity = attach;
         maskState = SCREEN_MASK_MODE_NONE;
         hide();
     }
 
     public void showNet()
     {
-        maskArea.setBackgroundResource(R.drawable.img_media_net_mask);
+        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.img_media_net_mask));
         maskArea.setVisibility(View.VISIBLE);
         maskState = SCREEN_MASK_MODE_NET;
     }
 
     public void showGray()
     {
-        maskArea.setBackgroundResource(R.drawable.img_media_gray_mask);
+        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.img_media_gray_mask3));
         maskArea.setVisibility(View.VISIBLE);
         maskState = SCREEN_MASK_MODE_GRAY;
     }

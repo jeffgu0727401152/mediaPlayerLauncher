@@ -367,10 +367,15 @@ public class MediaActivity extends Activity
 
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_USB_PARTITION_SWITCH;
+                msg.arg1 = AdapterView.INVALID_POSITION;
+                msg.obj = "none";
+                mHandler.sendMessage(msg);
             }
         });
 
-        mMaskArea = new MaskControl(mMaskView);
+        mMaskArea = new MaskControl(this,mMaskView);
 
         mPlayer = new PictureVideoPlayer(this, mVideoPlaySurfaceView, mPicturePlayView, mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
@@ -422,11 +427,6 @@ public class MediaActivity extends Activity
             public void itemSelectedChange() {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_LIST_SELECTED_CHANGE;
-                if (mAllMediaListAdapter.hasItemSelected()) {
-                    msg.arg1 = 1;
-                } else {
-                    msg.arg1 = 0;
-                }
                 mHandler.sendMessage(msg);
             }
         });
@@ -711,6 +711,26 @@ public class MediaActivity extends Activity
 
     }
 
+    private void updateMultiActionButtonState()
+    {
+        if (mAllMediaListAdapter.hasItemSelected()) {
+            // 额外需要检查是否存在usb设备
+            if (mUsbPartitionSpinner.getSelectedItemPosition()!=AdapterView.INVALID_POSITION) {
+                mMediaMultiCopyToRightBtn.setEnabled(true);
+            } else {
+                mMediaMultiCopyToRightBtn.setEnabled(false);
+            }
+            mMediaMultiAddToPlayListBtn.setEnabled(true);
+            mMediaMultiDeleteBtn.setEnabled(true);
+            mMediaMultiDownloadBtn.setEnabled(true);
+        } else {
+            mMediaMultiCopyToRightBtn.setEnabled(false);
+            mMediaMultiAddToPlayListBtn.setEnabled(false);
+            mMediaMultiDeleteBtn.setEnabled(false);
+            mMediaMultiDownloadBtn.setEnabled(false);
+        }
+    }
+
     private void loadPersistData() {
         // 加载播放模式,如果没有配置,则默认为全部循环
         SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
@@ -724,18 +744,7 @@ public class MediaActivity extends Activity
 
         mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
 
-        if (mAllMediaListAdapter.hasItemSelected()) {
-            mMediaMultiCopyToRightBtn.setEnabled(true);
-            mMediaMultiAddToPlayListBtn.setEnabled(true);
-            mMediaMultiDeleteBtn.setEnabled(true);
-            mMediaMultiDownloadBtn.setEnabled(true);
-        } else {
-            mMediaMultiCopyToRightBtn.setEnabled(false);
-            mMediaMultiAddToPlayListBtn.setEnabled(false);
-            mMediaMultiDeleteBtn.setEnabled(false);
-            mMediaMultiDownloadBtn.setEnabled(false);
-        }
-
+        updateMultiActionButtonState();
         // 初始化本地媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
@@ -758,31 +767,40 @@ public class MediaActivity extends Activity
             switch (msg.what) {
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
-                    //先remove后add,防止插入两个一样的
-                    mUsbPartitionAdapter.remove(storagePath);
-                    mUsbPartitionAdapter.add(storagePath);
-                    mUsbPartitionAdapter.notifyDataSetChanged();
-                    // 主动选择最后一个插上的设备,由这个操作触发onItemSelect,进而send MSG_USB_PARTITION_SWITCH
-                    mUsbPartitionSpinner.setSelection(mUsbPartitionAdapter.getCount()-1,true);
+                    discoverUsbMountDevice();
                     break;
 
                 case MSG_USB_PLUG_OUT:
+                    String currentSelect = "";
+                    if (mUsbPartitionSpinner.getSelectedItem()!=null) {
+                        currentSelect = mUsbPartitionSpinner.getSelectedItem().toString();
+                    }
+
                     discoverUsbMountDevice();
-                    if (mUsbPartitionAdapter.getCount() == 0) {
-                        Message newMsg = mHandler.obtainMessage();
-                        newMsg.what = MSG_USB_PARTITION_SWITCH;
-                        newMsg.arg1 = -1;
-                        newMsg.obj = "none";
-                        mHandler.sendMessage(newMsg);
+
+                    if (mUsbPartitionSpinner.getSelectedItem()!=null) {
+                        if (!currentSelect.equals(mUsbPartitionSpinner.getSelectedItem().toString()))
+                        {
+                            msg = mHandler.obtainMessage();
+                            msg.what = MSG_USB_PARTITION_SWITCH;
+                            msg.arg1 = mUsbPartitionSpinner.getSelectedItemPosition();
+                            msg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
+                            mHandler.sendMessage(msg);
+                        }
                     }
                     break;
 
                 case MSG_USB_PARTITION_SWITCH:
+                    // 处理 用户选择usb设备 或 插拔事件导致usb设备选择改变
                     // 首先将容量信息消除,等待线程查询成功后再发消息更新
                     mUsbCapacityTextView.setText(getResources().getString(R.string.str_media_wait_capacity));
 
-                    if (msg.arg1 < mUsbPartitionAdapter.getCount() && msg.arg1 >= 0) {
-
+                    if (msg.arg1 == AdapterView.INVALID_POSITION) {
+                        // 没有usb设备了
+                        // mUsbListTitle.setText("无USB设备");
+                        mUsbMediaListAdapter.clear();
+                        mUsbMediaListAdapter.refresh();
+                    } else if (msg.arg1 < mUsbPartitionAdapter.getCount()) {
                         final String currentPath = (String) msg.obj;
                         //mUsbListTitle.setText(currentPath);
 
@@ -791,13 +809,8 @@ public class MediaActivity extends Activity
 
                         // 由扫描来更新usb media列表
                         mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
-
-                    } else if (msg.arg1 == -1) {
-
-                        //mUsbListTitle.setText("无USB设备");
-                        mUsbMediaListAdapter.clear();
-                        mUsbMediaListAdapter.refresh();
                     }
+                    updateMultiActionButtonState();
                     break;
 
                 case MSG_USB_DEVICE_CAPACITY_SET:
@@ -876,17 +889,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_SELECTED_CHANGE:
-                    if (msg.arg1==1) {
-                        mMediaMultiCopyToRightBtn.setEnabled(true);
-                        mMediaMultiAddToPlayListBtn.setEnabled(true);
-                        mMediaMultiDeleteBtn.setEnabled(true);
-                        mMediaMultiDownloadBtn.setEnabled(true);
-                    } else {
-                        mMediaMultiCopyToRightBtn.setEnabled(false);
-                        mMediaMultiAddToPlayListBtn.setEnabled(false);
-                        mMediaMultiDeleteBtn.setEnabled(false);
-                        mMediaMultiDownloadBtn.setEnabled(false);
-                    }
+                    updateMultiActionButtonState();
                     break;
 
 
@@ -914,18 +917,7 @@ public class MediaActivity extends Activity
                         Log.d(TAG,m.toString());
                     }
                     mAllMediaListAdapter.refresh();
-
-                    if (mAllMediaListAdapter.hasItemSelected()) {
-                        mMediaMultiCopyToRightBtn.setEnabled(true);
-                        mMediaMultiAddToPlayListBtn.setEnabled(true);
-                        mMediaMultiDeleteBtn.setEnabled(true);
-                        mMediaMultiDownloadBtn.setEnabled(true);
-                    } else {
-                        mMediaMultiCopyToRightBtn.setEnabled(false);
-                        mMediaMultiAddToPlayListBtn.setEnabled(false);
-                        mMediaMultiDeleteBtn.setEnabled(false);
-                        mMediaMultiDownloadBtn.setEnabled(false);
-                    }
+                    updateMultiActionButtonState();
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
@@ -1005,20 +997,8 @@ public class MediaActivity extends Activity
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     data.setSelected(mAllMediaListCheckBox.isChecked());
                 }
-
-                if (mAllMediaListAdapter.hasItemSelected()) {
-                    mMediaMultiCopyToRightBtn.setEnabled(true);
-                    mMediaMultiAddToPlayListBtn.setEnabled(true);
-                    mMediaMultiDeleteBtn.setEnabled(true);
-                    mMediaMultiDownloadBtn.setEnabled(true);
-                } else {
-                    mMediaMultiCopyToRightBtn.setEnabled(false);
-                    mMediaMultiAddToPlayListBtn.setEnabled(false);
-                    mMediaMultiDeleteBtn.setEnabled(false);
-                    mMediaMultiDownloadBtn.setEnabled(false);
-                }
-
                 mAllMediaListAdapter.refresh();
+                updateMultiActionButtonState();
                 break;
 
             case R.id.cb_media_usb_list_check:
@@ -1384,10 +1364,13 @@ public class MediaActivity extends Activity
 
                 String basePath;
                 if (param.direct == CopyTaskParam.DIRECT_USB_TO_INTERNAL) {
-                    basePath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                            + File.separator + LOCAL_PATH
-                            + File.separator + USB_IMPORT_FOLDER;
+                    basePath = LOCAL_PATH + File.separator + USB_IMPORT_FOLDER;
                 } else {
+                    if (mUsbPartitionSpinner.getSelectedItem()==null)
+                    {
+                        // u盘被拔,直接抛异常
+                        throw new IOException();
+                    }
                     basePath = mUsbPartitionSpinner.getSelectedItem().toString()
                             + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER
                             + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
@@ -1458,7 +1441,13 @@ public class MediaActivity extends Activity
                     Message newMsg = mHandler.obtainMessage();
                     newMsg.what = MSG_USB_PARTITION_SWITCH;
                     newMsg.arg1 = mUsbPartitionSpinner.getSelectedItemPosition();
-                    newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
+
+                    if (mUsbPartitionSpinner.getSelectedItem()==null) {
+                        newMsg.obj = "none";
+                    } else {
+                        newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
+                    }
+
                     mHandler.sendMessage(newMsg);
                 }
             } else {
@@ -1509,6 +1498,12 @@ public class MediaActivity extends Activity
             param.totalSize += FileUtil.getFileSize(path);
             param.fromList.push(path);
             param.count++;
+        }
+
+        // 此处检查判断是否存在usb设备
+        if (mUsbPartitionSpinner.getSelectedItemPosition()==AdapterView.INVALID_POSITION) {
+            Log.e(TAG,"no usb device to copy to!");
+            return;
         }
 
         if (param.count>0) {
