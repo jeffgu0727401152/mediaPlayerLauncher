@@ -88,8 +88,8 @@ public class MediaActivity extends Activity
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
     private final int MSG_USB_PARTITION_SWITCH = 2;
-    private final int MSG_USB_DEVICE_CAPACITY_UPDATE = 3;
-    private final int MSG_LOCAL_CAPACITY_UPDATE = 4;
+    private final int MSG_USB_DEVICE_CAPACITY_SET = 3;
+    private final int MSG_LOCAL_CAPACITY_SET = 4;
 
     private final int MSG_LOCAL_MEDIA_DATABASE_UPDATE = 10;
     private final int MSG_LOCAL_MEDIA_LIST_CLEAN = 11;
@@ -150,7 +150,8 @@ public class MediaActivity extends Activity
 
     private SurfaceView mVideoPlaySurfaceView;
     private ImageView mPicturePlayView;
-    private ImageView mMaskView; //todo mask
+    private MaskControl mMaskArea;
+    private ImageView mMaskView;
 
     private Button mNetViewBtn;
     private Button mGrayViewBtn;
@@ -221,8 +222,7 @@ public class MediaActivity extends Activity
 
     private TextView mUsbCapacityTextView;
     private TextView mLocalCapacityTextView;
-    ExecutorService mUsbCapacityUpdateService;          //专门用于更新U盘容量的线程
-    ExecutorService mLocalCapacityUpdateService;        //专门用于更新本地硬盘容量的线程
+    ExecutorService mCapacityUpdateService;          //用于更新容量的线程
 
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;
@@ -370,11 +370,12 @@ public class MediaActivity extends Activity
             }
         });
 
+        mMaskArea = new MaskControl(mMaskView);
+
         mPlayer = new PictureVideoPlayer(this, mVideoPlaySurfaceView, mPicturePlayView, mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
 
-        mUsbCapacityUpdateService = Executors.newSingleThreadExecutor();
-        mLocalCapacityUpdateService = Executors.newSingleThreadExecutor();
+        mCapacityUpdateService = Executors.newSingleThreadExecutor();
 
         // 保存原始的布局位置,最大化后最小化的时候需要用
         mIsFullScreen = false;
@@ -651,21 +652,8 @@ public class MediaActivity extends Activity
         // 主动枚举一次usb设备加入usb spinner中
         discoverUsbMountDevice();
 
-        // 开线程去查询容量
-        mLocalCapacityUpdateService.execute(
-                new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(LOCAL_PATH) -
-                                    FileUtil.getAvailableCapacity(LOCAL_PATH));
-                            String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(LOCAL_PATH));
-                            updateLocalCapacity(fsUsed + "/" + fsCapacity);
-                        } catch (Exception e) {
-                            Log.e(TAG, "error in mLocalCapacityUpdateService!" + e);
-                        }
-                    }
-                });
+        // 开线程去查询本地容量
+        updateCapacity(true,LOCAL_PATH);
     }
 
     private void initView() {
@@ -774,22 +762,13 @@ public class MediaActivity extends Activity
                     mUsbPartitionAdapter.remove(storagePath);
                     mUsbPartitionAdapter.add(storagePath);
                     mUsbPartitionAdapter.notifyDataSetChanged();
-                    //如果spinner中的内容从无到有,spinner会自己调一次onItemSelect
-                    // 回调中我们send MSG_USB_PARTITION_SWITCH
+                    // 主动选择最后一个插上的设备,由这个操作触发onItemSelect,进而send MSG_USB_PARTITION_SWITCH
+                    mUsbPartitionSpinner.setSelection(mUsbPartitionAdapter.getCount()-1,true);
                     break;
 
                 case MSG_USB_PLUG_OUT:
-                    storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
-                    mUsbPartitionAdapter.remove(storagePath);
-                    mUsbPartitionAdapter.notifyDataSetChanged();
-
-                    if (mUsbPartitionAdapter.getCount() > 0) {
-                        Message newMsg = mHandler.obtainMessage();
-                        newMsg.what = MSG_USB_PARTITION_SWITCH;
-                        newMsg.arg1 = mUsbPartitionSpinner.getSelectedItemPosition();
-                        newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
-                        mHandler.sendMessage(newMsg);
-                    } else {
+                    discoverUsbMountDevice();
+                    if (mUsbPartitionAdapter.getCount() == 0) {
                         Message newMsg = mHandler.obtainMessage();
                         newMsg.what = MSG_USB_PARTITION_SWITCH;
                         newMsg.arg1 = -1;
@@ -807,21 +786,8 @@ public class MediaActivity extends Activity
                         final String currentPath = (String) msg.obj;
                         //mUsbListTitle.setText(currentPath);
 
-                        // 开线程去查询容量
-                        mUsbCapacityUpdateService.execute(
-                                new Thread() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(currentPath) -
-                                                    FileUtil.getAvailableCapacity(currentPath));
-                                            String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(currentPath));
-                                            updateUsbDeviceCapacity(fsUsed + "/" + fsCapacity);
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "mUsbCapacityUpdateService error!" + e);
-                                        }
-                                    }
-                                });
+                        // 开线程去查询currentPath容量
+                        updateCapacity(false,currentPath);
 
                         // 由扫描来更新usb media列表
                         mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
@@ -834,11 +800,11 @@ public class MediaActivity extends Activity
                     }
                     break;
 
-                case MSG_USB_DEVICE_CAPACITY_UPDATE:
+                case MSG_USB_DEVICE_CAPACITY_SET:
                     mUsbCapacityTextView.setText((String) msg.obj);
                     break;
 
-                case MSG_LOCAL_CAPACITY_UPDATE:
+                case MSG_LOCAL_CAPACITY_SET:
                     mLocalCapacityTextView.setText((String) msg.obj);
                     break;
 
@@ -1016,16 +982,19 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.btn_media_netView:
-                mMaskView.setBackgroundResource(R.drawable.img_media_net_mask);
-                if (mMaskView.getVisibility()==View.INVISIBLE) {
-                    mMaskView.setVisibility(View.VISIBLE);
+                if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_NET) {
+                    mMaskArea.showNet();
                 } else {
-                    mMaskView.setVisibility(View.INVISIBLE);
+                    mMaskArea.hide();
                 }
                 break;
 
             case R.id.btn_media_grayView:
-                // todo
+                if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY) {
+                    mMaskArea.showGray();
+                } else {
+                    mMaskArea.hide();
+                }
                 break;
 
             case R.id.bt_media_all_list_refresh:
@@ -1140,10 +1109,13 @@ public class MediaActivity extends Activity
             mPlayer = null;
         }
 
-        if (mUsbCapacityUpdateService != null) {
-            mUsbCapacityUpdateService.shutdown();
-            mUsbCapacityUpdateService = null;
+        if (mCapacityUpdateService != null) {
+            mCapacityUpdateService.shutdown();
+            mCapacityUpdateService = null;
         }
+
+        mLocalMediaScanner.release();
+        mUsbMediaScanner.release();
 
         unregisterReceiver(usbReceiver);
         super.onDestroy();
@@ -1152,7 +1124,7 @@ public class MediaActivity extends Activity
     @Override
     public void onBackPressed() {
         if (mIsFullScreen) {
-            new AlertDialog.Builder(this).setIcon(R.drawable.img_media_delete_warning)
+            new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
                     .setTitle(getResources().getString(R.string.str_media_full_screen_quite))
                     .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
                         @Override
@@ -1215,14 +1187,6 @@ public class MediaActivity extends Activity
         }
     };
 
-    //只能在主线程调用
-    private void setTimeTextView(TextView tv, int milliseconds) {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-        formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-        String hms = formatter.format(milliseconds);
-        tv.setText(hms);
-    }
-
     private void setMediaInfoUI(String name,String mimeType, int width, int height, long size, int bps) {
         if (Looper.myLooper() == Looper.getMainLooper()) { // UI主线程
             mMediaInfoNameTextView.setText(name);
@@ -1249,8 +1213,17 @@ public class MediaActivity extends Activity
         }
     }
 
+    //只能在主线程调用
+    private void setTimeTextView(TextView tv, int milliseconds) {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+        formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
+        String hms = formatter.format(milliseconds);
+        tv.setText(hms);
+    }
+
     private void setMediaDurationTimeUI(int milliseconds) {
-        if (Looper.myLooper() == Looper.getMainLooper()) { // UI主线程
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            // UI主线程
             setTimeTextView(mMediaDurationTimeTextView, milliseconds);
             mPlayProgressSeekBar.setMax(milliseconds);
         } else { // 非UI主线程
@@ -1275,30 +1248,52 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void updateUsbDeviceCapacity(String text) {
+    private void setUsbDeviceCapacity(String text) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             // UI主线程
             mUsbCapacityTextView.setText(text);
         } else {
             // 非UI主线程
             Message msg = mHandler.obtainMessage();
-            msg.what = MSG_USB_DEVICE_CAPACITY_UPDATE;
+            msg.what = MSG_USB_DEVICE_CAPACITY_SET;
             msg.obj = text;
             mHandler.sendMessage(msg);
         }
     }
 
-    private void updateLocalCapacity(String text) {
+    private void setLocalCapacity(String text) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             // UI主线程
             mLocalCapacityTextView.setText(text);
         } else {
             // 非UI主线程
             Message msg = mHandler.obtainMessage();
-            msg.what = MSG_LOCAL_CAPACITY_UPDATE;
+            msg.what = MSG_LOCAL_CAPACITY_SET;
             msg.obj = text;
             mHandler.sendMessage(msg);
         }
+    }
+
+    private void updateCapacity(final boolean internal, final String path)
+    {
+        mCapacityUpdateService.execute(
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path) -
+                                    FileUtil.getAvailableCapacity(path));
+                            String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path));
+                            if (internal){
+                                setLocalCapacity(fsUsed + "/" + fsCapacity);
+                            } else {
+                                setUsbDeviceCapacity(fsUsed + "/" + fsCapacity);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "mCapacityUpdateService error!" + e);
+                        }
+                    }
+                });
     }
 
     private void fullScreenDisplaySwitch() {
@@ -1342,12 +1337,14 @@ public class MediaActivity extends Activity
     }
 
     private void discoverUsbMountDevice() {
+        mUsbPartitionAdapter.clear();
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
             if (!FileUtil.contains(mMountExceptList, s)) {
                 mUsbPartitionAdapter.add(s);
             }
         }
+        mUsbPartitionAdapter.notifyDataSetChanged();
     }
 
     private class CopyTaskParam {
@@ -1469,6 +1466,8 @@ public class MediaActivity extends Activity
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_LOCAL_MEDIA_DATABASE_UI_SYNC;
                 mHandler.sendMessage(msg);
+
+                updateCapacity(true,LOCAL_PATH);
             }
         }
 
@@ -1518,7 +1517,7 @@ public class MediaActivity extends Activity
     }
 
     private void deleteInternalMediaFile() {
-        new AlertDialog.Builder(this).setIcon(R.drawable.img_media_delete_warning)
+        new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
                 .setTitle(getResources().getString(R.string.str_media_file_delete_dialog_title))
                 .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
                     @Override
@@ -1537,6 +1536,8 @@ public class MediaActivity extends Activity
 
                             // todo 从播放列表删除
                         }
+
+                        updateCapacity(true,LOCAL_PATH);
                         mAllMediaListAdapter.refresh();
                         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + mMediaDeleteDeque.size());
                     }

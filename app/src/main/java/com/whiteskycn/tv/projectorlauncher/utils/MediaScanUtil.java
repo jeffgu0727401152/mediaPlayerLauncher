@@ -11,6 +11,8 @@ import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,17 +27,34 @@ public class MediaScanUtil {
 
     private MediaPlayer mp;
     private MediaFileScanListener mMediaFileScanListener;
+    ExecutorService mBackgroundService;         // 保证单线程
     private boolean isNeedDuration = false;
     private boolean isNeedSize = false;
 
     public MediaScanUtil() {
         mMediaFileScanListener = null;
         mp = new MediaPlayer();
+        mBackgroundService = Executors.newSingleThreadExecutor();
     }
 
     public MediaScanUtil(MediaFileScanListener mediaFileScanListener) {
         this.mMediaFileScanListener = mediaFileScanListener;
         mp = new MediaPlayer();
+        mBackgroundService = Executors.newSingleThreadExecutor();
+    }
+
+    public void release()
+    {
+        if (mBackgroundService != null) {
+            mBackgroundService.shutdown();
+            mBackgroundService = null;
+        }
+
+        if (mp != null) {
+            mp.stop();
+            mp.release();
+            mp = null;
+        }
     }
 
     public void safeScanning(String path) {
@@ -54,11 +73,12 @@ public class MediaScanUtil {
             }
             return;
         }
-        new Thread(new Runnable() {
+
+        mBackgroundService.execute(new Thread(new Runnable() {
             public void run() {
                 scanning(folder,true);
             }
-        }).start();
+        }));
     }
 
     /**
