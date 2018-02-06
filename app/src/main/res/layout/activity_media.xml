@@ -35,6 +35,14 @@
                 android:layout_height="@dimen/x450"
                 android:visibility="invisible" />
 
+            <com.whiteskycn.tv.projectorlauncher.media.PaintableImageView
+                android:id="@+id/iv_media_paint"
+                android:layout_width="@dimen/x800"
+                android:layout_height="@dimen/x450"
+                android:visibility="invisible" />
+
+
+
             <Button
                 android:id="@+id/btn_media_netView"
                 android:layout_width="@dimen/x40"
@@ -42,6 +50,40 @@
                 android:layout_marginTop="@dimen/x20"
                 android:layout_marginLeft="@dimen/x20"
                 android:background="@drawable/selector_media_net_view_btn"/>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/ll_media_mask_paint_controlBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/x140"
+                android:layout_marginLeft="@dimen/x120"
+                android:orientation="horizontal"
+                android:visibility="invisible">
+
+                <Button
+                    android:id="@+id/btn_media_mask_paint_cancel"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginTop="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:background="@drawable/selector_media_copy_multi_to_left_btn"/>
+
+                <Button
+                    android:id="@+id/btn_media_mask_paint_done"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginTop="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:background="@drawable/selector_media_copy_to_right_btn"/>
+
+                <Button
+                    android:id="@+id/btn_media_mask_paint_undo"
+                    android:layout_width="@dimen/x40"
+                    android:layout_height="@dimen/x40"
+                    android:layout_marginTop="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:background="@drawable/selector_media_copy_to_left_btn"/>
+            </LinearLayout>
 
             <Button
                 android:id="@+id/btn_media_grayView"
@@ -51,6 +93,16 @@
                 android:layout_marginLeft="@dimen/x80"
                 android:background="@drawable/selector_media_gray_view_btn"/>
 
+            <SeekBar
+                android:id="@+id/sb_media_volume_level"
+                android:layout_width="@dimen/x200"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/x320"
+                android:layout_marginLeft="@dimen/x550"
+                android:rotation="-90"
+                android:translationY="@dimen/x1"
+                android:translationX="@dimen/x120"
+                android:visibility="invisible" />
 
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:id="@+id/ll_media_playControlBar"

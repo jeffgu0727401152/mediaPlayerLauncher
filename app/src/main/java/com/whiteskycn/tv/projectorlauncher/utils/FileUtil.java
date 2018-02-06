@@ -191,12 +191,12 @@ public class FileUtil
      * @return
      */
     public static String getFileExtension(String filePath){
+        String extension = "";
         int end=filePath.lastIndexOf(".");
         if(end!=-1){
-            return filePath.substring(end);
-        }else{
-            return null;
+            extension = filePath.substring(end+1);
         }
+        return extension;
     }
 
     /**
@@ -307,6 +307,30 @@ public class FileUtil
         }
 
         return count;
+    }
+
+    /**
+     * 创建文件
+     * @param pathname 希望创建文件的路径
+     * @return File
+     */
+    public static File createFile(String pathname) {
+        File file = new File(pathname);
+        File fileParent = file.getParentFile();
+
+        if(!fileParent.exists()){
+            fileParent.mkdirs();
+        }
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                Log.e(TAG, "创建文件出错：" + e.toString());
+                e.printStackTrace();
+            }
+        }
+        return file;
     }
 
     /**

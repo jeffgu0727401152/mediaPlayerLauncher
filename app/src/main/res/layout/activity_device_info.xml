@@ -26,7 +26,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/x164"
+            android:layout_height="@dimen/x246"
             android:orientation="vertical">
 
             <LinearLayout
@@ -44,7 +44,7 @@
                     android:textSize="@dimen/x40" />
 
                 <TextView
-                    android:id="@+id/tv_admin_device_terminalmodel"
+                    android:id="@+id/tv_admin_device_device_model"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="@dimen/x314"
@@ -77,11 +77,35 @@
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/x82"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/x160"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x78"
+                    android:gravity="center|left"
+                    android:text="@string/str_admin_device_sys_version_date"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+
+                <TextView
+                    android:id="@+id/tv_admin_device_sys_version_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/x314"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/x40" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/x164"
+            android:layout_height="@dimen/x82"
             android:orientation="vertical">
 
             <LinearLayout
@@ -99,40 +123,15 @@
                     android:textSize="@dimen/x40" />
 
                 <TextView
-                    android:id="@+id/tv_admin_device_uiversion"
+                    android:id="@+id/tv_admin_device_ui_version"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="@dimen/x314"
                     android:gravity="center"
-                    android:text="@string/str_admin_device_default"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/x82"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="@dimen/x160"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x78"
-                    android:gravity="center|left"
-                    android:text="@string/str_admin_device_dlp_info"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-
-                <TextView
-                    android:id="@+id/tv_admin_device_dlpinfo"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
-                    android:gravity="center"
-                    android:text="@string/str_admin_device_default"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -193,7 +192,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/x164"
+            android:layout_height="@dimen/x82"
             android:orientation="vertical">
 
             <LinearLayout
@@ -216,31 +215,6 @@
                     android:layout_height="match_parent"
                     android:layout_marginLeft="@dimen/x214"
                     android:gravity="center"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/x82"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="@dimen/x264"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x78"
-                    android:gravity="center|left"
-                    android:text="@string/str_admin_device_wifi_mac_adr"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-
-                <TextView
-                    android:id="@+id/tv_admin_device_wifi_mac"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x214"
-                    android:gravity="center"
-                    android:text="@string/str_admin_device_default"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>
@@ -276,29 +250,7 @@
                     android:textSize="@dimen/x40" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/x82"
-                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="@dimen/x160"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x78"
-                    android:gravity="center|left"
-                    android:text="@string/str_admin_device_sys_version_date"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-
-                <TextView
-                    android:id="@+id/tv_admin_device_sys_version_date"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
-                    android:gravity="center"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/x40" />
-            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

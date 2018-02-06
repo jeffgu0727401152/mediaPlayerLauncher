@@ -11,19 +11,18 @@
     <string name="str_admin_device_sys_version">系统版本</string>
     <string name="str_admin_device_sys_sn">SN号</string>
     <string name="str_admin_device_ui_version">UI版本</string>
-    <string name="str_admin_device_dlp_info">DLP信息</string>
     <string name="str_admin_device_ram_info">内存信息</string>
     <string name="str_admin_device_rom_info">存储空间</string>
     <string name="str_admin_device_common_available">可用</string>
     <string name="str_admin_device_common_all">总共</string>
     <string name="str_admin_device_mac_adr">有线 MAC地址</string>
     <string name="str_admin_device_wifi_mac_adr">WIFI MAC地址</string>
-    <string name="str_admin_device_default">UP100</string>
+    <string name="str_admin_device_default">PS500</string>
     <!-- 公共标签 -->
     <string name="title_default">敬请期待</string>
     <string name="title_bg_ok">【  按下确定键更换  】</string>
     <!--Home 页-->
-    <string name="str_home_welcome">欢迎使用皓空投影仪</string>
+    <string name="str_home_welcome">欢迎使用皓空巨幕</string>
     <string name="str_home_peo">个人页面</string>
     <string name="str_home_media">多媒体</string>
     <string name="str_home_sys">系统设置</string>
@@ -76,12 +75,17 @@
     <string name="str_media_file_delete_toast">删除文件:</string>
     <string name="str_media_file_copy_process_dialog_title">拷贝文件</string>
     <string name="str_media_file_delete_dialog_title">您是否要删除文件?</string>
+    <string name="str_media_file_copy_same_dialog_title">目标位置存在同名文件</string>
     <string name="str_media_file_copy_process_dialog_prompt">正在拷贝文件,请耐心等待,不要退出或插拔usb设备!</string>
 
 
     <string name="str_media_full_screen_quite">您是否要退出全屏？</string>
     <string name="str_media_dialog_button_ok">确定</string>
     <string name="str_media_dialog_button_cancel">取消</string>
+
+    <string name="str_media_dialog_copy_continue">覆盖</string>
+    <string name="str_media_dialog_copy_cancel">取消</string>
+    <string name="str_media_dialog_copy_skip">跳过</string>
 
     <string name="str_media_info_name">文件名:</string>
     <string name="str_media_info_type">文件类型:</string>

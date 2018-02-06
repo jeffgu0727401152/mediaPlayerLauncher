@@ -19,7 +19,6 @@ import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +33,6 @@ import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.Media
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE;
-import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -118,7 +116,8 @@ public class PictureVideoPlayer {
     //播放完成回调
     public interface OnMediaEventListener
     {
-        void onMediaCompletion();
+        void onMediaPlayStop();
+        void onMediaPlayCompletion();
         void onMediaSeekComplete();
         void onMediaPlayError();
         void onMediaInfoUpdate(String name, String mimeType, int width, int height, long size, int bps);
@@ -203,6 +202,11 @@ public class PictureVideoPlayer {
         else if (mPlayState.equals(MEDIA_PLAY_VIDEO))
         {
             videoStop();
+        }
+
+        if (mOnMediaEventListener!=null)
+        {
+            mOnMediaEventListener.onMediaPlayStop();
         }
     }
 
@@ -365,6 +369,7 @@ public class PictureVideoPlayer {
     }
 
     private void videoStop() {
+        mPlayState = MEDIA_IDLE;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
         }
@@ -475,7 +480,7 @@ public class PictureVideoPlayer {
                     mPlayState = MEDIA_PLAY_COMPLETE;
                     if (mOnMediaEventListener!=null)
                     {
-                        mOnMediaEventListener.onMediaCompletion();
+                        mOnMediaEventListener.onMediaPlayCompletion();
                     }
                 }
             });
@@ -526,7 +531,7 @@ public class PictureVideoPlayer {
 
     private void pictureStop()
     {
-        mPlayState = MEDIA_PLAY_COMPLETE;
+        mPlayState = MEDIA_IDLE;
         mIsPicturePause = false;
         mPicturePlayedTime = 0;
     }
@@ -621,7 +626,7 @@ public class PictureVideoPlayer {
                             mPlayState = MEDIA_PLAY_COMPLETE;
                             if (mOnMediaEventListener!=null)
                             {
-                                mOnMediaEventListener.onMediaCompletion();
+                                mOnMediaEventListener.onMediaPlayCompletion();
                             }
                         }
 
@@ -685,7 +690,15 @@ public class PictureVideoPlayer {
                 }
                 break;
             case MEDIA_REPLAY_SHUFFLE:
-                mPlayPosition = getRandomNum(mPlayList.size());
+                int oldPos = mPlayPosition;
+                if (mPlayList.size()>2) {
+                    // 随机出来的值不能是正在播放的
+                    while(mPlayPosition == oldPos) {
+                        mPlayPosition = getRandomNum(mPlayList.size());
+                    }
+                } else {
+                    mPlayPosition = getRandomNum(mPlayList.size());
+                }
                 break;
         }
 

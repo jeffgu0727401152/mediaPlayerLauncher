@@ -1,7 +1,10 @@
 package com.whiteskycn.tv.projectorlauncher.admin;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.text.TextUtils;
@@ -24,13 +27,12 @@ import java.util.Date;
 public class DeviceInfoActivity extends Activity
 {
     private final String TAG = this.getClass().getSimpleName();
-    
+
+
     private TextView mTvSysVersion;
-    
     private TextView mTvSysVersionDate;
-    
+    private TextView mUIVersion;
     private TextView mEthMac;
-    private TextView mWifiMac;
     
     
     @Override
@@ -40,8 +42,8 @@ public class DeviceInfoActivity extends Activity
         setContentView(R.layout.activity_device_info);
         mTvSysVersion = (TextView)findViewById(R.id.tv_sys_version);
         mTvSysVersionDate = (TextView)findViewById(R.id.tv_admin_device_sys_version_date);
+        mUIVersion = (TextView)findViewById(R.id.tv_admin_device_ui_version);
         mEthMac = (TextView)findViewById(R.id.tv_admin_device_mac);
-        mWifiMac = (TextView)findViewById(R.id.tv_admin_device_wifi_mac);
         if (!TextUtils.isEmpty(getSysVersion()))
         {
             mTvSysVersion.setText(getSysVersion());
@@ -54,9 +56,9 @@ public class DeviceInfoActivity extends Activity
         {
             mEthMac.setText(getEthMacAddr());
         }
-        if (!TextUtils.isEmpty(getWifiMacAddr()))
+        if (!TextUtils.isEmpty(getVersionName(this)))
         {
-            mWifiMac.setText(getWifiMacAddr());
+            mUIVersion.setText(getVersionName(this));
         }
     }
     
@@ -90,17 +92,7 @@ public class DeviceInfoActivity extends Activity
     {
         return null;
     }
-    
-    private String getUIVersion()
-    {
-        return null;
-    }
-    
-    private String getDlpInfo()
-    {
-        return null;
-    }
-    
+
     private String getRamInfo()
     {
         return null;
@@ -110,7 +102,43 @@ public class DeviceInfoActivity extends Activity
     {
         return null;
     }
-    
+
+    /**
+     * get App versionCode
+     * @param context
+     * @return
+     */
+    public String getVersionCode(Context context){
+        PackageManager packageManager=context.getPackageManager();
+        PackageInfo packageInfo;
+        String versionCode="";
+        try {
+            packageInfo=packageManager.getPackageInfo(context.getPackageName(),0);
+            versionCode=packageInfo.versionCode+"";
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return versionCode;
+    }
+
+    /**
+     * get App versionName
+     * @param context
+     * @return
+     */
+    public String getVersionName(Context context){
+        PackageManager packageManager=context.getPackageManager();
+        PackageInfo packageInfo;
+        String versionName="";
+        try {
+            packageInfo=packageManager.getPackageInfo(context.getPackageName(),0);
+            versionName=packageInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return versionName;
+    }
+
     private String getEthMacAddr()
     {
         String macAddress = null;
