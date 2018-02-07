@@ -169,8 +169,25 @@ public class FileUtil
         return stat.getBlockSizeLong();
     }
 
+
     /**
-     * @function 抽取文件路径中的文件名
+     * @function 抽取文件路径中的文件前缀
+     * @param filePath
+     * @return
+     */
+    public static String getFileName(String filePath){
+
+        int start=filePath.lastIndexOf(File.separator);
+        int end=filePath.length();
+        if(end!=-1){
+            return filePath.substring(start == -1 ? 0 : (start+1), end);
+        }else{
+            return null;
+        }
+    }
+
+    /**
+     * @function 抽取文件路径中的文件前缀
      * @param filePath
      * @return
      */
@@ -186,7 +203,7 @@ public class FileUtil
     }
 
     /**
-     * @function 抽取文件路径中的后缀名(带有点)
+     * @function 抽取文件路径中的后缀名(不点)
      * @param filePath
      * @return
      */

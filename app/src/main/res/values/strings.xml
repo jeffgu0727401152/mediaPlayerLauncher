@@ -78,8 +78,9 @@
     <string name="str_media_file_copy_same_dialog_title">目标位置存在同名文件</string>
     <string name="str_media_file_copy_process_dialog_prompt">正在拷贝文件,请耐心等待,不要退出或插拔usb设备!</string>
 
+    <string name="str_media_local_storage_not_found">没有可用的本地磁盘,可能是硬盘损坏了!</string>
 
-    <string name="str_media_full_screen_quite">您是否要退出全屏？</string>
+        <string name="str_media_full_screen_quite">您是否要退出全屏？</string>
     <string name="str_media_dialog_button_ok">确定</string>
     <string name="str_media_dialog_button_cancel">取消</string>
 
