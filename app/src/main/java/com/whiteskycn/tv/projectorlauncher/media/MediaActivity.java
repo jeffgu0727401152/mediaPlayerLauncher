@@ -90,9 +90,8 @@ public class MediaActivity extends Activity
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
     private final int MSG_USB_PARTITION_SWITCH = 2;
-    private final int MSG_LOCAL_STORAGE_FOUND = 3;
-    private final int MSG_USB_DEVICE_CAPACITY_SET = 4;
-    private final int MSG_LOCAL_CAPACITY_SET = 5;
+    private final int MSG_USB_DEVICE_CAPACITY_SET = 3;
+    private final int MSG_LOCAL_CAPACITY_SET = 4;
 
     private final int MSG_LOCAL_MEDIA_DATABASE_UPDATE = 10;
     private final int MSG_LOCAL_MEDIA_LIST_CLEAN = 11;
@@ -135,16 +134,14 @@ public class MediaActivity extends Activity
 
     private static final String CONFIG_PLAYMODE = "playMode";
 
+    private static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sdcard";  // todo 修改为硬盘的路径
     private static final String CLOUD_MEDIA_FOLDER = "cloud";
     private static final String LOCAL_MEDIA_FOLDER = "local";
 
     private static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";
     private static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";
 
-    private static final String LOCAL_STORAGE_INDICATE_FILE = "whitesky_ps500_storage.txt";
-    private String mLocal_mass_storage_path = "";
-    private List<String> mMountExceptList = new ArrayList<String>();
-    private String[] mFixedExceptPath = new String[]{"/mnt/sdcard", "/storage/emulated/0"}; // 排除在外的挂载目录,非移动硬盘
+    private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0"}; // 排除在外的挂载目录,非移动硬盘
 
     private final int DOUBLE_TAP_DELAY_MS = 600;            // 双击间隔时间,可调参数
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
@@ -609,7 +606,8 @@ public class MediaActivity extends Activity
 
             @Override
             public void onFindMedia(int type, String name, String extension, String path, int duration, long size) {
-                if (type == MEDIA_PICTURE || type == MEDIA_VIDEO) {
+                if (type == MEDIA_PICTURE ||
+                        type == MEDIA_VIDEO) {
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                     Bundle b = new Bundle();
@@ -677,8 +675,11 @@ public class MediaActivity extends Activity
         usbFilter.addDataScheme("file");
         registerReceiver(usbReceiver, usbFilter);
 
-        // 主动枚举一次所有mount设备,本地硬盘 + 加入usb设备
-        discoverMountStorage();
+        // 主动枚举一次usb设备加入usb spinner中
+        discoverUsbMountDevice();
+
+        // 开线程去查询本地容量
+        updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
     }
 
     private void initView() {
@@ -735,6 +736,7 @@ public class MediaActivity extends Activity
 
         mAllMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_all_list_check);
         mUsbMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_usb_list_check);
+
     }
 
     private void updateMultiActionButtonState()
@@ -764,11 +766,6 @@ public class MediaActivity extends Activity
         mReplayModeRadioGroup.check(playMode);
         onCheckedChanged(null,playMode);
 
-        mMountExceptList.clear();
-        for (String except : mFixedExceptPath) {
-            mMountExceptList.add(except);
-        }
-
         // 设置播放时长为00:00:00
         setMediaPlayedTime(0);
         setMediaDurationTimeUI(0);
@@ -782,9 +779,24 @@ public class MediaActivity extends Activity
         // 显示音量
         mMediaVolumeLevelSeekBar.setProgress(currentVolume);
 
+
         mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
 
         updateMultiActionButtonState();
+
+        // 初始化本地媒体列表
+        if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
+        {   // 如果数据库为空,则扫描一次本地媒体文件
+            mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
+        } else {
+            // 如果有数据库,则从数据库获取
+            for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
+            {
+                mAllMediaListBeans.add(new AllMediaListBean(m));
+                Log.d(TAG,m.toString());
+            }
+            mAllMediaListAdapter.refresh();
+        }
     }
 
     private Handler mHandler = new Handler() {
@@ -794,7 +806,7 @@ public class MediaActivity extends Activity
             switch (msg.what) {
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
-                    discoverMountStorage();
+                    discoverUsbMountDevice();
                     break;
 
                 case MSG_USB_PLUG_OUT:
@@ -804,7 +816,7 @@ public class MediaActivity extends Activity
                         currentSelect = mUsbPartitionSpinner.getSelectedItem().toString();
                     }
 
-                    discoverMountStorage();
+                    discoverUsbMountDevice();
 
                     if (mUsbPartitionSpinner.getSelectedItem()!=null) {
                         if (!currentSelect.equals(mUsbPartitionSpinner.getSelectedItem().toString()))
@@ -839,24 +851,6 @@ public class MediaActivity extends Activity
                         mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
                     }
                     updateMultiActionButtonState();
-                    break;
-
-                case MSG_LOCAL_STORAGE_FOUND:
-                    // 初始化本地媒体列表
-                    if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
-                    {   // 如果数据库为空,则扫描一次本地媒体文件
-                        mLocalMediaScanner.safeScanning((String)msg.obj);
-                    } else {
-                        // 如果有数据库,则从数据库获取
-                        for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
-                        {
-                            // todo sata硬盘的挂载位置改变,导致了文件位置不对,则需要重建数据库的索引
-                            mAllMediaListBeans.add(new AllMediaListBean(m));
-                            Log.d(TAG,m.toString());
-                        }
-                        mAllMediaListAdapter.refresh();
-                    }
-                    updateCapacity(true,(String)msg.obj);
                     break;
 
                 case MSG_USB_DEVICE_CAPACITY_SET:
@@ -1064,11 +1058,7 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.bt_media_all_list_refresh:
-                if (!mLocal_mass_storage_path.isEmpty()) {
-                    mLocalMediaScanner.safeScanning(mLocal_mass_storage_path);
-                } else {
-                    ToastUtil.showToast(this,getResources().getString(R.string.str_media_local_storage_not_found));
-                }
+                mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
                 break;
 
             case R.id.cb_media_all_list_check:
@@ -1479,28 +1469,11 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void discoverMountStorage() {
+    private void discoverUsbMountDevice() {
         mUsbPartitionAdapter.clear();
-        mMountExceptList.clear();
-        for (String except : mFixedExceptPath) {
-            mMountExceptList.add(except);
-        }
-
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
-            File file = new File(s + File.separator + LOCAL_STORAGE_INDICATE_FILE);
-            // 如果存在标志文件,则表示本硬盘为本地的sata盘
-            if (file.exists()){
-                mLocal_mass_storage_path = s;
-                mMountExceptList.add(s);
-
-                Message msg = mHandler.obtainMessage();
-                msg.what = MSG_LOCAL_STORAGE_FOUND;
-                msg.obj = s;
-                mHandler.sendMessage(msg);
-            }
-
-            if (!mMountExceptList.contains(s)) {
+            if (!FileUtil.contains(mMountExceptList, s)) {
                 mUsbPartitionAdapter.add(s);
             }
         }
@@ -1610,7 +1583,7 @@ public class MediaActivity extends Activity
                 {
                     updateCopyItemToMediaList();
                 }
-                updateCapacity(true, mLocal_mass_storage_path);
+                updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
             }
         }
 
@@ -1626,16 +1599,11 @@ public class MediaActivity extends Activity
         }
     }
 
-    public String pathGenerate(int direct, String path) {
+    private String pathGenerate(int direct, String path) {
         String result = "";
         String basePath = "";
         if (direct==CopyTaskParam.DIRECT_USB_TO_INTERNAL) {
-            if (mLocal_mass_storage_path.isEmpty()) {
-                // 没有找到内部存储路径
-                return "";
-            } else {
-                basePath = mLocal_mass_storage_path + File.separator + LOCAL_MEDIA_FOLDER;
-            }
+            basePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
         } else {
             if (mUsbPartitionSpinner.getSelectedItem()==null)
             {
@@ -1807,7 +1775,7 @@ public class MediaActivity extends Activity
 
                         }
 
-                        updateCapacity(true, mLocal_mass_storage_path);
+                        updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
                         mAllMediaListAdapter.refresh();
                         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
                     }

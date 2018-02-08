@@ -16,7 +16,6 @@ import android.widget.ImageView;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
-import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
 import java.io.File;
@@ -55,7 +54,7 @@ public class PictureVideoPlayer {
 
     private SurfaceView mSurfaceView;
     private ImageView mPictureView;
-    private MediaActivity mAttachActivity;
+    private Activity mAttachActivity;
 
     private List<PlayListBean> mPlayList;
 
@@ -134,7 +133,7 @@ public class PictureVideoPlayer {
     private OnMediaEventListener mOnMediaEventListener;
 
     // 构造函数
-    public PictureVideoPlayer(MediaActivity attach,
+    public PictureVideoPlayer(Activity attach,
             SurfaceView videoView,
             ImageView pictureView,
             List<PlayListBean> list) {
@@ -166,9 +165,6 @@ public class PictureVideoPlayer {
             type = mPreviewItem.getType();
             time = mPreviewItem.getDuration();
         }
-
-        // 由于sata硬盘每次开机挂载的位置不固定,所以需要对播放路径做一次转换
-        path = mAttachActivity.pathGenerate(1,path);
 
         if (path.isEmpty())
         {
@@ -239,9 +235,6 @@ public class PictureVideoPlayer {
             }
             return;
         }
-
-        // 由于sata硬盘每次开机挂载的位置不固定,所以需要对播放路径做一次转换
-        path = mAttachActivity.pathGenerate(1,path);
 
         if (path.isEmpty())
         {

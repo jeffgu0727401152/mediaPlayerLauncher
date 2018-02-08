@@ -274,7 +274,7 @@ public class MediaScanUtil {
                 ext.endsWith("3gpp2") || ext.endsWith("avi") || ext.endsWith("px") ||
                 ext.endsWith("wmv") || ext.endsWith("asf") || ext.endsWith("flv") ||
                 ext.endsWith("mkv") || ext.endsWith("mpg") || ext.endsWith("rmvb") ||
-                ext.endsWith("rm") || ext.endsWith("vob") || ext.endsWith("f4v") || ext.endsWith("ts")) {
+                ext.endsWith("rm") || ext.endsWith("vob") || ext.endsWith("f4v")) {
             return true;
         }
         return false;
