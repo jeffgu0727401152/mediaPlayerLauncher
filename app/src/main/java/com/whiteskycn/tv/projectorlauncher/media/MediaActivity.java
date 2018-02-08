@@ -134,14 +134,14 @@ public class MediaActivity extends Activity
 
     private static final String CONFIG_PLAYMODE = "playMode";
 
-    private static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sdcard";  // todo 修改为硬盘的路径
+    private static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sata/disk";
     private static final String CLOUD_MEDIA_FOLDER = "cloud";
     private static final String LOCAL_MEDIA_FOLDER = "local";
 
     private static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";
     private static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";
 
-    private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0"}; // 排除在外的挂载目录,非移动硬盘
+    private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", LOCAL_MASS_STORAGE_PATH}; // 排除在外的挂载目录,非移动硬盘
 
     private final int DOUBLE_TAP_DELAY_MS = 600;            // 双击间隔时间,可调参数
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
@@ -606,8 +606,7 @@ public class MediaActivity extends Activity
 
             @Override
             public void onFindMedia(int type, String name, String extension, String path, int duration, long size) {
-                if (type == MEDIA_PICTURE ||
-                        type == MEDIA_VIDEO) {
+                if (type == MEDIA_PICTURE || type == MEDIA_VIDEO) {
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                     Bundle b = new Bundle();
@@ -644,8 +643,7 @@ public class MediaActivity extends Activity
 
             @Override
             public void onFindMedia(int type, String name, String extension, String path, int duration, long size) {
-                if (type == MEDIA_PICTURE ||
-                        type == MEDIA_VIDEO) {
+                if (type == MEDIA_PICTURE || type == MEDIA_VIDEO) {
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_USB_MEDIA_LIST_UPDATE;
                     Bundle b = new Bundle();
@@ -676,7 +674,7 @@ public class MediaActivity extends Activity
         registerReceiver(usbReceiver, usbFilter);
 
         // 主动枚举一次usb设备加入usb spinner中
-        discoverUsbMountDevice();
+        discoverMountDevice();
 
         // 开线程去查询本地容量
         updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
@@ -806,7 +804,7 @@ public class MediaActivity extends Activity
             switch (msg.what) {
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
-                    discoverUsbMountDevice();
+                    discoverMountDevice();
                     break;
 
                 case MSG_USB_PLUG_OUT:
@@ -816,7 +814,7 @@ public class MediaActivity extends Activity
                         currentSelect = mUsbPartitionSpinner.getSelectedItem().toString();
                     }
 
-                    discoverUsbMountDevice();
+                    discoverMountDevice();
 
                     if (mUsbPartitionSpinner.getSelectedItem()!=null) {
                         if (!currentSelect.equals(mUsbPartitionSpinner.getSelectedItem().toString()))
@@ -1469,7 +1467,7 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void discoverUsbMountDevice() {
+    private void discoverMountDevice() {
         mUsbPartitionAdapter.clear();
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {

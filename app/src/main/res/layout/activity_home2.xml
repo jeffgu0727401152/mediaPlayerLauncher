@@ -95,7 +95,7 @@
             android:layout_height="@dimen/x650"
             android:layout_margin="@dimen/x5"
             android:background="@drawable/border_shape"
-            android:focusable="true"
+            android:focusable="false"
             android:nextFocusUp="@+id/rf_home2_media"
             android:padding="0dp"
             app:radius="@dimen/x4">
@@ -141,7 +141,7 @@
             android:layout_margin="@dimen/x5"
             android:layout_toEndOf="@+id/rf_home2_media"
             android:background="@drawable/border_shape"
-            android:focusable="true"
+            android:focusable="false"
             android:nextFocusUp="@+id/rf_home2_admin"
             android:padding="0dp"
             app:radius="@dimen/x4">
@@ -183,7 +183,7 @@
             android:layout_width="@dimen/x430"
             android:layout_height="@dimen/x650"
             android:layout_margin="@dimen/x5"
-            android:focusable="true"
+            android:focusable="false"
             android:nextFocusUp="@+id/rf_home2_sys"
             android:layout_toEndOf="@+id/rf_home2_admin"
             app:radius="@dimen/x4">

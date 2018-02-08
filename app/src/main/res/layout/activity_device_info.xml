@@ -159,7 +159,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginLeft="@dimen/x314"
                     android:gravity="center"
-                    android:text="@string/str_admin_device_default"
+                    android:text="1G"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>
@@ -184,7 +184,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginLeft="@dimen/x314"
                     android:gravity="center"
-                    android:text="@string/str_admin_device_default"
+                    android:text="2G"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>

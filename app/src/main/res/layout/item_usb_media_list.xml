@@ -57,9 +57,9 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x260"
+        android:layout_width="@dimen/x160"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x30"
+        android:layout_marginLeft="@dimen/x130"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"

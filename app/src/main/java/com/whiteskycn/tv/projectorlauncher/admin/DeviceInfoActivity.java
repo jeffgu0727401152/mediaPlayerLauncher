@@ -8,11 +8,14 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whiteskycn.tv.projectorlauncher.R;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.text.SimpleDateFormat;
@@ -27,13 +30,16 @@ import java.util.Date;
 public class DeviceInfoActivity extends Activity
 {
     private final String TAG = this.getClass().getSimpleName();
-
+    private static final String  EMMC_SERIAL_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
 
     private TextView mTvSysVersion;
     private TextView mTvSysVersionDate;
     private TextView mUIVersion;
     private TextView mEthMac;
-    
+    private TextView mRAMInfo;
+    private TextView mROMInfo;
+    private TextView mSysSN;
+
     
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -43,7 +49,11 @@ public class DeviceInfoActivity extends Activity
         mTvSysVersion = (TextView)findViewById(R.id.tv_sys_version);
         mTvSysVersionDate = (TextView)findViewById(R.id.tv_admin_device_sys_version_date);
         mUIVersion = (TextView)findViewById(R.id.tv_admin_device_ui_version);
+        mRAMInfo = (TextView)findViewById(R.id.tv_admin_device_raminfo);
+        mROMInfo = (TextView)findViewById(R.id.tv_admin_device_rominfo);
         mEthMac = (TextView)findViewById(R.id.tv_admin_device_mac);
+        mSysSN = (TextView)findViewById(R.id.tv_admin_device_sys_sn);
+
         if (!TextUtils.isEmpty(getSysVersion()))
         {
             mTvSysVersion.setText(getSysVersion());
@@ -56,9 +66,21 @@ public class DeviceInfoActivity extends Activity
         {
             mEthMac.setText(getEthMacAddr());
         }
+        if (!TextUtils.isEmpty(getRamInfo()))
+        {
+            mRAMInfo.setText(getRamInfo());
+        }
+        if (!TextUtils.isEmpty(getRomInfo()))
+        {
+            mROMInfo.setText(getRomInfo());
+        }
         if (!TextUtils.isEmpty(getVersionName(this)))
         {
             mUIVersion.setText(getVersionName(this));
+        }
+        if (!TextUtils.isEmpty(getSysSN()))
+        {
+            mSysSN.setText(getSysSN());
         }
     }
     
@@ -88,8 +110,31 @@ public class DeviceInfoActivity extends Activity
         return simpleDateFormat.format(date);
     }
     
-    private String getSysSN()
+    private static String getSysSN()
     {
+        File sn = new File(EMMC_SERIAL_NODE);
+        if (sn.exists())
+        {
+            FileInputStream fis = null;
+            try{
+                fis = new FileInputStream(sn);
+                byte[] data = new byte[1024];
+                int i = fis.read(data);
+                String result = new String(data,0,i);
+                result = result.substring(2).toUpperCase();
+                return result;
+            }catch(Exception e){
+                e.printStackTrace();
+            }finally{
+                try{
+                    fis.close();
+                }catch(Exception e){
+                    Log.e("DeviceInfoActivity","error in FileInputStream"+e.toString());
+                }
+            }
+        } else {
+            return null;
+        }
         return null;
     }
 

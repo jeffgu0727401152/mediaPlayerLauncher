@@ -59,6 +59,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
                 v.setFocusableInTouchMode(true);
                 v.requestFocusFromTouch();
+                v.bringToFront();
                 break;
             case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
                 break;

@@ -105,6 +105,7 @@ public class AdminActivity extends Activity implements View.OnClickListener , Vi
             case MotionEvent.ACTION_HOVER_ENTER: //鼠标进入view
                 v.setFocusableInTouchMode(true);
                 v.requestFocusFromTouch();
+                v.bringToFront();
                 break;
             case MotionEvent.ACTION_HOVER_EXIT: //鼠标离开view
                 //v.setFocusable(false);
