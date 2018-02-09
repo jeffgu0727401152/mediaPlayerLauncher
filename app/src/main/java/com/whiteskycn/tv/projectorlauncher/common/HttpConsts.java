@@ -7,13 +7,13 @@ package com.whiteskycn.tv.projectorlauncher.common;
  */
 public class HttpConsts
 {
-    public static final String LOGIN_URL = "http://projector.whiteskycn.com/device/bind/";
+    public static final String LOGIN_URL = "http://screen.whiteskycn.com/device/bind/";
     
-    public static final String GETLOGININFO_URL = "https://projector.whiteskycn.com/api/getLoginInfo";
+    public static final String GETLOGININFO_URL = "https://screen.whiteskycn.com/api/getLoginInfo";
     
-    public static final String DEVICELOGOUT_URL = "https://projector.whiteskycn.com/api/deviceLogout";
+    public static final String DEVICELOGOUT_URL = "https://screen.whiteskycn.com/api/deviceLogout";
     
-    public static final String CHECKVERSION_URL = "https://projector.whiteskycn.com/api/checkVersion";
+    public static final String CHECKVERSION_URL = "https://screen.whiteskycn.com/api/checkVersion";
     
     public static final String LOGIN_STATUS_000000 = "000000";
     

@@ -23,15 +23,15 @@ public class InitSSLSocketFactory extends Service
 {
     private final String TAG = this.getClass().getSimpleName();
     
-    private final String testUrl = "https://projector.whiteskycn.com/api/heartbeat";
-    
-    private final String keyStorePassword = "wxgh#4432";
+    private final String testUrl = "https://screen.whiteskycn.com/api/heartbeat";
+
+    private final String keyStorePassword = "wxgh#2561";
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         initSSL();
-        // testConnectWhiteSkycn();
+
         new Thread(new Runnable()
         {
             @Override
@@ -59,7 +59,7 @@ public class InitSSLSocketFactory extends Service
     {
         try
         {
-            InputStream kmin = this.getApplicationContext().getAssets().open("whiteskycn.p12");
+            InputStream kmin = this.getApplicationContext().getAssets().open("dev.pfx");
             KeyStore kmkeyStore = KeyStore.getInstance("PKCS12");
             kmkeyStore.load(kmin, keyStorePassword.toCharArray());
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");

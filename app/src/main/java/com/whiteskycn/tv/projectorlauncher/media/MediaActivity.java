@@ -143,7 +143,6 @@ public class MediaActivity extends Activity
 
     private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", LOCAL_MASS_STORAGE_PATH}; // 排除在外的挂载目录,非移动硬盘
 
-    private final int DOUBLE_TAP_DELAY_MS = 600;            // 双击间隔时间,可调参数
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
 
     private MediaScanUtil mLocalMediaScanner;
@@ -200,25 +199,18 @@ public class MediaActivity extends Activity
 
     private boolean mDoNotUpdateSeekBar = false;        //用户在拖动seekbar期间,系统不去更改seekbar位置
     private boolean mIsFullScreen;                      //是否在全屏播放标志
-    private long mLastFullScreenClickTime;              //双击最大化
 
     private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
     private PlayListAdapter mPlayListAdapter;
     private DragListView mDragPlayListView;
-    private int mLastPlayListClickPosition = 0;       //双击直接播放
-    private long mLastPlayListClickTime;
 
     private List<AllMediaListBean> mAllMediaListBeans = new ArrayList<AllMediaListBean>();
     private AllMediaListAdapter mAllMediaListAdapter;
     private ListView mAllMediaListView;
-    private int mLastAllMediaListClickPosition = 0;     //双击添加到播放列表功能
-    private long mLastAllMediaListClickTime;
 
     private List<UsbMediaListBean> mUsbMediaListBeans = new ArrayList<UsbMediaListBean>();
     private UsbMediaListAdapter mUsbMediaListAdapter;
     private ListView mUsbMediaListView;
-    private int mLastUsbMediaListClickPosition = 0;     //usb media list item的双击功能尚未启用,但是预留code
-    private long mLastUsbMediaListClickTime;
 
     private CheckBox mAllMediaListCheckBox;
     private CheckBox mUsbMediaListCheckBox;
@@ -461,17 +453,10 @@ public class MediaActivity extends Activity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // 如果是双击
-                if (position == mLastAllMediaListClickPosition
-                        && (Math.abs(mLastAllMediaListClickTime - System.currentTimeMillis()) < DOUBLE_TAP_DELAY_MS)) {
-                    mLastAllMediaListClickPosition = -1;
-                    mLastAllMediaListClickTime = 0;
+                if (ViewUtil.isFastDoubleClick()) {
                     mPlayListAdapter.addItem(new PlayListBean(mAllMediaListBeans.get(position).getMediaData()));
                     mPlayListAdapter.saveToConfig();
                     mPlayListAdapter.refresh();
-                } else {
-                    Log.d(TAG, "position = " + position + "; id = " + id);
-                    mLastAllMediaListClickPosition = position;
-                    mLastAllMediaListClickTime = System.currentTimeMillis();
                 }
             }
         });
@@ -531,16 +516,10 @@ public class MediaActivity extends Activity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // 如果是双击
-                if (position == mLastPlayListClickPosition
-                        && (Math.abs(mLastPlayListClickTime - System.currentTimeMillis()) < DOUBLE_TAP_DELAY_MS)) {
-                    mLastPlayListClickPosition = -1;
-                    mLastPlayListClickTime = 0;
+                if (ViewUtil.isFastDoubleClick()) {
                     Log.i(TAG, "double click play list!");
                     mPlayer.mediaStop();
                     mPlayer.mediaPlay(position);
-                } else {
-                    mLastPlayListClickPosition = position;
-                    mLastPlayListClickTime = System.currentTimeMillis();
                 }
             }
         });
@@ -579,15 +558,9 @@ public class MediaActivity extends Activity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // 如果是双击
-                if (position == mLastUsbMediaListClickPosition
-                        && (Math.abs(mLastUsbMediaListClickTime - System.currentTimeMillis()) < DOUBLE_TAP_DELAY_MS)) {
-                    mLastUsbMediaListClickPosition = -1;
-                    mLastUsbMediaListClickTime = 0;
+                if (ViewUtil.isFastDoubleClick()) {
                     Log.i(TAG, "double click usb media list!");
                     // 预留了双击的处理,但是目前没有做任何操作
-                } else {
-                    mLastUsbMediaListClickPosition = position;
-                    mLastUsbMediaListClickTime = System.currentTimeMillis();
                 }
             }
         });
@@ -981,13 +954,10 @@ public class MediaActivity extends Activity
 
             case R.id.sv_media_playVideo:
             case R.id.iv_media_playPicture:
-                if ((Math.abs(mLastFullScreenClickTime - System.currentTimeMillis()) < DOUBLE_TAP_DELAY_MS)) {
-                    mLastFullScreenClickTime = 0;
+                if (ViewUtil.isFastDoubleClick()) {
                     if (!mIsFullScreen) {
                         fullScreenDisplaySwitch();
                     }
-                } else {
-                    mLastFullScreenClickTime = System.currentTimeMillis();
                 }
                 break;
 

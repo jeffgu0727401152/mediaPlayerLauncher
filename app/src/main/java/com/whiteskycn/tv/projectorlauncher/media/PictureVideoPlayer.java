@@ -592,8 +592,6 @@ public class PictureVideoPlayer {
                 break;
         }
 
-// todo 使用bitmap factory加载后设置长宽比
-
         mPictureView.setImageDrawable(Drawable.createFromPath(path));
 
         if(mOnMediaEventListener !=null)

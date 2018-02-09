@@ -110,7 +110,7 @@ public class DeviceInfoActivity extends Activity
         return simpleDateFormat.format(date);
     }
     
-    private static String getSysSN()
+    public static String getSysSN()
     {
         File sn = new File(EMMC_SERIAL_NODE);
         if (sn.exists())

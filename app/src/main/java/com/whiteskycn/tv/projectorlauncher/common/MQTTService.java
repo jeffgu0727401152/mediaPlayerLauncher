@@ -12,6 +12,7 @@ import android.os.PowerManager;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.whiteskycn.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whiteskycn.tv.projectorlauncher.utils.SharedPreferencesUtil;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
@@ -112,8 +113,7 @@ public class MQTTService extends Service
         protocol = SystemProperties.get("persist.whitesky.mqtt.protocol", protocol);
         host = SystemProperties.get("persist.whitesky.mqtt.host", host);
         port = SystemProperties.get("persist.whitesky.mqtt.port", port);
-        //todo
-        //clientId = new String(WsdSerialnum.read()).toUpperCase();
+        clientId = DeviceInfoActivity.getSysSN();
         Log.d(TAG, "clientId = " + clientId);
         mMqttTopic = clientId;
     }

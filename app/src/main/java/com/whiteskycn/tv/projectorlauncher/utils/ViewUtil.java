@@ -13,6 +13,8 @@ import java.lang.reflect.Field;
 
 public class ViewUtil {
 
+    private final static int DOUBLE_CLICK_DELAY_MS = 600;            // 双击间隔时间,可调参数
+
     public static float getX(View view) {
         if (Build.VERSION.SDK_INT >= 11) {
             return view.getX();
@@ -45,7 +47,7 @@ public class ViewUtil {
     }
 
     public static boolean isFastDoubleClick() {
-        return isFastDoubleClick(500);
+        return isFastDoubleClick(DOUBLE_CLICK_DELAY_MS);
     }
 
     /**

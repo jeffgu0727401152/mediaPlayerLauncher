@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,7 +124,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         mLoginDialog = new Dialog(this, R.style.ReasonDialog);
         mLoginDialog.setContentView(view);
         ImageView imageView = (ImageView)view.findViewById(R.id.iv_admin_dialog_login);
-        String loginURL = HttpConsts.LOGIN_URL + "123456";//todo new String(WsdSerialnum.read()).toUpperCase();
+        String loginURL = HttpConsts.LOGIN_URL + DeviceInfoActivity.getSysSN();
         Bitmap bitmap = new QREncode.Builder(this).setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
             // .setParsedResultType(ParsedResultType.TEXT)//默认是TEXT类型
             // .setContents(AdminModel.LOGIN_URL + "123456789")// 二维码内容
@@ -208,7 +209,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
                 
                 FormBody body =
                     new FormBody.Builder().add("method", "post")
-                        .add("sn", "123456")//todo new String(WsdSerialnum.read()).toUpperCase())
+                        .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
                 Request request = new Request.Builder().url(HttpConsts.GETLOGININFO_URL).post(body).build();
                 Call call = mClient.newCall(request);
@@ -226,6 +227,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
                     public void onResponse(Call call, Response response)
                         throws IOException
                     {
+                        //todo 处理404
                         String htmlStr = response.body().string();
                         Gson gson = new Gson();
                         mLoginBean = gson.fromJson(htmlStr, LoginBean.class);
@@ -286,7 +288,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
                 
                 FormBody body =
                     new FormBody.Builder().add("method", "post")
-                        .add("sn", "123456")//todo new String(WsdSerialnum.read()).toUpperCase())
+                        .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
                 Request request = new Request.Builder().url(HttpConsts.DEVICELOGOUT_URL).post(body).build();
                 Call call = mClient.newCall(request);

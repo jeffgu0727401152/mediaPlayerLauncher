@@ -154,7 +154,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            // TODO Auto-generated method stub
             final String action = intent.getAction();
             mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
             ethNetInfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
