@@ -5,7 +5,10 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.whiteskycn.wsd.android.NativeCertification;
+
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -31,7 +34,6 @@ public class InitSSLSocketFactory extends Service
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         initSSL();
-
         new Thread(new Runnable()
         {
             @Override
@@ -59,18 +61,24 @@ public class InitSSLSocketFactory extends Service
     {
         try
         {
-            InputStream kmin = this.getApplicationContext().getAssets().open("dev.pfx");
-            KeyStore kmkeyStore = KeyStore.getInstance("PKCS12");
-            kmkeyStore.load(kmin, keyStorePassword.toCharArray());
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
-            kmf.init(kmkeyStore, keyStorePassword.toCharArray());
-            
-            // Create an SSLContext that uses our TrustManager
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(kmf.getKeyManagers(), null, null);
-            
-            SSLContext.setDefault(context);
-            Log.d(TAG, "init SSLContext for Https!");
+            byte[] bufferPkcs12 = NativeCertification.getPkcs12();
+            if (bufferPkcs12.length > 0)
+            {
+                InputStream kmin = new ByteArrayInputStream(bufferPkcs12);
+                KeyStore kmkeyStore = KeyStore.getInstance("PKCS12");
+                kmkeyStore.load(kmin, keyStorePassword.toCharArray());
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
+                kmf.init(kmkeyStore, keyStorePassword.toCharArray());
+
+                // Create an SSLContext that uses our TrustManager
+                SSLContext context = SSLContext.getInstance("TLS");
+                context.init(kmf.getKeyManagers(), null, null);
+
+                SSLContext.setDefault(context);
+                Log.d(TAG, "init SSLContext done!");
+            } else {
+                Log.e(TAG,"init SSLContext fail!");
+            }
         }
         catch (Exception e)
         {

@@ -39,8 +39,8 @@
                 android:id="@+id/iv_media_paint"
                 android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x450"
+                android:background="@drawable/shape_media_mask_window"
                 android:visibility="invisible" />
-
 
 
             <Button
