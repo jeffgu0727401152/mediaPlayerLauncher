@@ -23,7 +23,7 @@
 
         <LinearLayout
             android:id="@+id/ll_admin_account_1"
-            android:layout_width="@dimen/x225"
+            android:layout_width="@dimen/x425"
             android:layout_height="@dimen/x48"
             android:layout_marginLeft="@dimen/x47"
             android:layout_marginTop="@dimen/x78"

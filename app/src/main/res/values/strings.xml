@@ -4,7 +4,7 @@
     <string name="title_test">whitesky</string>
     <string name="title_admin">个人页面</string>
     <string name="title_admin_account">账号</string>
-    <string name="title_admin_account_type_Visitor">访客模式</string>
+    <string name="title_admin_account_type_visitor">访客模式</string>
     <string name="title_admin_device_info">设备信息</string>
     <string name="str_admin_device_terminal_model">终端型号</string>
     <string name="str_admin_device_sys_version_date">版本日期</string>

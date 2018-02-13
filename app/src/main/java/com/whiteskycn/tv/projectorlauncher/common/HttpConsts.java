@@ -7,22 +7,15 @@ package com.whiteskycn.tv.projectorlauncher.common;
  */
 public class HttpConsts
 {
-    public static final String LOGIN_URL = "http://screen.whiteskycn.com/device/bind/";
+    public static final String URL_LOGIN = "http://screen.whiteskycn.com/device/bind/";
+    public static final String URL_LOGIN_PROJECT_NAME = "?project=PS500";
+
+    public static final String URL_GET_LOGIN_INFO = "https://screen.whiteskycn.com/api/getLoginInfo";
+    public static final String URL_DEVICE_LOGOUT = "https://screen.whiteskycn.com/api/deviceLogout";
+    public static final String URL_CHECK_VERSION = "https://screen.whiteskycn.com/api/checkVersion";
     
-    public static final String GETLOGININFO_URL = "https://screen.whiteskycn.com/api/getLoginInfo";
+    public static final String LOGIN_STATUS_SUCCESS = "000000";
     
-    public static final String DEVICELOGOUT_URL = "https://screen.whiteskycn.com/api/deviceLogout";
-    
-    public static final String CHECKVERSION_URL = "https://screen.whiteskycn.com/api/checkVersion";
-    
-    public static final String LOGIN_STATUS_000000 = "000000";
-    
-    public static final String LOGIN_STATUS_200101 = "200101";
-    
-    public static int STATUS_CODE_200 = 200;
-    
-    public static int STATUS_CODE_422 = 422;
-    
-    public static int STATUS_CODE_500 = 500;
+    public static int HTTP_STATUS_SUCCESS = 200;
     
 }

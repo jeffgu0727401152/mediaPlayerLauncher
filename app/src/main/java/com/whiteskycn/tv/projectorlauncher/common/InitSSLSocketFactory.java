@@ -25,8 +25,6 @@ import javax.net.ssl.SSLContext;
 public class InitSSLSocketFactory extends Service
 {
     private final String TAG = this.getClass().getSimpleName();
-    
-    private final String testUrl = "https://screen.whiteskycn.com/api/heartbeat";
 
     private final String keyStorePassword = "wxgh#2561";
     
@@ -34,14 +32,6 @@ public class InitSSLSocketFactory extends Service
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         initSSL();
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                testConnectWhiteSkycn();
-            }
-        }).start();
         return super.onStartCommand(intent, flags, startId);
     }
     
@@ -57,13 +47,10 @@ public class InitSSLSocketFactory extends Service
         return null;
     }
     
-    void initSSL()
-    {
-        try
-        {
+    void initSSL() {
+        try {
             byte[] bufferPkcs12 = NativeCertification.getPkcs12();
-            if (bufferPkcs12.length > 0)
-            {
+            if (bufferPkcs12.length > 0) {
                 InputStream kmin = new ByteArrayInputStream(bufferPkcs12);
                 KeyStore kmkeyStore = KeyStore.getInstance("PKCS12");
                 kmkeyStore.load(kmin, keyStorePassword.toCharArray());
@@ -79,36 +66,7 @@ public class InitSSLSocketFactory extends Service
             } else {
                 Log.e(TAG,"init SSLContext fail!");
             }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-    
-    void testConnectWhiteSkycn()
-    {
-        try
-        {
-            URL url = new URL(testUrl);
-            HttpsURLConnection urlConnection = (HttpsURLConnection)url.openConnection();
-            urlConnection.setDoOutput(true);
-            
-            // 主要是添加这行代码，我们的公钥和私钥都存在系统里面，通过下面这行代码调用。
-            urlConnection.setSSLSocketFactory(SSLContext.getDefault().getSocketFactory());
-            
-            InputStream input = urlConnection.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"));
-            StringBuffer result = new StringBuffer();
-            String line = "";
-            while ((line = reader.readLine()) != null)
-            {
-                result.append(line);
-            }
-            Log.e(TAG, result.toString());
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

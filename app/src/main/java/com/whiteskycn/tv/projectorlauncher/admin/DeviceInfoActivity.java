@@ -122,6 +122,7 @@ public class DeviceInfoActivity extends Activity
                 int i = fis.read(data);
                 String result = new String(data,0,i);
                 result = result.substring(2).toUpperCase();
+                result = result.replaceAll("\r|\n", "");
                 return result;
             }catch(Exception e){
                 e.printStackTrace();

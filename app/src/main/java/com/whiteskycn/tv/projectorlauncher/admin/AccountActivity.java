@@ -41,6 +41,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.whiteskycn.tv.projectorlauncher.common.HttpConsts.LOGIN_STATUS_SUCCESS;
+import static com.whiteskycn.tv.projectorlauncher.common.HttpConsts.URL_LOGIN_PROJECT_NAME;
+
 /**
  * Created by mac on 17-6-2.
  *
@@ -48,23 +51,22 @@ import okhttp3.Response;
  */
 public class AccountActivity extends Activity implements View.OnClickListener
 {
+    private final String TAG = this.getClass().getSimpleName();
+
+    private final static int MSG_UPDATE_ACCOUNT_INFO = 1;
     
-    private final int UPDATE_ACCOUNT_INFO = 0x01;
+    private final AccountInfoHandler mHandler = new AccountInfoHandler(this);
     
-    private final MyHandler mHandler = new MyHandler(this);
+    private List<ListViewBean> mLoginHistoryDatas = new ArrayList<ListViewBean>();
     
-    private List<ListViewBean> mBeanDatas = new ArrayList<ListViewBean>();
-    
-    private AccountAdapter mProAdapter;
+    private AccountAdapter mLoginHistoryListAdapter;
     
     private ListView mLvAccount;
-    
     private TextView mTvAccount;
-    
     private Dialog mLoginDialog;
-    
-    private Button mBtLogin, mBtLogout;
-    
+    private Button mBtLogin;
+    private Button mBtLogout;
+
     private LoginBean mLoginBean;
     
     @Override
@@ -72,7 +74,6 @@ public class AccountActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_account);
-        getAccountInfo();
         mTvAccount = (TextView)findViewById(R.id.tv_admin_account_ac);
         mBtLogin = (Button)findViewById(R.id.bt_admin_account_login);
         mBtLogin.requestFocus();
@@ -81,6 +82,8 @@ public class AccountActivity extends Activity implements View.OnClickListener
         mBtLogout.requestFocus();
         mBtLogout.setOnClickListener(this);
         mLvAccount = (ListView)findViewById(R.id.lv_admin_account_list);
+
+        getAccountInfo();
     }
     
     @Override
@@ -91,46 +94,43 @@ public class AccountActivity extends Activity implements View.OnClickListener
         layout.setBackgroundResource(R.drawable.img_background);
     }
     
-    private void updateAccountInfo()
-    {
-        if (mLoginBean != null)
-        {
-            if (mLoginBean.getResult().getIsGuest() == 0)
-            {
+    private void updateAccountInfo() {
+        if (mLoginBean != null) {
+            if (mLoginBean.getResult().getIsGuest() == 0) {
                 mBtLogout.setVisibility(View.VISIBLE);
                 mBtLogin.setVisibility(View.INVISIBLE);
                 mBtLogout.requestFocus();
-            }
-            else
-            {
+
+                mTvAccount.setText(mLoginBean.getResult().getUserName());
+
+                if (mLoginHistoryDatas != null) {
+                    mLoginHistoryDatas.clear();
+                    mLoginHistoryDatas.add(new ListViewBean(mLoginBean.getResult().getDeviceNickname(), mLoginBean.getResult().getLoginDate(), 0, 0));
+                    mLoginHistoryListAdapter = new AccountAdapter(getApplicationContext(), mLoginHistoryDatas, R.layout.item_list_project);
+                    mLvAccount.setAdapter(mLoginHistoryListAdapter);
+                }
+
+            } else {
                 mBtLogin.setVisibility(View.VISIBLE);
                 mBtLogout.setVisibility(View.INVISIBLE);
                 mBtLogin.requestFocus();
+
+                mTvAccount.setText(getString(R.string.title_admin_account_type_visitor));
             }
-            if (mBeanDatas != null)
-                mBeanDatas.clear();
-            mTvAccount.setText(mLoginBean.getResult().getIsGuest() == 0 ? mLoginBean.getResult().getUserName()
-                : getString(R.string.title_admin_account_type_Visitor));
-            mBeanDatas.add(new ListViewBean(mLoginBean.getResult().getDeviceNickname(), mLoginBean.getResult()
-                .getLoginDate(), 0, 0));
-            mProAdapter = new AccountAdapter(getApplicationContext(), mBeanDatas, R.layout.item_list_project);
-            mLvAccount.setAdapter(mProAdapter);
         }
     }
     
-    private void showDialog()
+    private void showQRcode()
     {
         final View view = LayoutInflater.from(this).inflate(R.layout.dialog_login2, null);
         mLoginDialog = new Dialog(this, R.style.ReasonDialog);
         mLoginDialog.setContentView(view);
         ImageView imageView = (ImageView)view.findViewById(R.id.iv_admin_dialog_login);
-        String loginURL = HttpConsts.LOGIN_URL + DeviceInfoActivity.getSysSN();
+        String loginURL = HttpConsts.URL_LOGIN + DeviceInfoActivity.getSysSN() + URL_LOGIN_PROJECT_NAME;
         Bitmap bitmap = new QREncode.Builder(this).setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
-            // .setParsedResultType(ParsedResultType.TEXT)//默认是TEXT类型
-            // .setContents(AdminModel.LOGIN_URL + "123456789")// 二维码内容
-            .setContents(loginURL)
-            // 二维码内容
-            // .setLogoBitmap(logoBitmap)// 二维码中间logo
+            // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型
+            .setContents(loginURL)                         // 二维码内容
+            // .setLogoBitmap(logoBitmap)                  // 二维码中间logo
             .build()
             .encodeAsBitmap();
         imageView.setImageBitmap(bitmap);
@@ -150,10 +150,10 @@ public class AccountActivity extends Activity implements View.OnClickListener
         switch (view.getId())
         {
             case R.id.bt_admin_account_login:
-                showDialog();
+                showQRcode();
                 break;
             case R.id.bt_admin_account_logout:
-                outAccount();
+                accountLogout();
                 break;
         }
     }
@@ -161,9 +161,9 @@ public class AccountActivity extends Activity implements View.OnClickListener
     @Override
     protected void onDestroy()
     {
-        if (mBeanDatas != null)
+        if (mLoginHistoryDatas != null)
         {
-            mBeanDatas = null;
+            mLoginHistoryDatas = null;
         }
         if (mLoginDialog != null)
         {
@@ -189,12 +189,12 @@ public class AccountActivity extends Activity implements View.OnClickListener
             public void run()
             {
                 OkHttpClient mClient = new OkHttpClient();
-                if (HttpConsts.GETLOGININFO_URL.contains("https"))
+                if (HttpConsts.URL_GET_LOGIN_INFO.contains("https"))
                 {
                     try
                     {
-                        mClient =
-                            new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        mClient = new OkHttpClient.Builder()
+                                .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                                 .build();
                     }
                     catch (Exception e)
@@ -207,18 +207,17 @@ public class AccountActivity extends Activity implements View.OnClickListener
                     mClient = new OkHttpClient();
                 }
                 
-                FormBody body =
-                    new FormBody.Builder().add("method", "post")
+                FormBody body = new FormBody.Builder()
+                        .add("method", "post")
                         .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
-                Request request = new Request.Builder().url(HttpConsts.GETLOGININFO_URL).post(body).build();
+
+                Request request = new Request.Builder().url(HttpConsts.URL_GET_LOGIN_INFO).post(body).build();
                 Call call = mClient.newCall(request);
-                call.enqueue(new okhttp3.Callback()
-                {
+                call.enqueue(new okhttp3.Callback() {
                     // 失败
                     @Override
-                    public void onFailure(Call call, IOException e)
-                    {
+                    public void onFailure(Call call, IOException e) {
                         e.printStackTrace();
                     }
                     
@@ -227,32 +226,21 @@ public class AccountActivity extends Activity implements View.OnClickListener
                     public void onResponse(Call call, Response response)
                         throws IOException
                     {
-                        //todo 处理404
-                        String htmlStr = response.body().string();
-                        Gson gson = new Gson();
-                        mLoginBean = gson.fromJson(htmlStr, LoginBean.class);
-                        if (response.code() == HttpConsts.STATUS_CODE_200)
-                        {
-                            if (mLoginBean.getStatus().equals(HttpConsts.LOGIN_STATUS_000000))
-                            {
-                                // do sth when logout success
-                                if (mLoginBean.getResult() != null)
-                                {
-                                    mHandler.sendEmptyMessage(UPDATE_ACCOUNT_INFO);
+                        if (!response.isSuccessful()) {
+                            Log.e(TAG,"getAccountInfo response not success!");
+
+                        } else if (response.code() == HttpConsts.HTTP_STATUS_SUCCESS) {
+                            String htmlBody = response.body().string();
+                            mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+
+                            if (mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                                if (mLoginBean.getResult() != null) {
+                                    mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
                                 }
                             }
-                        }
-                        else if (response.code() == HttpConsts.STATUS_CODE_422)
-                        {
-                            if (mLoginBean.getStatus().equals(HttpConsts.LOGIN_STATUS_200101))
-                            {
-                            }
-                        }
-                        else if (response.code() == HttpConsts.STATUS_CODE_500)
-                        {
-                        }
-                        else
-                        {
+
+                        } else {
+                            Log.e(TAG,"getAccountInfo response http code undefine!");
                         }
                     }
                 });
@@ -260,37 +248,31 @@ public class AccountActivity extends Activity implements View.OnClickListener
         }).start();
     }
     
-    public void outAccount()
-    {
-        new Thread(new Runnable()
-        {
+    public void accountLogout() {
+        new Thread(new Runnable() {
             @Override
-            public void run()
-            {
-                OkHttpClient mClient = new OkHttpClient();
-                if (HttpConsts.DEVICELOGOUT_URL.contains("https"))
-                {
-                    try
-                    {
-                        mClient =
-                            new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+            public void run() {
+                OkHttpClient mClient;
+                if (HttpConsts.URL_DEVICE_LOGOUT.contains("https")) {
+                    try {
+                        mClient = new OkHttpClient.Builder()
+                                .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                                 .build();
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         e.printStackTrace();
+                        mClient = new OkHttpClient();
                     }
-                }
-                else
-                {
+
+                } else {
                     mClient = new OkHttpClient();
                 }
                 
-                FormBody body =
-                    new FormBody.Builder().add("method", "post")
+                FormBody body = new FormBody.Builder()
+                        .add("method", "post")
                         .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
-                Request request = new Request.Builder().url(HttpConsts.DEVICELOGOUT_URL).post(body).build();
+
+                Request request = new Request.Builder().url(HttpConsts.URL_DEVICE_LOGOUT).post(body).build();
                 Call call = mClient.newCall(request);
                 call.enqueue(new okhttp3.Callback()
                 {
@@ -306,32 +288,22 @@ public class AccountActivity extends Activity implements View.OnClickListener
                     public void onResponse(Call call, Response response)
                         throws IOException
                     {
-                        String htmlStr = response.body().string();
-                        Gson gson = new Gson();
-                        mLoginBean = gson.fromJson(htmlStr, LoginBean.class);
-                        if (response.code() == HttpConsts.STATUS_CODE_200)
-                        {
-                            if (mLoginBean.getStatus().equals("000000"))
+                        if (!response.isSuccessful()) {
+                            Log.e(TAG,"logout response not success!");
+
+                        } else if (response.code() == HttpConsts.HTTP_STATUS_SUCCESS) {
+                            String htmlStr = response.body().string();
+                            mLoginBean = new Gson().fromJson(htmlStr, LoginBean.class);
+
+                            if (mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS))
                             {
-                                // do sth when logout success
-                                SharedPreferencesUtil shared =
-                                    new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
+                                SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
                                 shared.putBoolean(Contants.IS_SETUP_PASS, false);
                                 shared.putBoolean(Contants.IS_ACTIVATE, false);
                                 getAccountInfo();
                             }
-                        }
-                        else if (response.code() == HttpConsts.STATUS_CODE_422)
-                        {
-                            if (mLoginBean.getStatus().equals("200101"))
-                            {
-                            }
-                        }
-                        else if (response.code() == HttpConsts.STATUS_CODE_500)
-                        {
-                        }
-                        else
-                        {
+                        } else {
+                            Log.e(TAG,"logout response http code undefine!");
                         }
                     }
                 });
@@ -339,11 +311,11 @@ public class AccountActivity extends Activity implements View.OnClickListener
         }).start();
     }
     
-    private static class MyHandler extends Handler
+    private static class AccountInfoHandler extends Handler
     {
         private final WeakReference<AccountActivity> mActivity;
         
-        public MyHandler(AccountActivity activity)
+        public AccountInfoHandler(AccountActivity activity)
         {
             mActivity = new WeakReference<AccountActivity>(activity);
         }
@@ -351,12 +323,19 @@ public class AccountActivity extends Activity implements View.OnClickListener
         @Override
         public void handleMessage(Message msg)
         {
-            AccountActivity activity = mActivity.get();
-            if (activity != null)
-            {
-                activity.updateAccountInfo();
+            super.handleMessage(msg);
+
+            switch (msg.what) {
+                case MSG_UPDATE_ACCOUNT_INFO:
+                    AccountActivity activity = mActivity.get();
+                    if (activity != null) {
+                        activity.updateAccountInfo();
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
     }
-
 }
