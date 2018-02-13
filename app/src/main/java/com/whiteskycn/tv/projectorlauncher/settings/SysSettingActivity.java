@@ -74,9 +74,9 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         switch (v.getId())
         {
             case R.id.rf_sys_net:
-                Intent intentWifiSettings = new Intent("android.settings.WIFI_SETTINGS");
-                //Intent intentWifiSettings = new Intent("android.settings.ETHERNET_SETTINGS");
-                startActivity(intentWifiSettings);
+                //Intent intentNetSettings = new Intent("android.settings.WIFI_SETTINGS");
+                Intent intentNetSettings = new Intent("android.settings.ETHERNET_SETTINGS");
+                startActivity(intentNetSettings);
                 //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_seo:
