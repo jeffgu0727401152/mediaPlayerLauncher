@@ -62,27 +62,32 @@
 
                 <Button
                     android:id="@+id/btn_media_mask_paint_cancel"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
-                    android:layout_marginTop="@dimen/x10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x10"
-                    android:background="@drawable/selector_media_copy_multi_to_left_btn"/>
-
-                <Button
-                    android:id="@+id/btn_media_mask_paint_done"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
-                    android:layout_marginTop="@dimen/x10"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:background="@drawable/selector_media_copy_to_right_btn"/>
+                    android:text="cancel"/>
 
                 <Button
                     android:id="@+id/btn_media_mask_paint_undo"
-                    android:layout_width="@dimen/x40"
-                    android:layout_height="@dimen/x40"
-                    android:layout_marginTop="@dimen/x10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x10"
-                    android:background="@drawable/selector_media_copy_to_left_btn"/>
+                    android:text="undo"/>
+
+                <Button
+                    android:id="@+id/btn_media_mask_paint_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:text="next"/>
+
+                <Button
+                    android:id="@+id/btn_media_mask_paint_done"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/x10"
+                    android:text="done"/>
+
             </LinearLayout>
 
             <Button

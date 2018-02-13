@@ -47,8 +47,7 @@
         <activity android:name=".admin.DeviceInfoActivity" />
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name=".common.MQTTService" />
-        <service android:name=".common.InitSSLSocketFactory" />
+        <service android:name=".common.MqttSslService" />
 
     </application>
 

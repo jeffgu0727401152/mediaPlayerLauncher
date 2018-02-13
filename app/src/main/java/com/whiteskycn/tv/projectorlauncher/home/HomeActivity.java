@@ -13,8 +13,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -24,10 +22,8 @@ import com.whitesky.sdk.widget.TvScrollTextView;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.admin.AdminActivity;
-import com.whiteskycn.tv.projectorlauncher.common.MQTTService;
 import com.whiteskycn.tv.projectorlauncher.media.MediaActivity;
 import com.whiteskycn.tv.projectorlauncher.settings.SysSettingActivity;
-import com.whiteskycn.tv.projectorlauncher.utils.ServiceStatusUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
 
@@ -42,7 +38,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     private boolean mLastEthConnected = false;
 
     private BroadcastReceiver mNetworkStatusReceiver;
-    private BroadcastReceiver mMqttStatusReceiver;
 
     //遥控光标框
     private FocusBorder mFocusBorder;
@@ -77,11 +72,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(mNetworkStatusReceiver, filter);
 
-        mMqttStatusReceiver = new MqttStateBroadcastReceiver();
-        IntentFilter filterTime = new IntentFilter();
-        filterTime.addAction(Intent.ACTION_TIME_TICK);
-        registerReceiver(mMqttStatusReceiver,filterTime);
-
         mEthConnectImg = (ImageView)findViewById(R.id.iv_home2_net);
         mWifiConnectImg = (ImageView)findViewById(R.id.iv_home2_wifi);
 
@@ -110,8 +100,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
-
-        startService(new Intent(getApplicationContext(), MQTTService.class));
     }
 
     @Override
@@ -124,22 +112,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
 
     public void setFocusableInTouchMode(boolean focusableInTouchMode) {
         this.focusableInTouchMode = focusableInTouchMode;
-    }
-
-
-    public class MqttStateBroadcastReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
-
-                if (!ServiceStatusUtil.isServiceRunning(context, MQTTService.class)) {
-                    Log.d(TAG,"MQTT be killed, so restart it!");
-                    startService(new Intent(getApplicationContext(), MQTTService.class));
-                }
-            }
-        }
     }
 
 
@@ -187,24 +159,16 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 if (!mLastEthConnected)
                 {
                     //由 mqtt service内部自己保证网络切换以后与服务器的连接
-                    //startService(new Intent(getApplicationContext(), MQTTService.class));
                 }
             }
             else if (wifiConnected)
             {
                 //由 mqtt service内部自己保证网络切换以后与服务器的连接
-                //startService(new Intent(getApplicationContext(), MQTTService.class));
             }
 
             mLastWifiConnected = wifiConnected;
             mLastEthConnected = ethConnected;
 
-            //每次网络通断的机会,检查服务是否被杀死,如果杀死则重启
-            if (!ServiceStatusUtil.isServiceRunning(context,MQTTService.class))
-            {
-                Log.d(TAG,"MQTT be killed, so restart it!");
-                startService(new Intent(getApplicationContext(), MQTTService.class));
-            }
         }
     }
 
@@ -243,7 +207,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     protected void onDestroy()
     {
         unregisterReceiver(mNetworkStatusReceiver);
-        unregisterReceiver(mMqttStatusReceiver);
         if (mFocusBorder != null)
         {
             mFocusBorder = null;
