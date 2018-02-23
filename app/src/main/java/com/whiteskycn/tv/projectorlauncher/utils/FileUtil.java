@@ -2,12 +2,17 @@ package com.whiteskycn.tv.projectorlauncher.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.os.StatFs;
 import android.os.storage.StorageManager;
 import android.util.Log;
+
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -535,6 +540,104 @@ public class FileUtil
 
         }
 
+    }
+
+    /* 将图像保存到Data目录 */
+    public static boolean saveBitmapToData(Activity act, Bitmap bmpToSave, String FileName, int Quality)
+    {//参数依次为：调用的 Activity，需要写入 data 的位图，文件名（不含扩展名），扩展名，图像质量
+        try
+        {
+            if (Quality > 100)
+                Quality = 100;
+            else if (Quality < 1)
+                Quality = 1;
+
+            FileOutputStream fos = act.openFileOutput(FileName, Context.MODE_PRIVATE);
+            bmpToSave.compress(Bitmap.CompressFormat.PNG, Quality, fos);
+
+            //写入文件
+            fos.flush();
+            fos.close();
+            return true;
+        }
+        catch (Exception e)
+        {
+            if (e.getMessage() != null)
+                Log.w(TAG, e.getMessage());
+            else
+                e.printStackTrace();
+
+            return false;
+        }
+    }
+
+    /* 从Data目录读取图像 */
+    public static Bitmap getBitmapFromData(Activity act, String FileName)
+    {
+        FileInputStream fis = null;
+        try
+        {
+            fis = act.openFileInput(FileName);
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        Bitmap bmpRet = BitmapFactory.decodeStream(bis);
+
+        try
+        {
+            bis.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            fis.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        return bmpRet;
+    }
+
+    /* 从Data目录删除文件 */
+    public static void deleteFileFromData(Activity act, String FileName)
+    {
+        String path = act.getFilesDir() + File.separator + FileName;
+        File file = new File(path);
+
+        if (!file.exists()) {
+            return;
+        }
+
+        if (file.isDirectory()) {
+            return;
+        }
+
+        file.delete();
+
+        return;
+    }
+
+    /* 在Data目录下是否存在 */
+    public static boolean fileExistInData(Activity act, String FileName)
+    {
+        String path = act.getFilesDir() + File.separator + FileName;
+        File file = new File(path);
+
+        if (file.exists()) {
+            return true;
+        }
+
+        return false;
     }
 
 }

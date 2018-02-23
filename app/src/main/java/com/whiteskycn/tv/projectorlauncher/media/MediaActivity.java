@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.media.AudioManager;
 import android.os.AsyncTask;
@@ -17,6 +18,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -46,6 +48,7 @@ import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PolygonWindow;
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -154,7 +157,7 @@ public class MediaActivity extends Activity
     private ImageView mPicturePlayView;
     private MaskControl mMaskArea;
     private ImageView mMaskView;
-    private PaintableImageView mPaintView;
+    private PolygonWindow mPaintView;
 
     private Button mNetViewBtn;
     private Button mGrayViewBtn;
@@ -200,6 +203,8 @@ public class MediaActivity extends Activity
     private boolean mDoNotUpdateSeekBar = false;        //用户在拖动seekbar期间,系统不去更改seekbar位置
     private boolean mIsFullScreen;                      //是否在全屏播放标志
 
+    private Point touchPoint = new Point();;
+
     private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
     private PlayListAdapter mPlayListAdapter;
     private DragListView mDragPlayListView;
@@ -217,7 +222,7 @@ public class MediaActivity extends Activity
 
     private TextView mUsbListTitle;
     private Deque<String> mUsbMediaCopyDeque = new ArrayDeque<String>();                        //需要复制的文件
-    private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();     //需要删除的文件
+    private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();               //需要删除的文件
     private Deque<String> mMediaSameDeque = new ArrayDeque<String>();                           //复制中重复冲突的文件
     private Deque<String> mCopyDoneDeque = new ArrayDeque<String>();                           //复制完成的文件
 
@@ -367,6 +372,8 @@ public class MediaActivity extends Activity
 
         mPicturePlayView.setOnLongClickListener(mLongPressHandle);
         mVideoPlaySurfaceView.setOnLongClickListener(mLongPressHandle);
+        mPicturePlayView.setOnTouchListener(mTouchHandle);
+        mVideoPlaySurfaceView.setOnTouchListener(mTouchHandle);
 
         mUsbPartitionSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
@@ -659,7 +666,7 @@ public class MediaActivity extends Activity
         mVideoPlaySurfaceView = (SurfaceView) findViewById(R.id.sv_media_playVideo);
         mPicturePlayView = (ImageView) findViewById(R.id.iv_media_playPicture);
         mMaskView = (ImageView) findViewById(R.id.iv_media_mask);
-        mPaintView = (PaintableImageView) findViewById(R.id.iv_media_paint);
+        mPaintView = (PolygonWindow) findViewById(R.id.iv_media_polygonWindow);
 
         mNetViewBtn = (Button) findViewById(R.id.btn_media_netView);
         mGrayViewBtn = (Button) findViewById(R.id.btn_media_grayView);
@@ -994,9 +1001,9 @@ public class MediaActivity extends Activity
 
             case R.id.btn_media_netView:
                 if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_NET) {
-                    mMaskArea.showNet();
+                    mMaskArea.showNetMask();
                 } else {
-                    mMaskArea.hide();
+                    mMaskArea.showDefaultMask();
                 }
                 break;
 
@@ -1004,19 +1011,19 @@ public class MediaActivity extends Activity
                 if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_1
                         && mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_2
                         && mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_3) {
-                    mMaskArea.showGray1();
+                    mMaskArea.showGray1Mask();
                 } else {
                     switch(mMaskArea.getMaskState()) {
                         case MaskControl.SCREEN_MASK_MODE_GRAY_1:
-                            mMaskArea.showGray2();
+                            mMaskArea.showGray2Mask();
                             break;
 
                         case MaskControl.SCREEN_MASK_MODE_GRAY_2:
-                            mMaskArea.showGray3();
+                            mMaskArea.showGray3Mask();
                             break;
 
                         case MaskControl.SCREEN_MASK_MODE_GRAY_3:
-                            mMaskArea.hide();
+                            mMaskArea.showDefaultMask();
                             break;
 
                         default:
@@ -1208,15 +1215,23 @@ public class MediaActivity extends Activity
         }
     };
 
+    private View.OnTouchListener mTouchHandle = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                touchPoint.x=(int) event.getRawX();
+                touchPoint.y=(int) event.getRawY();
+            }
+            return false;
+        }
+    };
+
     private View.OnLongClickListener mLongPressHandle = new View.OnLongClickListener() {
         @Override
         public boolean onLongClick(View v) {
             if (mIsFullScreen) {
                 Toast.makeText(MediaActivity.this, "长按成功", Toast.LENGTH_SHORT).show();
-                mMaskArea.showPaintWindow();
-                LinearLayout maskControlBarLayout = (LinearLayout) findViewById(R.id.ll_media_mask_paint_controlBar);
-                maskControlBarLayout.setVisibility(View.VISIBLE);
-                maskControlBarLayout.bringToFront();
+                mMaskArea.showPaintWindow(touchPoint);
             }
 
             return true;
@@ -1410,9 +1425,6 @@ public class MediaActivity extends Activity
             LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_media_playControlBar);
             controlBarLayout.setVisibility(View.VISIBLE);
 
-            LinearLayout maskControlBarLayout = (LinearLayout) findViewById(R.id.ll_media_mask_paint_controlBar);
-            maskControlBarLayout.setVisibility(View.INVISIBLE);
-
             mGrayViewBtn.setVisibility(View.VISIBLE);
             mNetViewBtn.setVisibility(View.VISIBLE);
 
@@ -1429,8 +1441,8 @@ public class MediaActivity extends Activity
             mMaskView.setLayoutParams(flp);
             mPaintView.setLayoutParams(flp);
 
-            if (mMaskArea.getMaskState()==MaskControl.SCREEN_MASK_MODE_WINDOW) {
-                mMaskArea.hide();
+            if (mMaskArea.getMaskState()==MaskControl.SCREEN_MASK_MODE_PAINT) {
+                mMaskArea.showDefaultMask();
             }
 
             mIsFullScreen = false;

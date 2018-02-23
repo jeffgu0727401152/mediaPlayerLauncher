@@ -35,13 +35,12 @@
                 android:layout_height="@dimen/x450"
                 android:visibility="invisible" />
 
-            <com.whiteskycn.tv.projectorlauncher.media.PaintableImageView
-                android:id="@+id/iv_media_paint"
+            <com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PolygonWindow
+                android:id="@+id/iv_media_polygonWindow"
                 android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x450"
-                android:background="@drawable/shape_media_mask_window"
+                android:background="@drawable/shape_media_mask_paint_background"
                 android:visibility="invisible" />
-
 
             <Button
                 android:id="@+id/btn_media_netView"
@@ -50,45 +49,6 @@
                 android:layout_marginTop="@dimen/x20"
                 android:layout_marginLeft="@dimen/x20"
                 android:background="@drawable/selector_media_net_view_btn"/>
-
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/ll_media_mask_paint_controlBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/x140"
-                android:layout_marginLeft="@dimen/x120"
-                android:orientation="horizontal"
-                android:visibility="invisible">
-
-                <Button
-                    android:id="@+id/btn_media_mask_paint_cancel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:text="cancel"/>
-
-                <Button
-                    android:id="@+id/btn_media_mask_paint_undo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:text="undo"/>
-
-                <Button
-                    android:id="@+id/btn_media_mask_paint_next"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:text="next"/>
-
-                <Button
-                    android:id="@+id/btn_media_mask_paint_done"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
-                    android:text="done"/>
-
-            </LinearLayout>
 
             <Button
                 android:id="@+id/btn_media_grayView"

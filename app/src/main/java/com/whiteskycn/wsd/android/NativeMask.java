@@ -20,7 +20,7 @@ package com.whiteskycn.wsd.android;
 // Wrapper for native library
 
 public class NativeMask {
-	private static String TAG = "NativeMask";
+	private static String TAG = "NativePolygon";
 
 	static {
 		System.loadLibrary("PolygonMask");
@@ -30,9 +30,9 @@ public class NativeMask {
 		int[] polygonBufferArray,
 		int width,
 		int height,
-		int[] polygonCountArray,
-		int[] xPointArray,
-		int[] yPointArray,
+		int[] polygonCountArray,	//这个数组的size决定了有画几个多边形,数组的每个元素表示多边形的顶点数
+		int[] xPointArray,			//所有多边形的顶点的x
+		int[] yPointArray,			//所有多边形的顶点的y
 		int insideColor,
 		int outsideColor);
 }

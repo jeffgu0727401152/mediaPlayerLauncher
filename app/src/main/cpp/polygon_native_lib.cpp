@@ -23,7 +23,7 @@
 
 #include "PolygonBuffer.h"
 
-#define LOG_TAG    "MASK_NATIVE"
+#define LOG_TAG    "POLYGON_NATIVE"
 
 extern "C" {
     JNIEXPORT void JNICALL Java_com_whiteskycn_wsd_android_NativeMask_createPolygonBuffer(
@@ -91,13 +91,13 @@ JNIEXPORT void JNICALL Java_com_whiteskycn_wsd_android_NativeMask_createPolygonB
 					yPoint+nPointIndex,
 					nPolygonCountArray[m]) >= 0)
 				{
-					__android_log_print(
-						ANDROID_LOG_INFO,
-						LOG_TAG,
-						"point[%d,%d] inside polygon[%d]\n",
-						j,
-						i,
-						m);
+//					__android_log_print(
+//						ANDROID_LOG_INFO,
+//						LOG_TAG,
+//						"point[%d,%d] inside polygon[%d]\n",
+//						j,
+//						i,
+//						m);
 
 					isInsidePolygon = 1;
 					break;

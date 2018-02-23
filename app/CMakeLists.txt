@@ -8,7 +8,7 @@ include_directories(
 add_library(
     PolygonMask                          #希望so库被编译出来的名称，java代码loadlibrary用这个名称
     SHARED
-    src/main/cpp/mask_native_lib.cpp     #cpp代码文件的路径 从这里往下可以随意添加c、c++文件
+    src/main/cpp/polygon_native_lib.cpp     #cpp代码文件的路径 从这里往下可以随意添加c、c++文件
     src/main/cpp/PolygonBuffer.cpp
 )
 

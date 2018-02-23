@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PaintPolygonView
+        android:id="@+id/iv_paint_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
+
+    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/ll_paint_controlBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:rowCount="2"
+        android:columnCount="2">
+
+        <Button
+            android:id="@+id/btn_paint_undo"
+            android:layout_width="@dimen/x160"
+            android:layout_height="wrap_content"
+            android:text="Undo"/>
+
+        <Button
+            android:id="@+id/btn_paint_next"
+            android:layout_width="@dimen/x160"
+            android:layout_height="wrap_content"
+            android:text="Next"/>
+
+        <Button
+            android:id="@+id/btn_paint_cancel"
+            android:layout_width="@dimen/x160"
+            android:layout_height="wrap_content"
+            android:text="Cancel"/>
+
+        <Button
+            android:id="@+id/btn_paint_done"
+            android:layout_width="@dimen/x160"
+            android:layout_height="wrap_content"
+            android:text="Done"/>
+
+    </GridLayout>
+</FrameLayout>
