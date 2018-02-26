@@ -297,7 +297,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
 
                             if (mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS))
                             {
-                                SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
+                                SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
                                 shared.putBoolean(Contants.IS_SETUP_PASS, false);
                                 shared.putBoolean(Contants.IS_ACTIVATE, false);
                                 getAccountInfo();

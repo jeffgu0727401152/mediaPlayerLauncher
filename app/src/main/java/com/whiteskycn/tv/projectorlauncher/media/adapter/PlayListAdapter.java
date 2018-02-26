@@ -1,7 +1,6 @@
 package com.whiteskycn.tv.projectorlauncher.media.adapter;
 
 import android.content.Context;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -35,7 +35,6 @@ import static com.whiteskycn.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO
 
 public class PlayListAdapter extends CommonAdapter<PlayListBean>
 {
-    private static final String CONFIG_PLAYLIST = "playList";
     private final String TAG = this.getClass().getSimpleName();
 
     public PlayListAdapter(Context context, List<PlayListBean> data)
@@ -140,9 +139,9 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         return false;
     }
 
-    public void loadFromConfig() {
+    public boolean loadFromConfig() {
         Gson gson = new Gson();
-        SharedPreferencesUtil config = new SharedPreferencesUtil(mContext, Contants.CONFIG);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(mContext, Contants.PERF_CONFIG);
         String jsonStr = config.getString(CONFIG_PLAYLIST, null);
         Type type = new TypeToken<List<PlayListBean>>(){}.getType();
         if (jsonStr!=null)
@@ -154,10 +153,16 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 addItem(datas.get(i));
             }
         }
+
+        if (getCount() > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void saveToConfig() {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(mContext, Contants.CONFIG);
+        SharedPreferencesUtil shared = new SharedPreferencesUtil(mContext, Contants.PERF_CONFIG);
         Gson gson = new Gson();
         String jsonStr = gson.toJson(getListDatas());
         shared.putString(CONFIG_PLAYLIST, jsonStr);

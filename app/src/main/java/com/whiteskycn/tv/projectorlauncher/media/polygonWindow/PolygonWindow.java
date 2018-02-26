@@ -24,7 +24,7 @@ import com.whiteskycn.wsd.android.NativeMask;
  * Created by jeff on 18-2-22.
  */
 
-public class PolygonWindow extends FrameLayout implements View.OnClickListener, PaintPolygonView.OnFirstPointListener {
+public class PolygonWindow extends FrameLayout implements View.OnClickListener, PaintPolygonView.OnPointDownListener {
     private final String TAG = this.getClass().getSimpleName();
 
     private static final int DEFAULT_INSIDE_COLOR = 0x00000000;
@@ -48,6 +48,8 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     private int displayWidth;
     private int displayHeight;
 
+    private boolean showControlBarWithVisible = true;
+
     public interface OnPolygonWindowEventListener {
         public void onGenerateBegin();
         public void onGenerateDone(Bitmap bmp);
@@ -63,6 +65,7 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
         public void handleMessage(Message msg){
             super.handleMessage(msg);
             paintView.clearAllPolygonPoints();
+            updateBtnActiveState();
             if (eventListener!=null) {
                 eventListener.onGenerateDone((Bitmap)msg.obj);
             }
@@ -85,7 +88,7 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
         doneBtn.setOnClickListener(this);
 
         eventListener = null;
-        paintView.SetOnFirstPointListener(this);
+        paintView.setOnPointDownListener(this);
 
         insideColor = DEFAULT_INSIDE_COLOR;
         outsideColor = DEFAULT_OUTSIDE_COLOR;
@@ -98,11 +101,17 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
         Log.d(TAG,"display size:" + displayWidth + "*" + displayHeight);
     }
 
+    public void updateBtnActiveState() {
+        undoBtn.setEnabled(paintView.hasPointToDelete());
+        nextBtn.setEnabled(paintView.couldDrawNextPolygon());
+    }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_paint_cancel:
                 paintView.clearAllPolygonPoints();
+                updateBtnActiveState();
                 if (eventListener!=null) {
                     eventListener.onCancel();
                 }
@@ -151,14 +160,16 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
                 break;
 
             case R.id.btn_paint_undo:
-                if (paintView.stillHasPointToDelete()) {
+                if (paintView.hasPointToDelete()) {
                     paintView.deleteLastPoint();
+                    updateBtnActiveState();
                 }
                 break;
 
             case R.id.btn_paint_next:
                 if (paintView.couldDrawNextPolygon()) {
                     paintView.drawNextPolygonPoints();
+                    updateBtnActiveState();
                 }
                 break;
 
@@ -172,7 +183,12 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     {
         super.setVisibility(visibility);
         paintView.setVisibility(visibility);
-        paintControlBar.setVisibility(visibility);
+
+        if (showControlBarWithVisible) {
+            showControlBar(visibility);
+        }
+
+        updateBtnActiveState();
 
         if(visibility==View.VISIBLE) {
             paintView.bringToFront();
@@ -181,8 +197,13 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     }
 
     @Override
-    public void onFirstPointDown(Point p) {
-        adjustPaintControlBarPosition(p);
+    public void onPointDown(int idx, Point p) {
+        if (idx==1) {
+            adjustPaintControlBarPosition(p);
+            showControlBar(VISIBLE);
+        }
+
+        updateBtnActiveState();
     }
 
     // 抠图内部的颜色,一般使用透明色
@@ -203,6 +224,14 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
 
     public PaintPolygonView getPaintView() {
         return paintView;
+    }
+
+    public void showControlBarWithVisible(boolean isNeed) {
+        showControlBarWithVisible = isNeed;
+    }
+
+    public void showControlBar(int visibility) {
+        paintControlBar.setVisibility(visibility);
     }
 
     public void adjustPaintControlBarPosition(Point position) {

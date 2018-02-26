@@ -87,6 +87,7 @@
     <string name="str_media_dialog_copy_cancel">取消</string>
     <string name="str_media_dialog_copy_skip">跳过</string>
 
+    <string name="str_media_mask_paint_begin">鼠标左键点出多边形</string>
     <string name="str_media_dialog_mask_generate_title">窗口生成</string>
     <string name="str_media_dialog_mask_generate_message">多边形窗口生成中...</string>
 

@@ -73,6 +73,9 @@ import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.CONFIG_PLAYMODE;
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.EXTRA_MEDIA_ACTIVITY_START_MODE;
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.MEDIA_ACTIVITY_START_MODE_PLAY;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_PICTURE;
 import static com.whiteskycn.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PAUSE_VIDEO;
@@ -134,9 +137,6 @@ public class MediaActivity extends Activity
     private static final String BUNDLE_KEY_INFO_HEIGHT = "height";
     private static final String BUNDLE_KEY_INFO_BPS = "bitRate";
 
-
-    private static final String CONFIG_PLAYMODE = "playMode";
-
     private static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sata/disk";
     private static final String CLOUD_MEDIA_FOLDER = "cloud";
     private static final String LOCAL_MEDIA_FOLDER = "local";
@@ -147,6 +147,10 @@ public class MediaActivity extends Activity
     private String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", LOCAL_MASS_STORAGE_PATH}; // 排除在外的挂载目录,非移动硬盘
 
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
+
+    private static final int START_MODE_IDLE = 0;
+    private static final int START_MODE_PLAY = 1;
+    private int mActivityStartMode = START_MODE_IDLE;
 
     private MediaScanUtil mLocalMediaScanner;
     private MediaScanUtil mUsbMediaScanner;
@@ -203,7 +207,7 @@ public class MediaActivity extends Activity
     private boolean mDoNotUpdateSeekBar = false;        //用户在拖动seekbar期间,系统不去更改seekbar位置
     private boolean mIsFullScreen;                      //是否在全屏播放标志
 
-    private Point touchPoint = new Point();;
+    private Point longPressPoint = new Point();;
 
     private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
     private PlayListAdapter mPlayListAdapter;
@@ -330,7 +334,7 @@ public class MediaActivity extends Activity
             if (mPlayer != null)
                 mPlayer.setReplayMode(PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_SHUFFLE);
         }
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
+        SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
         shared.putInt(CONFIG_PLAYMODE, checkedId);
     }
 
@@ -658,6 +662,9 @@ public class MediaActivity extends Activity
 
         // 开线程去查询本地容量
         updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
+
+        // 为保证播放模式可以被设置,加载配置必须在mPlayer被new出以后做
+        loadPersistData();
     }
 
     private void initView() {
@@ -739,7 +746,7 @@ public class MediaActivity extends Activity
 
     private void loadPersistData() {
         // 加载播放模式,如果没有配置,则默认为全部循环
-        SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
         int playMode = config.getInt(CONFIG_PLAYMODE, mReplayAllRadioButton.getId());
         mReplayModeRadioGroup.check(playMode);
         onCheckedChanged(null,playMode);
@@ -1120,8 +1127,15 @@ public class MediaActivity extends Activity
         LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.img_background);
 
-        // 为保证播放模式可以被设置,加载配置必须在mPlayer被new出以后做
-        loadPersistData();
+        mActivityStartMode = START_MODE_IDLE;
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        if (bundle!=null) {
+            String reason = bundle.getString(EXTRA_MEDIA_ACTIVITY_START_MODE);
+            if (reason!=null && reason.equals(MEDIA_ACTIVITY_START_MODE_PLAY) && mPlayListAdapter.getCount()>0) {
+                mActivityStartMode = START_MODE_PLAY;
+            }
+        }
     }
 
     @Override
@@ -1180,6 +1194,10 @@ public class MediaActivity extends Activity
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            if (mActivityStartMode == START_MODE_PLAY) {
+                mPlayer.mediaPlay(0);
+                fullScreenDisplaySwitch();
+            }
             Log.i(TAG, "SurfaceHolder 被创建");
         }
 
@@ -1219,8 +1237,8 @@ public class MediaActivity extends Activity
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                touchPoint.x=(int) event.getRawX();
-                touchPoint.y=(int) event.getRawY();
+                longPressPoint.x=(int) event.getRawX();
+                longPressPoint.y=(int) event.getRawY();
             }
             return false;
         }
@@ -1230,8 +1248,8 @@ public class MediaActivity extends Activity
         @Override
         public boolean onLongClick(View v) {
             if (mIsFullScreen) {
-                Toast.makeText(MediaActivity.this, "长按成功", Toast.LENGTH_SHORT).show();
-                mMaskArea.showPaintWindow(touchPoint);
+                Toast.makeText(MediaActivity.this, getResources().getString(R.string.str_media_mask_paint_begin), Toast.LENGTH_SHORT).show();
+                mMaskArea.showPaintWindow(longPressPoint);
             }
 
             return true;

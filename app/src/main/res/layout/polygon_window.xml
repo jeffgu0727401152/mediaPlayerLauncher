@@ -6,8 +6,7 @@
     <com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PaintPolygonView
         android:id="@+id/iv_paint_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible" />
+        android:layout_height="match_parent" />
 
     <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/ll_paint_controlBar"
@@ -15,31 +14,36 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:rowCount="2"
-        android:columnCount="2">
+        android:columnCount="2"
+        android:visibility="invisible">
 
         <Button
             android:id="@+id/btn_paint_undo"
-            android:layout_width="@dimen/x160"
-            android:layout_height="wrap_content"
-            android:text="Undo"/>
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:layout_margin="@dimen/x10"
+            android:background="@drawable/selector_media_mask_paint_undo_btn" />
 
         <Button
             android:id="@+id/btn_paint_next"
-            android:layout_width="@dimen/x160"
-            android:layout_height="wrap_content"
-            android:text="Next"/>
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:layout_margin="@dimen/x10"
+            android:background="@drawable/selector_media_mask_paint_next_btn"/>
 
         <Button
             android:id="@+id/btn_paint_cancel"
-            android:layout_width="@dimen/x160"
-            android:layout_height="wrap_content"
-            android:text="Cancel"/>
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:layout_margin="@dimen/x10"
+            android:background="@drawable/selector_media_mask_paint_cancel_btn"/>
 
         <Button
             android:id="@+id/btn_paint_done"
-            android:layout_width="@dimen/x160"
-            android:layout_height="wrap_content"
-            android:text="Done"/>
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:layout_margin="@dimen/x10"
+            android:background="@drawable/selector_media_mask_paint_done_btn"/>
 
     </GridLayout>
 </FrameLayout>

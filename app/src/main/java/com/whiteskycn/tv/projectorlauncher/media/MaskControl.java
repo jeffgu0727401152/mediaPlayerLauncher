@@ -3,6 +3,8 @@ package com.whiteskycn.tv.projectorlauncher.media;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.util.Log;
 import android.view.View;
@@ -44,7 +46,6 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
         lastMaskStateBeforePaint = SCREEN_MASK_MODE_NONE;
         paintWindow = window;
         paintWindow.setOnPolygonWindowEventListener(this);
-
         showDefaultMask();
     }
 

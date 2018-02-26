@@ -1,5 +1,7 @@
 package com.whiteskycn.tv.projectorlauncher.common;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +11,8 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.util.Log;
 
+import com.whiteskycn.tv.projectorlauncher.R;
+import com.whiteskycn.tv.projectorlauncher.home.HomeActivity;
 import com.whiteskycn.tv.projectorlauncher.utils.MqttUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.SharedPreferencesUtil;
 import com.whiteskycn.wsd.android.NativeCertification;
@@ -26,7 +30,7 @@ import javax.net.ssl.SSLContext;
 
 public class MqttSslService extends Service implements MqttUtil.MqttMessageCallback
 {
-    public static final String INTENT_LOGIN_URI = "com.whiteskycn.tv.login";
+    private final static int SERVICE_ID = 1001;
 
     private final static int MSG_NONE = 0;
     // command
@@ -43,15 +47,34 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String keyStorePassword = "wxgh#2561";
 
 
-    // MQTT Util callback begin
+    // MQTT Util callback +++
     @Override
     public void onDistributeMessage(String msg) {
         Log.d("TAG","on distributeMessage:" + msg);
         parserMqttMessage(msg);
-        // todo 使用eventbus
+        // todo 考虑使用eventbus?
     }
-    // MQTT Util callback end
+    // MQTT Util callback ---
 
+
+    @Override
+    public void onCreate() {
+        //前台通知提高优先级
+        Intent notificationIntent = new Intent(this,HomeActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+
+        //新建Builer对象
+        Notification.Builder builer = new Notification.Builder(this);
+        builer.setContentTitle("MQTT Service");         //设置通知的标题
+        builer.setContentText("service running...");    //设置通知的内容
+        builer.setSmallIcon(R.mipmap.ic_launcher);      //设置通知的图标
+        builer.setContentIntent(pendingIntent);         //设置点击通知后的操作
+
+        Notification notification = builer.build();//将Builder对象转变成普通的notification
+        startForeground(SERVICE_ID, notification);//让Service变成前台Service,并在系统的状态栏显示出来
+
+        super.onCreate();
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
@@ -98,12 +121,13 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
     }
 
-    private void parserMqttMessage(String mqttMessage)
-    {
+    private void parserMqttMessage(String mqttMessage) {
         Message message = mqttUtilHandler.obtainMessage();
         message.what = MSG_NONE;
 
-        if (mqttMessage.indexOf("command") == 20) { // command 用于管理端向设备发送控制命令
+        if (mqttMessage.indexOf("command") == 20) {
+            // command 用于管理端向设备发送控制命令
+
             if (mqttMessage.contains("logindone")) {
                 message.what = MSG_DEVICE_LOGIN_DONE;
 
@@ -120,7 +144,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 message.what = MSG_DEVICE_OTA_UPDATE;
             }
 
-        } else if (mqttMessage.indexOf("request") == 20) { // request 用于管理端向设备发送请求
+        } else if (mqttMessage.indexOf("request") == 20) {
+            // request 用于管理端向设备发送请求
+
             if (mqttMessage.contains("status")) {
                 message.what = MSG_REQUEST_STATUS;
 
@@ -132,31 +158,35 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         mqttUtilHandler.sendMessage(message);
     }
 
-    private Handler mqttUtilHandler = new Handler()
-    {
-        public void handleMessage(Message msg)
-        {
-            switch (msg.what)
-            {
+    private Handler mqttUtilHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+
                 case MSG_DEVICE_LOGIN_DONE:
                     Log.i(TAG, "mqtt login done!");
-                    SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.CONFIG);
+                    SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
                     shared.putBoolean(Contants.IS_ACTIVATE, true);
                     shared.putBoolean(Contants.IS_SETUP_PASS, true);
 
-                    Intent intent = new Intent(INTENT_LOGIN_URI);
-                    sendBroadcast(intent);
+                    Intent homeIntent = new Intent(getApplicationContext(), HomeActivity.class);
+                    homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(homeIntent);
                     break;
+
                 case MSG_DEVICE_REBOOT:
                     PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
                     powerManager.reboot("mqtt request");
                     break;
+
                 case MSG_DEVICE_INSTALL_APK:
                     break;
+
                 case MSG_DEVICE_REMOVE_APK:
                     break;
+
                 case MSG_DEVICE_OTA_UPDATE:
                     break;
+
                 default:
                     Log.i(TAG, "unknown msg " + msg.what);
                     break;

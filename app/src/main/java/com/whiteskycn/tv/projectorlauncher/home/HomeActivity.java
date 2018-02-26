@@ -1,5 +1,6 @@
 package com.whiteskycn.tv.projectorlauncher.home;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,13 +23,20 @@ import com.whitesky.sdk.widget.TvScrollTextView;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whiteskycn.tv.projectorlauncher.R;
 import com.whiteskycn.tv.projectorlauncher.admin.AdminActivity;
+import com.whiteskycn.tv.projectorlauncher.common.MqttSslService;
 import com.whiteskycn.tv.projectorlauncher.media.MediaActivity;
+import com.whiteskycn.tv.projectorlauncher.media.adapter.PlayListAdapter;
+import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.settings.SysSettingActivity;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.EXTRA_MEDIA_ACTIVITY_START_MODE;
+import static com.whiteskycn.tv.projectorlauncher.common.Contants.MEDIA_ACTIVITY_START_MODE_PLAY;
 
-public class HomeActivity extends BaseActivity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
+public class HomeActivity extends Activity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
     private final String TAG = this.getClass().getSimpleName();
     private ImageView mEthConnectImg;
@@ -100,6 +108,20 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
+
+        // SSL 与 MQTT服务
+        startService(new Intent(getApplicationContext(), MqttSslService.class));
+
+        // 如果有播放列表,直接跳转
+        List<PlayListBean> tmpPlayList = new ArrayList<PlayListBean>();
+        PlayListAdapter playlist = new PlayListAdapter(this,tmpPlayList);
+        if (playlist.loadFromConfig()) {
+            Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
+            if (intentMedia.resolveActivity(getPackageManager())!=null) {
+                intentMedia.putExtra(EXTRA_MEDIA_ACTIVITY_START_MODE,MEDIA_ACTIVITY_START_MODE_PLAY);
+                startActivity(intentMedia);
+            }
+        }
     }
 
     @Override

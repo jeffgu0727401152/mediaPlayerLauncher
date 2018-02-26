@@ -105,7 +105,7 @@ public class DeviceInfoActivity extends Activity
     private String getSysVersionDate()
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyy-MM-dd HH:mm");
-        long lt = new Long(SystemProperties.get("ro.build.date.utc", "1513328136"));
+        long lt = Long.valueOf(SystemProperties.get("ro.build.date.utc", "1513328136"));
         Date date = new Date(lt * 1000);
         return simpleDateFormat.format(date);
     }

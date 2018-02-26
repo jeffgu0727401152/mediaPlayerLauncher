@@ -39,7 +39,7 @@ public class PaintPolygonView extends AppCompatImageView {
 
     private int PointRadius;
 
-    private OnFirstPointListener firstPointListener;
+    private OnPointDownListener pointDownListener;
 
     {
         totalPolygonPoints = new ArrayList<List<Point>>();
@@ -47,13 +47,15 @@ public class PaintPolygonView extends AppCompatImageView {
 
         drawLinePaint.setColor(DEFAULT_LINE_COLOR);
         drawLinePaint.setStrokeWidth(DEFAULT_LINE_STROKE);
+        drawLinePaint.setAntiAlias(true);
 
         drawPointPaint.setColor(DEFAULT_POINT_COLOR);
         drawPointPaint.setStrokeWidth(DEFAULT_POINT_STROKE);
+        drawPointPaint.setAntiAlias(true);
 
         PointRadius = DEFAULT_POINT_RADIUS;
 
-        firstPointListener = null;
+        pointDownListener = null;
     }
 
     public PaintPolygonView(Context context) {
@@ -69,12 +71,12 @@ public class PaintPolygonView extends AppCompatImageView {
     }
 
 
-    public interface OnFirstPointListener {
-        public void onFirstPointDown(Point p);
+    public interface OnPointDownListener {
+        public void onPointDown(int idxInPolygon, Point p);
     }
 
-    public void SetOnFirstPointListener(OnFirstPointListener onFirstPointListener) {
-        this.firstPointListener = onFirstPointListener;
+    public void setOnPointDownListener(OnPointDownListener onPointListener) {
+        this.pointDownListener = onPointListener;
     }
 
     @Override
@@ -87,11 +89,12 @@ public class PaintPolygonView extends AppCompatImageView {
                 currentPoint = new Point();
                 currentPoint.set((int)(xPos + 0.5f),(int)(yPos + 0.5f));                //四舍五入
 
-                if (firstPointListener!=null && currentPolygonPoints.size()==0) {
-                    firstPointListener.onFirstPointDown(currentPoint);
+                currentPolygonPoints.add(currentPoint);
+
+                if (pointDownListener !=null) {
+                    pointDownListener.onPointDown(currentPolygonPoints.size(),currentPoint);
                 }
 
-                currentPolygonPoints.add(currentPoint);
                 invalidate();
 
                 return true; // return true消费掉ACTION_DOWN事件，否则不会触发ACTION_UP
@@ -191,7 +194,7 @@ public class PaintPolygonView extends AppCompatImageView {
      * 判断是否可以继续撤销
      * @return
      */
-    public boolean stillHasPointToDelete() {
+    public boolean hasPointToDelete() {
         if (currentPolygonPoints.size() > 0 || totalPolygonPoints.size() > 0) {
             return true;
         } else {
