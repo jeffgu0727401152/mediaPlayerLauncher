@@ -167,5 +167,6 @@
     <color name="navy">#000080</color><!--海军色 -->
     <color name="black">#000000</color><!--黑色 -->
     <color name="translucent">#00000000</color>
+    <color name="background">#26325D</color><!--背景颜色 -->
     <color name="sss">#EC7263</color>
 </resources>

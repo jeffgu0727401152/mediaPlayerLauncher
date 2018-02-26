@@ -249,7 +249,7 @@ public class SpeedTestActivity extends Activity implements OnClickListener
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        layout.setBackgroundResource(R.drawable.img_background);
+        layout.setBackgroundResource(R.drawable.shape_background);
     }
 
     @Override

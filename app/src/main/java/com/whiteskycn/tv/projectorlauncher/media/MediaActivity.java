@@ -91,6 +91,7 @@ public class MediaActivity extends Activity
         implements View.OnClickListener,
         PictureVideoPlayer.OnMediaEventListener,
         RadioGroup.OnCheckedChangeListener {
+
     private final String TAG = this.getClass().getSimpleName();
 
     private final int MSG_USB_PLUG_IN = 0;
@@ -148,9 +149,9 @@ public class MediaActivity extends Activity
 
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
 
-    private static final int START_MODE_IDLE = 0;
-    private static final int START_MODE_PLAY = 1;
-    private int mActivityStartMode = START_MODE_IDLE;
+    private static final int START_ACTION_IDLE = 0;
+    private static final int START_ACTION_PLAY = 1;
+    private int mActivityActionAfterResume = START_ACTION_IDLE;
 
     private MediaScanUtil mLocalMediaScanner;
     private MediaScanUtil mUsbMediaScanner;
@@ -649,14 +650,6 @@ public class MediaActivity extends Activity
             }
         });
 
-        // 监听usb插拔事件
-        IntentFilter usbFilter = new IntentFilter();
-        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
-        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
-        usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
-        usbFilter.addDataScheme("file");
-        registerReceiver(usbReceiver, usbFilter);
-
         // 主动枚举一次usb设备加入usb spinner中
         discoverMountDevice();
 
@@ -1125,23 +1118,39 @@ public class MediaActivity extends Activity
     protected void onResume() {
         super.onResume();
         LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
-        layout.setBackgroundResource(R.drawable.img_background);
+        layout.setBackgroundResource(R.drawable.shape_background);
 
-        mActivityStartMode = START_MODE_IDLE;
+        // 监听usb插拔事件
+        IntentFilter usbFilter = new IntentFilter();
+        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+        usbFilter.addDataScheme("file");
+        registerReceiver(usbReceiver, usbFilter);
+
+        mActivityActionAfterResume = START_ACTION_IDLE;
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
         if (bundle!=null) {
             String reason = bundle.getString(EXTRA_MEDIA_ACTIVITY_START_MODE);
             if (reason!=null && reason.equals(MEDIA_ACTIVITY_START_MODE_PLAY) && mPlayListAdapter.getCount()>0) {
-                mActivityStartMode = START_MODE_PLAY;
+                mActivityActionAfterResume = START_ACTION_PLAY;
             }
         }
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onPause() {
         if (mPlayer != null) {
             mPlayer.mediaStop();
+        }
+        unregisterReceiver(usbReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mPlayer != null) {
             mPlayer.release();
             mPlayer = null;
         }
@@ -1159,7 +1168,6 @@ public class MediaActivity extends Activity
         mLocalMediaScanner.release();
         mUsbMediaScanner.release();
 
-        unregisterReceiver(usbReceiver);
         super.onDestroy();
     }
 
@@ -1194,7 +1202,7 @@ public class MediaActivity extends Activity
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            if (mActivityStartMode == START_MODE_PLAY) {
+            if (mActivityActionAfterResume == START_ACTION_PLAY) {
                 mPlayer.mediaPlay(0);
                 fullScreenDisplaySwitch();
             }

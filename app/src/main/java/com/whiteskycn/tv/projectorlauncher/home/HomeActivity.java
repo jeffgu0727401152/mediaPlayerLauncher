@@ -75,11 +75,6 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home2);
 
-        mNetworkStatusReceiver = new NetworkStateBroadcastReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(mNetworkStatusReceiver, filter);
-
         mEthConnectImg = (ImageView)findViewById(R.id.iv_home2_net);
         mWifiConnectImg = (ImageView)findViewById(R.id.iv_home2_wifi);
 
@@ -112,7 +107,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         // SSL 与 MQTT服务
         startService(new Intent(getApplicationContext(), MqttSslService.class));
 
-        // 如果有播放列表,直接跳转
+        // 如果有播放列表,直接跳转去播放
         List<PlayListBean> tmpPlayList = new ArrayList<PlayListBean>();
         PlayListAdapter playlist = new PlayListAdapter(this,tmpPlayList);
         if (playlist.loadFromConfig()) {
@@ -129,7 +124,12 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        layout.setBackgroundResource(R.drawable.img_background);
+        layout.setBackgroundResource(R.drawable.shape_background);
+
+        mNetworkStatusReceiver = new NetworkStateBroadcastReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mNetworkStatusReceiver, filter);
     }
 
     public void setFocusableInTouchMode(boolean focusableInTouchMode) {
@@ -228,7 +228,6 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     @Override
     protected void onDestroy()
     {
-        unregisterReceiver(mNetworkStatusReceiver);
         if (mFocusBorder != null)
         {
             mFocusBorder = null;
@@ -291,6 +290,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     @Override
     protected void onPause()
     {
+        unregisterReceiver(mNetworkStatusReceiver);
         super.onPause();
     }
 

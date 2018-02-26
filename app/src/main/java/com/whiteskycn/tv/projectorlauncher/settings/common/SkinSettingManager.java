@@ -18,9 +18,9 @@ public class SkinSettingManager
     
     public SharedPreferences skinSettingPreference;
     
-    private int[] skinResources = {R.drawable.img_background, R.drawable.img_background, R.drawable.img_background,
-        R.drawable.img_background, R.drawable.img_background, R.drawable.img_background, R.drawable.img_background,
-        R.drawable.img_background};
+    private int[] skinResources = {R.drawable.shape_background, R.drawable.shape_background, R.drawable.shape_background,
+        R.drawable.shape_background, R.drawable.shape_background, R.drawable.shape_background, R.drawable.shape_background,
+        R.drawable.shape_background};
     
     private Activity mActivity;
     

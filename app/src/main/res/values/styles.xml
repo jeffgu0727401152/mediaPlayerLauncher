@@ -4,7 +4,7 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@drawable/img_background</item>
+        <item name="android:windowBackground">@drawable/shape_background</item>
         <item name="android:windowIsTranslucent">true</item>
     </style>
 

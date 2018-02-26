@@ -89,7 +89,7 @@ public class DeviceInfoActivity extends Activity
     {
         super.onResume();
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
-        layout.setBackgroundResource(R.drawable.img_background);
+        layout.setBackgroundResource(R.drawable.shape_background);
     }
     
     private String getSysVersion()
