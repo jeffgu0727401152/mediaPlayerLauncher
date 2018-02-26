@@ -37,6 +37,7 @@ Thumbs.db
 .idea
 .gradle
 build/
+app/release
 .externalNativeBuild
 
 # Signing files
