@@ -212,6 +212,7 @@ public class PictureVideoPlayer {
 
     public void mediaPlay(int position)
     {
+        Log.d(TAG,"mediaPlay position = " + position);
         String path="";
         int type = MEDIA_UNKNOWN;
         int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
@@ -228,6 +229,7 @@ public class PictureVideoPlayer {
             }
         } else {
             ToastUtil.showToast(mAttachActivity, R.string.str_media_play_list_empty);
+            Log.e(TAG,"mediaPlay position(" + position +") INVALID_POSITION!");
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -239,6 +241,7 @@ public class PictureVideoPlayer {
         if (path.isEmpty())
         {
             ToastUtil.showToast(mAttachActivity, R.string.str_media_play_path_error);
+            Log.e(TAG,"mediaPlay position(" + position +") PATH_ERROR!");
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -250,7 +253,8 @@ public class PictureVideoPlayer {
         mIsPreview = false;
         mPlayPosition = position;
 
-        //ToastUtil.showToast(mAttachActivity, "play path=" + path + ", pos=" + position);
+        //ToastUtil.showToast(mAttachActivity, "path=" + path + ", position=" + position);
+        Log.d(TAG,"mediaPlay path:" + path + ", type:" + type);
 
         switch (type)
         {

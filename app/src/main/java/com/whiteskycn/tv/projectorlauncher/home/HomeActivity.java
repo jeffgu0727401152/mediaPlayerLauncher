@@ -107,7 +107,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         // SSL 与 MQTT服务
         startService(new Intent(getApplicationContext(), MqttSslService.class));
 
-        // 如果有播放列表,直接跳转去播放
+        // 如果有播放列表,直接跳转去mediaActivity
         List<PlayListBean> tmpPlayList = new ArrayList<PlayListBean>();
         PlayListAdapter playlist = new PlayListAdapter(this,tmpPlayList);
         if (playlist.loadFromConfig()) {

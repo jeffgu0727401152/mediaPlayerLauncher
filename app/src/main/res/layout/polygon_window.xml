@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PaintPolygonView
+    <com.whiteskycn.tv.projectorlauncher.media.maskController.PaintPolygonView
         android:id="@+id/iv_paint_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -46,4 +46,4 @@
             android:background="@drawable/selector_media_mask_paint_done_btn"/>
 
     </GridLayout>
-</FrameLayout>
+</merge>

@@ -1,24 +1,26 @@
-package com.whiteskycn.tv.projectorlauncher.media;
+package com.whiteskycn.tv.projectorlauncher.media.maskController;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.whiteskycn.tv.projectorlauncher.R;
-import com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PolygonWindow;
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
 
 /**
  * Created by jeff on 18-2-5.
  */
 
-public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
+public class MaskController extends FrameLayout implements View.OnClickListener, PolygonWindow.OnPolygonWindowEventListener {
     private final String TAG = this.getClass().getSimpleName();
 
     private static final String PAINT_SAVE_NAME = "polygon.png";
@@ -33,37 +35,93 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     private ImageView maskArea;
     private PolygonWindow paintWindow;
+    private Button netMaskBtn;
+    private Button grayMaskBtn;
+
     private int maskState;
     private int lastMaskStateBeforePaint;
-    private Activity mAttachActivity;
+    private Context attachedContext;
     private ProgressDialog waitBmpDialog;
 
-    public MaskControl(Activity attach, ImageView mask, PolygonWindow window) {
-        maskArea = mask;
+    public MaskController(Context context, AttributeSet attrs) {
+        super(context, attrs);
+
+        LayoutInflater.from(context).inflate(R.layout.mask_controller, this, true);
+        maskArea = (ImageView) findViewById(R.id.iv_mask);
         maskArea.setScaleType(ImageView.ScaleType.FIT_XY);
-        mAttachActivity = attach;
+        paintWindow = (PolygonWindow) findViewById(R.id.iv_polygon_paint_window);
+        paintWindow.setOnPolygonWindowEventListener(this);
+        // 使用小bmp图,节约内存
+        paintWindow.setPolygonBmpSize(960,540);
+
+        netMaskBtn = (Button) findViewById(R.id.btn_netMask);
+        grayMaskBtn = (Button) findViewById(R.id.btn_grayMask);
+        grayMaskBtn.setOnClickListener(this);
+        netMaskBtn.setOnClickListener(this);
+
+        attachedContext = context;
         maskState = SCREEN_MASK_MODE_NONE;
         lastMaskStateBeforePaint = SCREEN_MASK_MODE_NONE;
-        paintWindow = window;
-        paintWindow.setOnPolygonWindowEventListener(this);
+
         showDefaultMask();
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_netMask:
+                if (maskState != MaskController.SCREEN_MASK_MODE_NET) {
+                    showNetMask();
+                } else {
+                    showDefaultMask();
+                }
+                break;
+
+            case R.id.btn_grayMask:
+                if (maskState != MaskController.SCREEN_MASK_MODE_GRAY_1
+                        && maskState != MaskController.SCREEN_MASK_MODE_GRAY_2
+                        && maskState != MaskController.SCREEN_MASK_MODE_GRAY_3) {
+                    showGray1Mask();
+                } else {
+                    switch (maskState) {
+                        case MaskController.SCREEN_MASK_MODE_GRAY_1:
+                            showGray2Mask();
+                            break;
+
+                        case MaskController.SCREEN_MASK_MODE_GRAY_2:
+                            showGray3Mask();
+                            break;
+
+                        case MaskController.SCREEN_MASK_MODE_GRAY_3:
+                            showDefaultMask();
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+                break;
+
+            default:
+                break;
+        }
     }
 
     // OnPolygonWindowEventListener +++
     @Override
     public void onGenerateBegin() {
-        waitBmpDialog = ProgressDialog.show(mAttachActivity,
-                mAttachActivity.getResources().getString(R.string.str_media_dialog_mask_generate_title),
-                mAttachActivity.getResources().getString(R.string.str_media_dialog_mask_generate_message));
+        waitBmpDialog = ProgressDialog.show(attachedContext,
+                attachedContext.getResources().getString(R.string.str_media_dialog_mask_generate_title),
+                attachedContext.getResources().getString(R.string.str_media_dialog_mask_generate_message));
     }
 
 
     @Override
     public void onGenerateDone(Bitmap bmp) {
         if (bmp==null) {
-            FileUtil.deleteFileFromData(mAttachActivity,PAINT_SAVE_NAME);
+            FileUtil.deleteFileFromData((Activity) attachedContext,PAINT_SAVE_NAME);
         } else {
-            FileUtil.saveBitmapToData(mAttachActivity, bmp, PAINT_SAVE_NAME, 100);
+            FileUtil.saveBitmapToData((Activity) attachedContext, bmp, PAINT_SAVE_NAME, 100);
             if (bmp != null && !bmp.isRecycled()) {
                 bmp.recycle();
             }
@@ -114,11 +172,11 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public boolean showPolygonMask()
     {
-        if (!FileUtil.fileExistInData(mAttachActivity,PAINT_SAVE_NAME)){
+        if (!FileUtil.fileExistInData( (Activity) attachedContext, PAINT_SAVE_NAME)){
             return false;
         }
 
-        Bitmap bmp = FileUtil.getBitmapFromData(mAttachActivity,PAINT_SAVE_NAME);
+        Bitmap bmp = FileUtil.getBitmapFromData( (Activity) attachedContext, PAINT_SAVE_NAME);
         if (bmp==null) {
             return false;
         }
@@ -133,7 +191,7 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public void showNetMask()
     {
-        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.img_media_net_mask));
+        maskArea.setImageDrawable(attachedContext.getResources().getDrawable(R.drawable.img_media_net_mask));
         maskArea.setVisibility(View.VISIBLE);
         paintWindow.setVisibility(View.INVISIBLE);
         maskState = SCREEN_MASK_MODE_NET;
@@ -141,7 +199,7 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public void showGray1Mask()
     {
-        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.shape_media_gray_1));
+        maskArea.setImageDrawable(attachedContext.getResources().getDrawable(R.drawable.shape_media_gray_1));
         maskArea.setVisibility(View.VISIBLE);
         paintWindow.setVisibility(View.INVISIBLE);
         maskState = SCREEN_MASK_MODE_GRAY_1;
@@ -149,7 +207,7 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public void showGray2Mask()
     {
-        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.shape_media_gray_2));
+        maskArea.setImageDrawable(attachedContext.getResources().getDrawable(R.drawable.shape_media_gray_2));
         maskArea.setVisibility(View.VISIBLE);
         paintWindow.setVisibility(View.INVISIBLE);
         maskState = SCREEN_MASK_MODE_GRAY_2;
@@ -157,7 +215,7 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public void showGray3Mask()
     {
-        maskArea.setImageDrawable(mAttachActivity.getResources().getDrawable(R.drawable.shape_media_gray_3));
+        maskArea.setImageDrawable(attachedContext.getResources().getDrawable(R.drawable.shape_media_gray_3));
         maskArea.setVisibility(View.VISIBLE);
         paintWindow.setVisibility(View.INVISIBLE);
         maskState = SCREEN_MASK_MODE_GRAY_3;
@@ -165,7 +223,6 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
 
     public void showPaintWindow()
     {
-        //maskArea.setVisibility(View.INVISIBLE);
         paintWindow.setVisibility(View.VISIBLE);
         lastMaskStateBeforePaint = maskState;
         maskState = SCREEN_MASK_MODE_PAINT;
@@ -190,9 +247,11 @@ public class MaskControl implements PolygonWindow.OnPolygonWindowEventListener {
         }
     }
 
+    public void showControlButton(boolean show) {
+        grayMaskBtn.setVisibility(show?View.VISIBLE:View.INVISIBLE);
+        netMaskBtn.setVisibility(show?View.VISIBLE:View.INVISIBLE);
 
-    public int getMaskState()
-    {
-        return maskState;
+        // 画布一定是其他地方长按后主动调showPaintWindow出现的,所以这边强制设置为不可见
+        paintWindow.setVisibility(INVISIBLE);
     }
 }

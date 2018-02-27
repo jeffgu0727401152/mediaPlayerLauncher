@@ -1,4 +1,4 @@
-package com.whiteskycn.tv.projectorlauncher.media.polygonWindow;
+package com.whiteskycn.tv.projectorlauncher.media.maskController;
 
 import android.content.Context;
 import android.graphics.Canvas;

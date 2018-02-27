@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/iv_mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
+
+    <com.whiteskycn.tv.projectorlauncher.media.maskController.PolygonWindow
+        android:id="@+id/iv_polygon_paint_window"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/shape_media_polygon_paint_background"
+        android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/btn_netMask"
+        android:layout_width="@dimen/x40"
+        android:layout_height="@dimen/x40"
+        android:layout_marginTop="@dimen/x20"
+        android:layout_marginLeft="@dimen/x20"
+        android:background="@drawable/selector_media_net_mask_btn"/>
+
+    <Button
+        android:id="@+id/btn_grayMask"
+        android:layout_width="@dimen/x40"
+        android:layout_height="@dimen/x40"
+        android:layout_marginTop="@dimen/x20"
+        android:layout_marginLeft="@dimen/x80"
+        android:background="@drawable/selector_media_gray_mask_btn"/>
+
+</merge>

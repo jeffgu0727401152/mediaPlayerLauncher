@@ -48,7 +48,7 @@ import com.whiteskycn.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whiteskycn.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whiteskycn.tv.projectorlauncher.media.db.MediaBean;
 import com.whiteskycn.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whiteskycn.tv.projectorlauncher.media.polygonWindow.PolygonWindow;
+import com.whiteskycn.tv.projectorlauncher.media.maskController.MaskController;
 import com.whiteskycn.tv.projectorlauncher.utils.FileUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whiteskycn.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -160,12 +160,7 @@ public class MediaActivity extends Activity
 
     private SurfaceView mVideoPlaySurfaceView;
     private ImageView mPicturePlayView;
-    private MaskControl mMaskArea;
-    private ImageView mMaskView;
-    private PolygonWindow mPaintView;
-
-    private Button mNetViewBtn;
-    private Button mGrayViewBtn;
+    private MaskController mMaskController;
 
     private Button mPreviousBtn;
     private Button mPlayBtn;
@@ -359,9 +354,6 @@ public class MediaActivity extends Activity
         mNextBtn.setOnClickListener(this);
         mVolumeBtn.setOnClickListener(this);
 
-        mGrayViewBtn.setOnClickListener(this);
-        mNetViewBtn.setOnClickListener(this);
-
         mAllMediaListCheckBox.setOnClickListener(this);
         mUsbMediaListCheckBox.setOnClickListener(this);
 
@@ -403,10 +395,10 @@ public class MediaActivity extends Activity
 
         mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
-        mMaskArea = new MaskControl(this, mMaskView, mPaintView);
-
         mPlayer = new PictureVideoPlayer(this, mVideoPlaySurfaceView, mPicturePlayView, mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
+
+        mMaskController.bringToFront();
 
         mCapacityUpdateService = Executors.newSingleThreadExecutor();
         mCopyDoneUpdateService = Executors.newSingleThreadExecutor();
@@ -660,16 +652,244 @@ public class MediaActivity extends Activity
         loadPersistData();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
+        layout.setBackgroundResource(R.drawable.shape_background);
+
+        // 监听usb插拔事件
+        IntentFilter usbFilter = new IntentFilter();
+        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+        usbFilter.addDataScheme("file");
+        registerReceiver(usbReceiver, usbFilter);
+
+        mActivityActionAfterResume = START_ACTION_IDLE;
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        if (bundle!=null) {
+            String reason = bundle.getString(EXTRA_MEDIA_ACTIVITY_START_MODE);
+            if (reason!=null && reason.equals(MEDIA_ACTIVITY_START_MODE_PLAY) && mPlayListAdapter.getCount()>0) {
+                mActivityActionAfterResume = START_ACTION_PLAY;
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mPlayer != null) {
+            mPlayer.mediaStop();
+        }
+        unregisterReceiver(usbReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
+        }
+
+        if (mCapacityUpdateService != null) {
+            mCapacityUpdateService.shutdown();
+            mCapacityUpdateService = null;
+        }
+
+        if (mCopyDoneUpdateService != null) {
+            mCopyDoneUpdateService.shutdown();
+            mCopyDoneUpdateService = null;
+        }
+
+        mLocalMediaScanner.release();
+        mUsbMediaScanner.release();
+
+        super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mIsFullScreen) {
+            new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
+                    .setTitle(getResources().getString(R.string.str_media_full_screen_quite))
+                    .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            screenDisplaySizeSwitch(false);
+                        }
+                    }).setNegativeButton(getResources().getString(R.string.str_media_dialog_button_cancel), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            }).show();
+        } else {
+            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+            startActivity(intent);
+            this.finish();
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+
+            case R.id.sv_media_playVideo:
+            case R.id.iv_media_playPicture:
+                if (ViewUtil.isFastDoubleClick()) {
+                    if (!mIsFullScreen) {
+                        screenDisplaySizeSwitch(true);
+                    }
+                }
+                break;
+
+            case R.id.bt_media_play:
+                if (mPlayer.getPlayState().equals(MEDIA_IDLE)) {
+                    mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
+                    mPlayer.mediaPlay(0);
+                } else {
+                    if (mPlayer.getPlayState().equals(MEDIA_PAUSE_PICTURE) ||
+                            mPlayer.getPlayState().equals(MEDIA_PAUSE_VIDEO)) {
+                        mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
+                    } else {
+                        mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
+                    }
+                    mPlayer.mediaPauseResume();
+                }
+                break;
+
+            case R.id.bt_media_playNext:
+                mPlayer.mediaPlayNext();
+                break;
+
+            case R.id.bt_media_playPrevious:
+                mPlayer.mediaPlayPrevious();
+                break;
+
+            case R.id.bt_media_volume:
+                if (mMediaVolumeLevelSeekBar.getVisibility()==View.INVISIBLE) {
+                    mMediaVolumeLevelSeekBar.setVisibility(View.VISIBLE);
+                } else {
+                    mMediaVolumeLevelSeekBar.setVisibility(View.INVISIBLE);
+                }
+                break;
+
+            case R.id.bt_media_all_list_refresh:
+                mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
+                break;
+
+            case R.id.cb_media_all_list_check:
+                for (AllMediaListBean data : mAllMediaListBeans) {
+                    data.setSelected(mAllMediaListCheckBox.isChecked());
+                }
+                mAllMediaListAdapter.refresh();
+                updateMultiActionButtonState();
+                break;
+
+            case R.id.cb_media_usb_list_check:
+                for (UsbMediaListBean data : mUsbMediaListBeans) {
+                    data.setSelected(mUsbMediaListCheckBox.isChecked());
+                }
+                mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
+                mUsbMediaListAdapter.refresh();
+                break;
+
+
+            case R.id.bt_media_multi_copy_to_left:
+                mUsbMediaCopyDeque.clear();
+                for (UsbMediaListBean data : mUsbMediaListAdapter.getListDatas()) {
+                    if (data.isSelected()) {
+                        mUsbMediaCopyDeque.add(data.getPath());
+                    }
+                }
+
+                if (!mUsbMediaCopyDeque.isEmpty()) {
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = MSG_USB_COPY_TO_INTERNAL;
+                    mHandler.sendMessage(msg);
+                }
+                break;
+
+            case R.id.bt_media_multi_delete:
+                mMediaDeleteDeque.clear();
+                for (AllMediaListBean data : mAllMediaListBeans) {
+                    if (data.isSelected()) {
+                        mMediaDeleteDeque.push(data);
+                        // 这边只加入等待删除的列表,从播放列表以及数据库删除记录的动作,在处理msg的地方做
+                    }
+                }
+
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_MEDIA_LIST_ITEM_DELETE;
+                mHandler.sendMessage(msg);
+                break;
+
+            case R.id.bt_media_multi_add:
+                for (AllMediaListBean data : mAllMediaListBeans) {
+                    if (data.isSelected()) {
+                        mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
+                    }
+                }
+                mPlayListAdapter.saveToConfig();
+                mPlayListAdapter.refresh();
+                break;
+
+            case R.id.bt_media_multi_download:
+                break;
+
+            case R.id.bt_media_multi_copy_to_right:
+                mUsbMediaCopyDeque.clear();
+                for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
+                    if (data.isSelected()) {
+                        mUsbMediaCopyDeque.add(data.getMediaData().getPath());
+                    }
+                }
+
+                if (!mUsbMediaCopyDeque.isEmpty()) {
+                    // 目前不存在点击单个item复制到u盘的情况,所以内部复制到U盘就不使用handler message了
+                    copyInternalFileToUsb();
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+
+    private SurfaceHolder.Callback svCallback = new SurfaceHolder.Callback() {
+        // SurfaceHolder被修改的时候回调
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            Log.i(TAG, "SurfaceHolder 被销毁");
+        }
+
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            if (mActivityActionAfterResume == START_ACTION_PLAY) {
+                mPlayer.mediaPlay(0);
+                screenDisplaySizeSwitch(true);
+                mActivityActionAfterResume = START_ACTION_IDLE;
+            }
+            Log.i(TAG, "SurfaceHolder 被创建");
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width,
+                                   int height) {
+            Log.i(TAG, "SurfaceHolder 大小被改变");
+        }
+
+    };
+
     private void initView() {
         setContentView(R.layout.activity_media);
 
         mVideoPlaySurfaceView = (SurfaceView) findViewById(R.id.sv_media_playVideo);
         mPicturePlayView = (ImageView) findViewById(R.id.iv_media_playPicture);
-        mMaskView = (ImageView) findViewById(R.id.iv_media_mask);
-        mPaintView = (PolygonWindow) findViewById(R.id.iv_media_polygonWindow);
 
-        mNetViewBtn = (Button) findViewById(R.id.btn_media_netView);
-        mGrayViewBtn = (Button) findViewById(R.id.btn_media_grayView);
+        mMaskController = (com.whiteskycn.tv.projectorlauncher.media.maskController.MaskController) findViewById(R.id.maskControl_maskArea);
 
         mPlayBtn = (Button) findViewById(R.id.bt_media_play);
         mPreviousBtn = (Button) findViewById(R.id.bt_media_playPrevious);
@@ -955,268 +1175,6 @@ public class MediaActivity extends Activity
     };
 
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-
-            case R.id.sv_media_playVideo:
-            case R.id.iv_media_playPicture:
-                if (ViewUtil.isFastDoubleClick()) {
-                    if (!mIsFullScreen) {
-                        fullScreenDisplaySwitch();
-                    }
-                }
-                break;
-
-            case R.id.bt_media_play:
-                if (mPlayer.getPlayState().equals(MEDIA_IDLE)) {
-                    mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
-                    mPlayer.mediaPlay(0);
-                } else {
-                    if (mPlayer.getPlayState().equals(MEDIA_PAUSE_PICTURE) ||
-                            mPlayer.getPlayState().equals(MEDIA_PAUSE_VIDEO)) {
-                        mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
-                    } else {
-                        mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
-                    }
-                    mPlayer.mediaPauseResume();
-                }
-                break;
-
-            case R.id.bt_media_playNext:
-                mPlayer.mediaPlayNext();
-                break;
-
-            case R.id.bt_media_playPrevious:
-                mPlayer.mediaPlayPrevious();
-                break;
-
-            case R.id.bt_media_volume:
-                if (mMediaVolumeLevelSeekBar.getVisibility()==View.INVISIBLE) {
-                    mMediaVolumeLevelSeekBar.setVisibility(View.VISIBLE);
-                } else {
-                    mMediaVolumeLevelSeekBar.setVisibility(View.INVISIBLE);
-                }
-                break;
-
-            case R.id.btn_media_netView:
-                if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_NET) {
-                    mMaskArea.showNetMask();
-                } else {
-                    mMaskArea.showDefaultMask();
-                }
-                break;
-
-            case R.id.btn_media_grayView:
-                if (mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_1
-                        && mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_2
-                        && mMaskArea.getMaskState()!= MaskControl.SCREEN_MASK_MODE_GRAY_3) {
-                    mMaskArea.showGray1Mask();
-                } else {
-                    switch(mMaskArea.getMaskState()) {
-                        case MaskControl.SCREEN_MASK_MODE_GRAY_1:
-                            mMaskArea.showGray2Mask();
-                            break;
-
-                        case MaskControl.SCREEN_MASK_MODE_GRAY_2:
-                            mMaskArea.showGray3Mask();
-                            break;
-
-                        case MaskControl.SCREEN_MASK_MODE_GRAY_3:
-                            mMaskArea.showDefaultMask();
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-                break;
-
-            case R.id.bt_media_all_list_refresh:
-                mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
-                break;
-
-            case R.id.cb_media_all_list_check:
-                for (AllMediaListBean data : mAllMediaListBeans) {
-                    data.setSelected(mAllMediaListCheckBox.isChecked());
-                }
-                mAllMediaListAdapter.refresh();
-                updateMultiActionButtonState();
-                break;
-
-            case R.id.cb_media_usb_list_check:
-                for (UsbMediaListBean data : mUsbMediaListBeans) {
-                    data.setSelected(mUsbMediaListCheckBox.isChecked());
-                }
-                mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
-                mUsbMediaListAdapter.refresh();
-                break;
-
-
-            case R.id.bt_media_multi_copy_to_left:
-                mUsbMediaCopyDeque.clear();
-                for (UsbMediaListBean data : mUsbMediaListAdapter.getListDatas()) {
-                    if (data.isSelected()) {
-                        mUsbMediaCopyDeque.add(data.getPath());
-                    }
-                }
-
-                if (!mUsbMediaCopyDeque.isEmpty()) {
-                    Message msg = mHandler.obtainMessage();
-                    msg.what = MSG_USB_COPY_TO_INTERNAL;
-                    mHandler.sendMessage(msg);
-                }
-                break;
-
-            case R.id.bt_media_multi_delete:
-                mMediaDeleteDeque.clear();
-                for (AllMediaListBean data : mAllMediaListBeans) {
-                    if (data.isSelected()) {
-                        mMediaDeleteDeque.push(data);
-                        // 这边只加入等待删除的列表,从播放列表以及数据库删除记录的动作,在处理msg的地方做
-                    }
-                }
-
-                Message msg = mHandler.obtainMessage();
-                msg.what = MSG_MEDIA_LIST_ITEM_DELETE;
-                mHandler.sendMessage(msg);
-                break;
-
-            case R.id.bt_media_multi_add:
-                for (AllMediaListBean data : mAllMediaListBeans) {
-                    if (data.isSelected()) {
-                        mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
-                    }
-                }
-                mPlayListAdapter.saveToConfig();
-                mPlayListAdapter.refresh();
-                break;
-
-            case R.id.bt_media_multi_download:
-                break;
-
-            case R.id.bt_media_multi_copy_to_right:
-                mUsbMediaCopyDeque.clear();
-                for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
-                    if (data.isSelected()) {
-                        mUsbMediaCopyDeque.add(data.getMediaData().getPath());
-                    }
-                }
-
-                if (!mUsbMediaCopyDeque.isEmpty()) {
-                    // 目前不存在点击单个item复制到u盘的情况,所以内部复制到U盘就不使用handler message了
-                    copyInternalFileToUsb();
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
-        layout.setBackgroundResource(R.drawable.shape_background);
-
-        // 监听usb插拔事件
-        IntentFilter usbFilter = new IntentFilter();
-        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
-        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
-        usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
-        usbFilter.addDataScheme("file");
-        registerReceiver(usbReceiver, usbFilter);
-
-        mActivityActionAfterResume = START_ACTION_IDLE;
-        Intent intent = getIntent();
-        Bundle bundle = intent.getExtras();
-        if (bundle!=null) {
-            String reason = bundle.getString(EXTRA_MEDIA_ACTIVITY_START_MODE);
-            if (reason!=null && reason.equals(MEDIA_ACTIVITY_START_MODE_PLAY) && mPlayListAdapter.getCount()>0) {
-                mActivityActionAfterResume = START_ACTION_PLAY;
-            }
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        if (mPlayer != null) {
-            mPlayer.mediaStop();
-        }
-        unregisterReceiver(usbReceiver);
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (mPlayer != null) {
-            mPlayer.release();
-            mPlayer = null;
-        }
-
-        if (mCapacityUpdateService != null) {
-            mCapacityUpdateService.shutdown();
-            mCapacityUpdateService = null;
-        }
-
-        if (mCopyDoneUpdateService != null) {
-            mCopyDoneUpdateService.shutdown();
-            mCopyDoneUpdateService = null;
-        }
-
-        mLocalMediaScanner.release();
-        mUsbMediaScanner.release();
-
-        super.onDestroy();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mIsFullScreen) {
-            new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
-                    .setTitle(getResources().getString(R.string.str_media_full_screen_quite))
-                    .setPositiveButton(getResources().getString(R.string.str_media_dialog_button_ok), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            fullScreenDisplaySwitch();
-                        }
-                    }).setNegativeButton(getResources().getString(R.string.str_media_dialog_button_cancel), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            }).show();
-        } else {
-            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-            startActivity(intent);
-            this.finish();
-        }
-    }
-
-    private SurfaceHolder.Callback svCallback = new SurfaceHolder.Callback() {
-        // SurfaceHolder被修改的时候回调
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {
-            Log.i(TAG, "SurfaceHolder 被销毁");
-        }
-
-        @Override
-        public void surfaceCreated(SurfaceHolder holder) {
-            if (mActivityActionAfterResume == START_ACTION_PLAY) {
-                mPlayer.mediaPlay(0);
-                fullScreenDisplaySwitch();
-            }
-            Log.i(TAG, "SurfaceHolder 被创建");
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width,
-                                   int height) {
-            Log.i(TAG, "SurfaceHolder 大小被改变");
-        }
-
-    };
-
     private SeekBar.OnSeekBarChangeListener mDurationSeekbarChange = new SeekBar.OnSeekBarChangeListener() {
 
         @Override
@@ -1257,7 +1215,7 @@ public class MediaActivity extends Activity
         public boolean onLongClick(View v) {
             if (mIsFullScreen) {
                 Toast.makeText(MediaActivity.this, getResources().getString(R.string.str_media_mask_paint_begin), Toast.LENGTH_SHORT).show();
-                mMaskArea.showPaintWindow(longPressPoint);
+                mMaskController.showPaintWindow(longPressPoint);
             }
 
             return true;
@@ -1426,20 +1384,25 @@ public class MediaActivity extends Activity
                 });
     }
 
-    private void fullScreenDisplaySwitch() {
-        if (!mIsFullScreen) {
+    private void screenDisplaySizeSwitch(boolean setFullScreen) {
+        if (mIsFullScreen == setFullScreen) {
+            Log.d(TAG, "screenDisplaySizeSwitch do nothing, mIsFullScreen == setFullScreen");
+            return;
+        }
+
+        Log.d(TAG, "screenDisplaySizeSwitch setFullScreen:" + setFullScreen);
+
+        if (setFullScreen) {
             LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_media_playControlBar);
             controlBarLayout.setVisibility(View.INVISIBLE);
-            mGrayViewBtn.setVisibility(View.INVISIBLE);
-            mNetViewBtn.setVisibility(View.INVISIBLE);
             mMediaVolumeLevelSeekBar.setVisibility(View.INVISIBLE);
             FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) mVideoPlaySurfaceView.getLayoutParams();
             flp.width = getResources().getDimensionPixelSize(R.dimen.x1920);
             flp.height = getResources().getDimensionPixelSize(R.dimen.x1080);
             mVideoPlaySurfaceView.setLayoutParams(flp);
             mPicturePlayView.setLayoutParams(flp);
-            mMaskView.setLayoutParams(flp);
-            mPaintView.setLayoutParams(flp);
+            mMaskController.setLayoutParams(flp);
+            mMaskController.showControlButton(false);
 
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayerPanel.getLayoutParams();
             llp.topMargin = 0;
@@ -1451,9 +1414,6 @@ public class MediaActivity extends Activity
             LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_media_playControlBar);
             controlBarLayout.setVisibility(View.VISIBLE);
 
-            mGrayViewBtn.setVisibility(View.VISIBLE);
-            mNetViewBtn.setVisibility(View.VISIBLE);
-
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayerPanel.getLayoutParams();
             llp.topMargin = mOriginPlayerMarginTop;
             llp.leftMargin = mOriginPlayerMarginLeft;
@@ -1464,12 +1424,8 @@ public class MediaActivity extends Activity
             flp.height = mOriginSurfaceHeight;
             mVideoPlaySurfaceView.setLayoutParams(flp);
             mPicturePlayView.setLayoutParams(flp);
-            mMaskView.setLayoutParams(flp);
-            mPaintView.setLayoutParams(flp);
-
-            if (mMaskArea.getMaskState()==MaskControl.SCREEN_MASK_MODE_PAINT) {
-                mMaskArea.showDefaultMask();
-            }
+            mMaskController.setLayoutParams(flp);
+            mMaskController.showControlButton(true);
 
             mIsFullScreen = false;
         }

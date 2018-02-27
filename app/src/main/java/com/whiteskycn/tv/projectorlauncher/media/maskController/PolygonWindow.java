@@ -1,4 +1,4 @@
-package com.whiteskycn.tv.projectorlauncher.media.polygonWindow;
+package com.whiteskycn.tv.projectorlauncher.media.maskController;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,6 +18,7 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 
 import com.whiteskycn.tv.projectorlauncher.R;
+import com.whiteskycn.tv.projectorlauncher.media.maskController.PaintPolygonView;
 import com.whiteskycn.wsd.android.NativeMask;
 
 /**
@@ -207,17 +208,17 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     }
 
     // 抠图内部的颜色,一般使用透明色
-    public void setInsideColor(@ColorInt int color) {
+    public void setPolygonInsideColor(@ColorInt int color) {
         insideColor = color;
     }
 
     // 抠图外部的颜色,一般使用不透明色
-    public void setOutsideColor(@ColorInt int color) {
+    public void setPolygonOutsideColor(@ColorInt int color) {
         outsideColor = color;
     }
 
     // 设置需要生成的bmp图的大小,1920*1080的屏幕,也可以使用960*540的设置,节约内存,但是会有锯齿
-    public void setBmpSize(int width, int height) {
+    public void setPolygonBmpSize(int width, int height) {
         bmpWidth = width;
         bmpHeight = height;
     }
