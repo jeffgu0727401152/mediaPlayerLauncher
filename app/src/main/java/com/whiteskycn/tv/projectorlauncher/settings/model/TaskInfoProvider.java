@@ -16,11 +16,13 @@ public class TaskInfoProvider
 {
     private PackageManager mPackageManager;
     private ActivityManager mActivityManager;
+    private String myApplicationPackageName;
     
     public TaskInfoProvider(Context context)
     {
         mPackageManager = context.getPackageManager();
         mActivityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+        myApplicationPackageName = context.getPackageName();
     }
     
     // 遍历传入的列表,将所有应用的信息传入taskinfo中
@@ -47,7 +49,7 @@ public class TaskInfoProvider
                 int memory = memoryInfo[0].getTotalPrivateDirty();
                 info.setMemory(memory);
                 // 不清除自己的进程
-                if (!info.getPackageName().equalsIgnoreCase("com.whiteskycn.tv.projectorlauncher"))
+                if (!info.getPackageName().equalsIgnoreCase(myApplicationPackageName))
                 {
                     taskInfoBeans.add(info);
                 }
@@ -55,7 +57,6 @@ public class TaskInfoProvider
             }
             catch (Exception e)
             {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
                 info.setName(packageName);
                 info.setIsSystemProcess(true);

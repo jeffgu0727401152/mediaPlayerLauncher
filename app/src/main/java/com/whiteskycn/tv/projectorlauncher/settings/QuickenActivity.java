@@ -6,8 +6,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -18,10 +18,7 @@ import com.whiteskycn.tv.projectorlauncher.settings.bean.TaskInfoBean;
 import com.whiteskycn.tv.projectorlauncher.settings.model.TaskInfoProvider;
 import com.whiteskycn.tv.projectorlauncher.utils.ToastUtil;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.lang.reflect.Method;
-import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -30,47 +27,32 @@ import java.util.List;
 public class QuickenActivity extends Activity implements View.OnClickListener
 {
     // 加速完成
-    public final int QUICKEN_CLEAN_STATUS_FINISH = 1;
-    
+    public final int QUICKEN_CLEAN_STATUS_SUCCESS = 1;
     // 不需要加速
-    public final int QUICKEN_CLEAN_STATUS_NEEDENT = 2;
+    public final int QUICKEN_CLEAN_STATUS_FAIL = 2;
     
-    public final int MSG_CLEAN = -1;
-    
+    public final int MSG_CLEAN = 3;
+
     private ActivityManager mActivityManager;
-    
-    private float mTotalMemory;
-    
-    // 内存信息
-    private ActivityManager.MemoryInfo mMemoryInfo;
-    
-    // 正在运行的进程/
-    private List<ActivityManager.RunningAppProcessInfo> mAppProcessInfo;
-    
-    // 加速前设备剩余内存
-    private float mMemorySurPlus;
-    
-    // 进程信息
-    private List<TaskInfoBean> mUserTaskInfoBean;
-    
+
+    // 设备剩余内存
+    private float mMemorySurplus;
+    // 设备总内存
+    private float mMemoryTotal;
+
     // 清理了多大的内存 */
-    private String mClearmemoryStr;
-    
-    private String mPercentnum;
-    
-    // 实时内存重用百分比
-    private int mCurrentMemoryPercentInt;
+    private Float mMemoryClean;
+
+    // 使用内存百分比
+    private int mUsedMemoryPercent;
     
     private WaveLoadingView mWlvLoading;
     
-    private Button mBtClean;
+    private Button mBtnClean;
     
-    // 是否停止线程
-    private boolean isStopThread = false;
+    private HandlerThread mQuickenTaskHandlerThread;
     
-    private HandlerThread mHandlerThread;
-    
-    private HandlerThreadHandler mHandlerThreadHandler;
+    private Handler mQuickenTaskHandler;
     
     private final Handler mHandler = new Handler(new Handler.Callback()
     {
@@ -82,19 +64,22 @@ public class QuickenActivity extends Activity implements View.OnClickListener
                 case MSG_CLEAN:
                     mWlvLoading.setProgressValue(0);
                     mWlvLoading.setTopTitle("");
-                    mHandlerThreadHandler.postDelayed(new QuickenTask(), 1000);
+                    mQuickenTaskHandler.postDelayed(new QuickenTask(), 500);
                     break;
-                case QUICKEN_CLEAN_STATUS_NEEDENT:
-                    mWlvLoading.setProgressValue(getCurrentMemoryPercent());
-                    mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + getCurrentMemoryPercent()
-                        + "%");
+
+                case QUICKEN_CLEAN_STATUS_FAIL:
+                    mWlvLoading.setProgressValue(mUsedMemoryPercent);
+                    mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + mUsedMemoryPercent + "%");
                     break;
-                case QUICKEN_CLEAN_STATUS_FINISH:
-                    mWlvLoading.setProgressValue(getCurrentMemoryPercent());
+
+                case QUICKEN_CLEAN_STATUS_SUCCESS:
+                    mWlvLoading.setProgressValue(mUsedMemoryPercent);
+                    mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + mUsedMemoryPercent + "%");
                     ToastUtil.showToast(getApplication(),
-                        getString(R.string.title_already_cleanup) + (int)Float.parseFloat(getClearmemory()) + "M 空间");
-                    mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + getCurrentMemoryPercent()
-                        + "%");
+                            getString(R.string.title_already_cleanup) + mMemoryClean.intValue() + "M 空间");
+                    break;
+
+                default:
                     break;
             }
             return false;
@@ -107,8 +92,8 @@ public class QuickenActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quicken);
         mWlvLoading = (WaveLoadingView)findViewById(R.id.wlv_quicken_loading);
-        mBtClean = (Button)findViewById(R.id.bt_quicken_clean);
-        mBtClean.setOnClickListener(this);
+        mBtnClean = (Button)findViewById(R.id.bt_quicken_clean);
+        mBtnClean.setOnClickListener(this);
     }
     
     public void setProgressValue(float value)
@@ -119,16 +104,17 @@ public class QuickenActivity extends Activity implements View.OnClickListener
     @Override
     protected void onResume()
     {
-        mHandlerThread = new HandlerThread("handlerThread");
-        mHandlerThread.start();
-        mHandlerThreadHandler = new HandlerThreadHandler(mHandlerThread.getLooper());
-        initData();
-        float memorySurPlus = getMemorySurPlus();
-        float totalMemory = getTotalMemory();
-        float temp = memorySurPlus / totalMemory;
-        setCurrentMemoryPercent((int)(temp * 100));
-        mWlvLoading.setProgressValue(getCurrentMemoryPercent());
-        mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + (int)(temp * 100) + "%");
+        mQuickenTaskHandlerThread = new HandlerThread("QuickenTaskHandler");
+        mQuickenTaskHandlerThread.start();
+        mQuickenTaskHandler = new Handler(mQuickenTaskHandlerThread.getLooper());
+
+        mActivityManager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+
+        // 在显示UI前获取运行的进程和设备的内存情况
+        updateMemoryInfo();
+        mWlvLoading.setProgressValue(mUsedMemoryPercent);
+        mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + mUsedMemoryPercent + "%");
+
         super.onResume();
     }
     
@@ -160,61 +146,29 @@ public class QuickenActivity extends Activity implements View.OnClickListener
     {
         super.finish();
         overridePendingTransition(R.anim.activity_up_in, R.anim.activity_up_out);
-        isStopThread = true;
         mHandler.removeCallbacksAndMessages(null);
-        mHandlerThreadHandler.removeCallbacksAndMessages(null);
+        mQuickenTaskHandler.removeCallbacksAndMessages(null);
     }
-    
-    private void initData()
+
+    private long updateMemoryInfo()
     {
-        // 在显示UI前获取运行的进程和设备的内存情况
-        mActivityManager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
-        GetSurplusMemory();
-        mTotalMemory = GetTotalMemory();
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        mActivityManager.getMemoryInfo(memoryInfo);
+        long availMemorySize = memoryInfo.availMem;
+        long totalMemorySize = memoryInfo.totalMem;
+
+        mMemorySurplus = (float)availMemorySize / 1024 / 1024;
+        mMemoryTotal = (float)totalMemorySize / 1024 / 1024;
+
+        mUsedMemoryPercent = (int)(100*((mMemoryTotal - mMemorySurplus)/mMemoryTotal));
+
+        return availMemorySize;
     }
     
-    private List<ActivityManager.RunningAppProcessInfo> getRunningApp()
-    {
-        // 得到当前运行的进程数目
-        mAppProcessInfo = mActivityManager.getRunningAppProcesses();
-        return mAppProcessInfo;
-    }
-    
-    private long GetSurplusMemory()
-    {
-        // 得到清理前剩余的内存
-        mMemoryInfo = new ActivityManager.MemoryInfo();
-        mActivityManager.getMemoryInfo(mMemoryInfo);
-        long MemorySize = mMemoryInfo.availMem;
-        mMemorySurPlus = (float)MemorySize / 1024 / 1024;
-        return MemorySize;
-    }
-    
-    private float GetTotalMemory()
-    {
-        String str1 = "/proc/meminfo";// 系统内存信息文件
-        String str2;
-        String[] arrayOfString;
-        long initial_memory = 0;
-        try
-        {
-            FileReader fileReader = new FileReader(str1);
-            BufferedReader bufferedReader = new BufferedReader(fileReader, 8192);
-            str2 = bufferedReader.readLine();
-            arrayOfString = str2.split("\\s+");
-            initial_memory = Integer.valueOf(arrayOfString[1]);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return (float)(initial_memory / 1024);
-    }
-    
-    private void KillTask()
+    private void killTask(List<TaskInfoBean> userTaskInfoBean)
     {
         // 清理进程
-        for (TaskInfoBean info : mUserTaskInfoBean)
+        for (TaskInfoBean info : userTaskInfoBean)
         {
             if (!info.getIsSystemProcess())
             {
@@ -233,97 +187,35 @@ public class QuickenActivity extends Activity implements View.OnClickListener
                 }
             }
         }
+        // 更新内存信息
         ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
         mActivityManager.getMemoryInfo(memoryInfo);
-        float MemorySize = (float)memoryInfo.availMem / 1024 / 1024;
-        float size = MemorySize - mMemorySurPlus;
-        if (size > 0)
+
+        float currentAvailMemory = (float)memoryInfo.availMem / 1024 / 1024;
+        float cleanSize = currentAvailMemory - mMemorySurplus;
+        updateMemoryInfo();
+
+        if (cleanSize > 0)
         {
-            DecimalFormat decimalFormat = new DecimalFormat("0.00");
-            mClearmemoryStr = decimalFormat.format(size);
-            mPercentnum = decimalFormat.format((size / mTotalMemory) * 100);
-            float temp = Float.parseFloat(mClearmemoryStr);
-            mCurrentMemoryPercentInt = (int)((mMemorySurPlus - temp) / mTotalMemory * 100);
-            mHandler.sendEmptyMessage(QUICKEN_CLEAN_STATUS_FINISH);
+            mMemoryClean = cleanSize;
+            mHandler.sendEmptyMessage(QUICKEN_CLEAN_STATUS_SUCCESS);
         }
         else
         {
-            mHandler.sendEmptyMessage(QUICKEN_CLEAN_STATUS_NEEDENT);
+            mHandler.sendEmptyMessage(QUICKEN_CLEAN_STATUS_FAIL);
         }
     }
-    
-    private int getCurrentMemoryPercent()
-    {
-        return mCurrentMemoryPercentInt;
-    }
-    
-    private void setCurrentMemoryPercent(int currentMemoryPercent)
-    {
-        this.mCurrentMemoryPercentInt = currentMemoryPercent;
-    }
-    
-    private String getClearmemory()
-    {
-        return mClearmemoryStr;
-    }
-    
-    private List<ActivityManager.RunningAppProcessInfo> getAppProcessInfo()
-    {
-        return mAppProcessInfo;
-    }
-    
-    private List<TaskInfoBean> getUserTaskInfoBean()
-    {
-        return mUserTaskInfoBean;
-    }
-    
-    private void setUserTaskInfoBean(List<TaskInfoBean> userTaskInfoBean)
-    {
-        this.mUserTaskInfoBean = userTaskInfoBean;
-    }
-    
-    private float getMemorySurPlus()
-    {
-        return mMemorySurPlus;
-    }
-    
-    private float getTotalMemory()
-    {
-        return mTotalMemory;
-    }
-    
-    // 为加速线程自定义handler
-    class HandlerThreadHandler extends Handler
-    {
-        public HandlerThreadHandler(Looper looper)
-        {
-            super(looper);
-        }
-        
-        @Override
-        public void handleMessage(Message msg)
-        {
-            super.handleMessage(msg);
-        }
-    }
-    
-    // 通过handlerThread的handler的post方法可以把QuickenTask放在handlerThread中执行
+
+    // post QuickenTask在QuickenTaskHandlerThread中执行
     class QuickenTask implements Runnable
     {
-        public QuickenTask()
-        {
-        }
+        public QuickenTask() {}
         
         @Override
         public void run()
         {
-            if (!isStopThread)
-            {
-                getRunningApp();
-                TaskInfoProvider taskInfoProvider = new TaskInfoProvider(getApplicationContext());
-                setUserTaskInfoBean(taskInfoProvider.GetAllTask(getAppProcessInfo()));
-                KillTask();
-            }
+            TaskInfoProvider taskInfoProvider = new TaskInfoProvider(getApplicationContext());
+            killTask(taskInfoProvider.GetAllTask(mActivityManager.getRunningAppProcesses()));
         }
     }
 }
