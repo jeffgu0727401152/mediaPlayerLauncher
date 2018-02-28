@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.whiteskycn.tv.projectorlauncher"
+    package="com.whitesky.tv.projectorlauncher"
     android:sharedUserId="android.uid.system">
 
 
@@ -19,7 +19,7 @@
 
     <application
         android:allowBackup="true"
-        android:name="com.whiteskycn.tv.projectorlauncher.application.MainApplication"
+        android:name="com.whitesky.tv.projectorlauncher.application.MainApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -27,7 +27,7 @@
         android:largeHeap="true"
         android:screenOrientation="sensor"
         android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
-        <activity android:name=".home.HomeActivity"
+        <activity android:name="com.whitesky.tv.projectorlauncher.home.HomeActivity"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,21 +36,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".settings.OTAActivity" />
-        <activity android:name=".settings.SpeedTestActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTAActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTALocalActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.SpeedTestActivity" />
         <activity
-            android:name=".settings.QuickenActivity"
+            android:name="com.whitesky.tv.projectorlauncher.settings.QuickenActivity"
             android:theme="@style/transcutestyle" />
-        <activity android:name=".settings.SysSettingActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.SysSettingActivity" />
 
-        <activity android:name=".media.MediaActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.media.MediaActivity" />
 
-        <activity android:name=".admin.AdminActivity" />
-        <activity android:name=".admin.AccountActivity" />
-        <activity android:name=".admin.DeviceInfoActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.admin.AdminActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.admin.AccountActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity" />
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name=".common.MqttSslService" />
+        <service android:name="com.whitesky.tv.projectorlauncher.common.MqttSslService" />
 
     </application>
 

@@ -26,11 +26,11 @@
 #define LOG_TAG    "ATC_NATIVE"
 
 extern "C" {
-    JNIEXPORT jbyteArray JNICALL Java_com_whiteskycn_wsd_android_NativeCertification_getPkcs12(
+    JNIEXPORT jbyteArray JNICALL Java_com_wsd_android_NativeCertification_getPkcs12(
 		JNIEnv * env, jobject obj);
 };
 
-JNIEXPORT jbyteArray JNICALL Java_com_whiteskycn_wsd_android_NativeCertification_getPkcs12(
+JNIEXPORT jbyteArray JNICALL Java_com_wsd_android_NativeCertification_getPkcs12(
 	JNIEnv * env,
 	jobject obj)
 {

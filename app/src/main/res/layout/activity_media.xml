@@ -29,7 +29,7 @@
                 android:layout_height="@dimen/x450"
                 android:visibility="invisible" />
 
-            <com.whiteskycn.tv.projectorlauncher.media.maskController.MaskController
+            <com.whitesky.tv.projectorlauncher.media.maskController.MaskController
                 android:id="@+id/maskControl_maskArea"
                 android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x450"
@@ -273,7 +273,7 @@
             </LinearLayout>
 
             <!--播放列表数据-->
-            <com.whiteskycn.tv.projectorlauncher.media.DragListView
+            <com.whitesky.tv.projectorlauncher.media.DragListView
                 android:id="@+id/lv_media_playList"
                 android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x410"

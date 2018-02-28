@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:visibility="invisible" />
 
-    <com.whiteskycn.tv.projectorlauncher.media.maskController.PolygonWindow
+    <com.whitesky.tv.projectorlauncher.media.maskController.PolygonWindow
         android:id="@+id/iv_polygon_paint_window"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

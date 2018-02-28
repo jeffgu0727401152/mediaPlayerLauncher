@@ -26,7 +26,7 @@
 #define LOG_TAG    "POLYGON_NATIVE"
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_com_whiteskycn_wsd_android_NativeMask_createPolygonBuffer(
+    JNIEXPORT void JNICALL Java_com_wsd_android_NativeMask_createPolygonBuffer(
 		JNIEnv * env,
 		jobject obj,
 		jintArray polygonBufferArray,
@@ -39,7 +39,7 @@ extern "C" {
 		int outsideColor);
 };
 
-JNIEXPORT void JNICALL Java_com_whiteskycn_wsd_android_NativeMask_createPolygonBuffer(
+JNIEXPORT void JNICALL Java_com_wsd_android_NativeMask_createPolygonBuffer(
 	JNIEnv * env,
 	jobject obj,
 	jintArray polygonBufferArray,
