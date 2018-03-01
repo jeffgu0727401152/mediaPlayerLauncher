@@ -131,19 +131,6 @@ public class FileUtil
         return false;
     }
 
-    public static boolean contains(String[] stringArray, String source) {
-        // 转换为list
-        List<String> tempList = Arrays.asList(stringArray);
-
-        // 利用list的包含方法,进行判断
-        if(tempList.contains(source))
-        {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     /**
      * @function 获得该路径下的剩余容量
      * @param path
@@ -178,17 +165,18 @@ public class FileUtil
      *
      * @param filePath
      * @function 抽取文件路径中的文件名
-     * @return^M
+     * @return
      */
     public static String getFileName(String filePath) {
+        String name = "";
 
-        int start = filePath.lastIndexOf(File.separator);
-        int end = filePath.length();
-        if (end != -1) {
-            return filePath.substring(start == -1 ? 0 : (start + 1), end);
-        } else {
-            return null;
+        if ((filePath != null) && (filePath.length() > 0)) {
+            int start = filePath.lastIndexOf(File.separator);
+            int end = filePath.length();
+            name =  filePath.substring(start == -1 ? 0 : (start + 1), end);
         }
+
+        return name;
     }
 
 
@@ -198,27 +186,33 @@ public class FileUtil
      * @return
      */
     public static String getFilePrefix(String filePath){
+        String prefix = "";
 
-        int start=filePath.lastIndexOf(File.separator);
-        int end=filePath.lastIndexOf(".");
-        if(end!=-1){
-            return filePath.substring(start == -1 ? 0 : (start+1), end);
-        }else{
-            return null;
+        if ((filePath != null) && (filePath.length() > 0)) {
+            int start=filePath.lastIndexOf(File.separator);
+            int end=filePath.lastIndexOf(".");
+            if(end!=-1){
+                prefix = filePath.substring(start == -1 ? 0 : (start+1), end);
+            }
         }
+
+        return prefix;
     }
 
     /**
      * @function 抽取文件路径中的后缀名(没有点)
-     * @param filePath
+     * @param fileName
      * @return
      */
-    public static String getFileExtension(String filePath){
+    public static String getFileExtension(String fileName){
         String extension = "";
-        int end=filePath.lastIndexOf(".");
-        if(end!=-1){
-            extension = filePath.substring(end+1);
+        if ((fileName != null) && (fileName.length() > 0)) {
+            int dot = fileName.lastIndexOf(".");
+            if (dot > -1 && (dot < (fileName.length() - 1))) {
+                extension = fileName.substring(dot + 1);
+            }
         }
+
         return extension;
     }
 
@@ -230,20 +224,14 @@ public class FileUtil
      */
     public static long getFileSize(String path) {
 
-        if (path == null) {
+        if (path == null || path.isEmpty()) {
+            Log.e(TAG,"getFileSize path error!");
             return 0;
         }
 
         File file = new File(path);
-
-        try {
-            // 取得文件大小
-            long size = getFileSize(file);
-            return size;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
+        long size = getFileSize(file);
+        return size;
     }
 
     /**
@@ -254,15 +242,15 @@ public class FileUtil
      */
     public static long getFileSize(File file) {
 
-        if (file == null) {
+        if (file == null || file.isDirectory()) {
+            Log.e(TAG,"getFileSize file error!");
             return 0;
         }
 
         long size = 0;
         if (file.exists()) {
             try {
-                FileInputStream fis = null;
-                fis = new FileInputStream(file);
+                FileInputStream fis = new FileInputStream(file);
                 size = fis.available();
                 fis.close();
             } catch (Exception e) {

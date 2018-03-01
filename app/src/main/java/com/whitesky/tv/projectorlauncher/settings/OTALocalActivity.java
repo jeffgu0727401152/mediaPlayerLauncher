@@ -2,6 +2,7 @@ package com.whitesky.tv.projectorlauncher.settings;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 
 import scut.carson_ho.kawaii_loadingview.Kawaii_LoadingView;
 
@@ -186,7 +187,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         updateApkInfo = null;
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
-            if (!FileUtil.contains(mMountExceptList, s)) {
+            if (!Arrays.asList(mMountExceptList).contains(s)) {
                 File file = new File(s + File.separator + DEFAULT_UPDATE_APK_NAME);
                 if (file.exists() && !file.isDirectory()) {
                     updateApkInfo = getApkInfo(s + File.separator + DEFAULT_UPDATE_APK_NAME);

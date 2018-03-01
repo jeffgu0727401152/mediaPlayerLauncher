@@ -66,6 +66,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -701,6 +702,8 @@ public class MediaActivity extends Activity
 
         mLocalMediaScanner.release();
         mUsbMediaScanner.release();
+        mLocalMediaScanner = null;
+        mUsbMediaScanner = null;
 
         super.onDestroy();
     }
@@ -1431,7 +1434,7 @@ public class MediaActivity extends Activity
         mUsbPartitionAdapter.clear();
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
-            if (!FileUtil.contains(mMountExceptList, s)) {
+            if (!!Arrays.asList(mMountExceptList).contains(s)) {
                 mUsbPartitionAdapter.add(s);
             }
         }

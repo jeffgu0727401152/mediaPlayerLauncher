@@ -25,28 +25,25 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 public class MediaScanUtil {
     private final String TAG = this.getClass().getSimpleName();
 
-    private MediaPlayer mp;
-    private MediaFileScanListener mMediaFileScanListener;
-    ExecutorService mBackgroundService;         // 保证单线程
+    private MediaPlayer mp = new MediaPlayer();;                                  //用于获取媒体文件的播放时长度
+    private MediaFileScanListener mMediaFileScanListener = null;
+    ExecutorService mBackgroundService = Executors.newSingleThreadExecutor();;    // 保证单线程
     private boolean isNeedDuration = false;
     private boolean isNeedSize = false;
+    private boolean isRunning = false;
 
     public MediaScanUtil() {
         mMediaFileScanListener = null;
-        mp = new MediaPlayer();
-        mBackgroundService = Executors.newSingleThreadExecutor();
     }
 
     public MediaScanUtil(MediaFileScanListener mediaFileScanListener) {
         this.mMediaFileScanListener = mediaFileScanListener;
-        mp = new MediaPlayer();
-        mBackgroundService = Executors.newSingleThreadExecutor();
     }
 
     public void release()
     {
         if (mBackgroundService != null) {
-            mBackgroundService.shutdown();
+            mBackgroundService.shutdownNow();
             mBackgroundService = null;
         }
 
@@ -60,23 +57,25 @@ public class MediaScanUtil {
     public void safeScanning(String path) {
         final File folder = new File(path);
 
-        if (mMediaFileScanListener!=null)
-        {
-            mMediaFileScanListener.onMediaScanBegin();
+        if (!folder.exists() || !folder.isDirectory()) {
+            Log.e(TAG,"path not exist!");
+            return;
         }
 
-        if (!folder.exists()) {
-            Log.i(TAG,"path not exist!");
-            if (mMediaFileScanListener!=null)
-            {
-                mMediaFileScanListener.onMediaScanDone();
-            }
+        if (isRunning) {
+            Log.d(TAG,"already running a scan task!");
             return;
         }
 
         mBackgroundService.execute(new Thread(new Runnable() {
             public void run() {
+                isRunning = true;
+                if (mMediaFileScanListener!=null)
+                {
+                    mMediaFileScanListener.onMediaScanBegin();
+                }
                 scanning(folder,true);
+                isRunning = false;
             }
         }));
     }
@@ -88,106 +87,89 @@ public class MediaScanUtil {
      * @param needReport scan完需要回报
      */
     private void scanning(File folder, boolean needReport) {
-        //指定正则表达式
-        Pattern mPattern = Pattern.compile("([^\\.]*)\\.([^\\.]*)");
+
         // 当前目录下的所有文件
         final String[] filenames = folder.list();
-        // 当前目录的名称
-        //final String folderName = folder.getName();
-        // 当前目录的绝对路径
-        //final String folderPath = folder.getAbsolutePath();
 
         if (filenames != null) {
             // 遍历当前目录下的所有文件
             for (String name : filenames) {
                 File file = new File(folder, name);
-                // 如果是文件夹则继续递归当前方法
-                if (file.isDirectory()) {
-                    scanning(file,false);
-                } else {
-                // 如果是文件则对文件进行相关操作
-                    Matcher matcher = mPattern.matcher(name);
-                    if (matcher.matches()) {
-                        // 文件名称
-                        String fileName = matcher.group(1);
-                        // 文件后缀
-                        String fileExtension = matcher.group(2);
-                        // 文件路径
-                        String filePath = file.getAbsolutePath();
-                        if (isMusic(fileExtension)) {
-                            // 初始化音乐文件......................
-                            Log.e(TAG,"This file is Music File,fileName=" + fileName + "."
-                                    + fileExtension + ",filePath=" + filePath);
-                            if (mMediaFileScanListener!=null)
-                            {
-                                int duration = 0;
-                                if (mp!=null && isNeedDuration)
-                                {
-                                    duration = getMediaDuration(filePath);
-                                }
 
-                                long size = 0;
-                                if (isNeedSize)
-                                {
-                                    try {
-                                        size = FileUtil.getFileSize(filePath);
-                                    } catch (Exception e) {
-                                        Log.e(TAG,"get file size error!" + e);
-                                    }
-                                }
-                                mMediaFileScanListener.onFindMedia(MEDIA_MUSIC,fileName, fileExtension, filePath, duration, size);
+                if (file.isDirectory()) { // 如果是文件夹则继续递归当前方法
+
+                    scanning(file, false);
+
+                } else { // 如果是文件则对文件进行相关操作
+
+                    String fileName = file.getName();
+                    String filePath = file.getAbsolutePath();
+                    String fileExtension = FileUtil.getFileExtension(fileName);
+
+                    if (isMusic(fileExtension)) {
+
+                        Log.d(TAG, "Music File,fileName=" + fileName + "."
+                                + fileExtension + ",filePath=" + filePath);
+                        if (mMediaFileScanListener != null) {
+                            int duration = 0;
+                            if (mp != null && isNeedDuration) {
+                                duration = getMediaDuration(filePath);
                             }
-                        }
 
-                        if (isPicture(fileExtension)) {
-                            // 初始化图片文件......................
-                            Log.e(TAG,"This file is Photo File,fileName=" + fileName + "."
-                                    + fileExtension + ",filePath=" + filePath);
-                            if (mMediaFileScanListener!=null)
-                            {
-                                long size = 0;
-                                if (isNeedSize)
-                                {
-                                    try {
-                                        size = FileUtil.getFileSize(filePath);
-                                    } catch (Exception e) {
-                                        Log.e(TAG,"get file size error!" + e);
-                                    }
+                            long size = 0;
+                            if (isNeedSize) {
+                                try {
+                                    size = FileUtil.getFileSize(filePath);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "get file size error!" + e);
                                 }
-                                mMediaFileScanListener.onFindMedia(MEDIA_PICTURE, fileName, fileExtension, filePath, PICTURE_DEFAULT_PLAY_DURATION_MS, size);
                             }
+                            mMediaFileScanListener.onFindMedia(MEDIA_MUSIC, fileName, fileExtension, filePath, duration, size);
                         }
-
-                        if (isVideo(fileExtension)) {
-                            // 初始化视频文件......................
-                            Log.e(TAG,"This file is Video File,fileName=" + fileName + "."
-                                    + fileExtension + ",filePath=" + filePath);
-                            if (mMediaFileScanListener!=null)
-                            {
-                                int duration = 0;
-                                if (mp!=null && isNeedDuration)
-                                {
-                                    duration = getMediaDuration(filePath);
+                    } else if (isPicture(fileExtension)) {
+                        // 初始化图片文件......................
+                        Log.d(TAG, "Picture File,fileName=" + fileName + "."
+                                + fileExtension + ",filePath=" + filePath);
+                        if (mMediaFileScanListener != null) {
+                            long size = 0;
+                            if (isNeedSize) {
+                                try {
+                                    size = FileUtil.getFileSize(filePath);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "get file size error!" + e);
                                 }
-
-                                long size = 0;
-                                if (isNeedSize)
-                                {
-                                    try {
-                                        size = FileUtil.getFileSize(filePath);
-                                    } catch (Exception e) {
-                                        Log.e(TAG,"get file size error!" + e);
-                                    }
-                                }
-                                mMediaFileScanListener.onFindMedia(MEDIA_VIDEO, fileName, fileExtension, filePath, duration, size);
                             }
+                            mMediaFileScanListener.onFindMedia(MEDIA_PICTURE, fileName, fileExtension, filePath, PICTURE_DEFAULT_PLAY_DURATION_MS, size);
                         }
+                    } else if (isVideo(fileExtension)) {
+                        // 初始化视频文件......................
+                        Log.d(TAG, "Video File,fileName=" + fileName + "."
+                                + fileExtension + ",filePath=" + filePath);
+                        if (mMediaFileScanListener != null) {
+                            int duration = 0;
+                            if (mp != null && isNeedDuration) {
+                                duration = getMediaDuration(filePath);
+                            }
+
+                            long size = 0;
+                            if (isNeedSize) {
+                                try {
+                                    size = FileUtil.getFileSize(filePath);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "get file size error!" + e);
+                                }
+                            }
+                            mMediaFileScanListener.onFindMedia(MEDIA_VIDEO, fileName, fileExtension, filePath, duration, size);
+                        }
+                    } else {
+                        Log.d(TAG, "Unknown File,fileName=" + fileName + "."
+                                + fileExtension + ",filePath=" + filePath);
                     }
                 }
             }
         }
-        if (needReport && mMediaFileScanListener!=null)
-        {
+
+        if (needReport && mMediaFileScanListener != null) {
             mMediaFileScanListener.onMediaScanDone();
         }
     }
@@ -284,12 +266,11 @@ public class MediaScanUtil {
     {
         File file = new File(path);
         if (!file.exists()) {
-            Log.e(TAG, "视频文件路径错误!!!");
+            Log.e(TAG, "file path not exists!!!");
             return -1;
         }
 
-        switch(getMediaTypeFromPath(path))
-        {
+        switch (getMediaTypeFromPath(path)) {
             case MediaBean.MEDIA_PICTURE:
             case MediaBean.MEDIA_UNKNOWN:
                 return PICTURE_DEFAULT_PLAY_DURATION_MS;
