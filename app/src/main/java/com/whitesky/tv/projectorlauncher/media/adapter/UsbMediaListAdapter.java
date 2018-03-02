@@ -96,7 +96,7 @@ public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
         public void itemSelectedChange();
     }
 
-    public void setOnUsbItemCopyListener(OnUsbItemEventListener onUsbItemEventListener) {
+    public void setOnUsbItemEventListener(OnUsbItemEventListener onUsbItemEventListener) {
         this.mOnUsbItemEventListener = onUsbItemEventListener;
     }
 

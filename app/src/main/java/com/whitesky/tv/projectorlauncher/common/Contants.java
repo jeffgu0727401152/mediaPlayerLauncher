@@ -11,9 +11,6 @@ public class Contants
     public static final String CONFIG_PLAYLIST = "playList";
     public static final String CONFIG_PLAYMODE = "playMode";
 
-    public static final String EXTRA_MEDIA_ACTIVITY_START_MODE = "EXTRA_MEDIA_ACTIVITY_START_MODE";
-    public static final String MEDIA_ACTIVITY_START_MODE_PLAY = "play";
-
     public static final String IS_ACTIVATE = "false"; // 设备是否被激活
     
     public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过

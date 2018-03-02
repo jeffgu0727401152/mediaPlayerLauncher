@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <SurfaceView
+        android:id="@+id/sv_playVideo"
+        android:layout_width="@dimen/x800"
+        android:layout_height="@dimen/x450" />
+
+    <ImageView
+        android:id="@+id/iv_playPicture"
+        android:layout_width="@dimen/x800"
+        android:layout_height="@dimen/x450"
+        android:visibility="invisible" />
+
+    <com.whitesky.tv.projectorlauncher.media.maskController.MaskController
+        android:id="@+id/maskControl_maskArea"
+        android:layout_width="@dimen/x800"
+        android:layout_height="@dimen/x450"
+        android:visibility="visible" />
+
+    <SeekBar
+        android:id="@+id/sb_volume_level"
+        android:layout_width="@dimen/x200"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/x320"
+        android:layout_marginLeft="@dimen/x550"
+        android:rotation="-90"
+        android:translationY="@dimen/x1"
+        android:translationX="@dimen/x120"
+        android:visibility="invisible" />
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/ll_playControlBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/x460"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/bt_playPrevious"
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:background="@drawable/selector_media_previous_btn"/>
+        <Button
+            android:id="@+id/bt_play"
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:layout_marginLeft="@dimen/x10"
+            android:background="@drawable/selector_media_play_btn"/>
+
+        <TextView
+            android:id="@+id/tv_playedTime"
+            android:layout_width="@dimen/x100"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/x10"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"/>
+        <SeekBar
+            android:id="@+id/sb_playProgress"
+            android:layout_width="@dimen/x400"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+        <TextView
+            android:id="@+id/tv_durationTime"
+            android:layout_width="@dimen/x100"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+        <Button
+            android:id="@+id/bt_playNext"
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:background="@drawable/selector_media_next_btn"
+            android:layout_marginLeft="@dimen/x10"/>
+        <Button
+            android:id="@+id/bt_volume"
+            android:layout_width="@dimen/x40"
+            android:layout_height="@dimen/x40"
+            android:background="@drawable/selector_media_volume_btn"
+            android:layout_marginLeft="@dimen/x10" />
+    </LinearLayout>
+
+</merge>

@@ -37,6 +37,8 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
+    private OnPlaylistItemEventListener mOnPlaylistItemEventListener = null;
+
     public PlayListAdapter(Context context, List<PlayListBean> data)
     {
         super(context, data, R.layout.item_play_list);
@@ -76,16 +78,18 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
         //scale选择spinner
         ArrayAdapter adapter = new ArrayAdapter<String>(mContext, R.layout.item_media_play_scale_spinner, R.id.tv_media_play_scale_idx);
-        adapter.add("16:9");
-        adapter.add("4:3");
-        adapter.add("1:1");
+        adapter.add(mContext.getResources().getString(R.string.str_media_scale_fix_xy));
+        adapter.add(mContext.getResources().getString(R.string.str_media_scale_fix_center));
         ((Spinner) holder.getView(R.id.sp_media_scale)).setAdapter(adapter);
         ((Spinner) holder.getView(R.id.sp_media_scale)).setSelection(item.getPlayScale());
         ((Spinner) holder.getView(R.id.sp_media_scale)).setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
                 getItem(position).setPlayScale(pos);
-                saveToConfig();
+                if (mOnPlaylistItemEventListener != null) {
+                    mOnPlaylistItemEventListener.onPlaylistChange();
+                    mOnPlaylistItemEventListener.onScaleChange(position, pos);
+                }
             }
 
             @Override
@@ -97,8 +101,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist remove position " + position);
-                removeItem(getItem(position));
-                saveToConfig();
+                removeItem(position);
                 refresh();
             }
         });
@@ -109,7 +112,9 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 Log.i(TAG,"playlist add time");
                 int duration = getItem(position).getMediaData().getDuration();
                 getItem(position).getMediaData().setDuration(duration + 5000);
-                saveToConfig();
+                if (mOnPlaylistItemEventListener != null) {
+                    mOnPlaylistItemEventListener.onPlaylistChange();
+                }
                 refresh();
             }
         });
@@ -121,8 +126,10 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 int duration = getItem(position).getMediaData().getDuration();
                 if (duration > 10000) {
                     getItem(position).getMediaData().setDuration(duration - 5000);
+                    if (mOnPlaylistItemEventListener != null) {
+                        mOnPlaylistItemEventListener.onPlaylistChange();
+                    }
                 }
-                saveToConfig();
                 refresh();
             }
         });
@@ -132,39 +139,50 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public boolean exchange(int src, int dst) {
         if (src != INVALID_POSITION && dst != INVALID_POSITION) {
             Collections.swap(getListDatas(), src, dst);
-            saveToConfig();
+
+            if (mOnPlaylistItemEventListener != null) {
+                mOnPlaylistItemEventListener.onPlaylistChange();
+            }
+
             refresh();
             return true;
         }
         return false;
     }
 
-    public boolean loadFromConfig() {
-        Gson gson = new Gson();
-        SharedPreferencesUtil config = new SharedPreferencesUtil(mContext, Contants.PERF_CONFIG);
-        String jsonStr = config.getString(CONFIG_PLAYLIST, null);
-        Type type = new TypeToken<List<PlayListBean>>(){}.getType();
-        if (jsonStr!=null)
-        {
-            List<PlayListBean> datas = gson.fromJson(jsonStr,type);
-            clear();
-            for(int i = 0; i < datas.size(); i++)
-            {
-                addItem(datas.get(i));
-            }
+    @Override
+    public void addItem(PlayListBean item) {
+        super.addItem(item);
+        if (mOnPlaylistItemEventListener != null) {
+            mOnPlaylistItemEventListener.onPlaylistChange();
         }
-
-        if (getCount() > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        refresh();
     }
 
-    public void saveToConfig() {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(mContext, Contants.PERF_CONFIG);
-        Gson gson = new Gson();
-        String jsonStr = gson.toJson(getListDatas());
-        shared.putString(CONFIG_PLAYLIST, jsonStr);
+    @Override
+    public void removeItem(PlayListBean item) {
+        super.removeItem(item);
+        if (mOnPlaylistItemEventListener != null) {
+            mOnPlaylistItemEventListener.onPlaylistChange();
+        }
+        refresh();
     }
+
+    public void removeItem(int position) {
+        super.removeItem(getItem(position));
+        if (mOnPlaylistItemEventListener != null) {
+            mOnPlaylistItemEventListener.onPlaylistChange();
+        }
+        refresh();
+    }
+
+    public interface OnPlaylistItemEventListener {
+        void onPlaylistChange();
+        void onScaleChange(int position, int scaleType);
+    }
+
+    public void setOnPlaylistItemEventListener(OnPlaylistItemEventListener onPlaylistItemEventListener) {
+        this.mOnPlaylistItemEventListener = onPlaylistItemEventListener;
+    }
+
 }

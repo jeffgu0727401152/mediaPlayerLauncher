@@ -33,8 +33,6 @@ import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.whitesky.tv.projectorlauncher.common.Contants.EXTRA_MEDIA_ACTIVITY_START_MODE;
-import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_ACTIVITY_START_MODE_PLAY;
 
 public class HomeActivity extends Activity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
@@ -108,12 +106,9 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         startService(new Intent(getApplicationContext(), MqttSslService.class));
 
         // 如果有播放列表,直接跳转去mediaActivity
-        List<PlayListBean> tmpPlayList = new ArrayList<PlayListBean>();
-        PlayListAdapter playlist = new PlayListAdapter(this,tmpPlayList);
-        if (playlist.loadFromConfig()) {
+        if (MediaActivity.hasPlaylistConfig(this)) {
             Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
             if (intentMedia.resolveActivity(getPackageManager())!=null) {
-                intentMedia.putExtra(EXTRA_MEDIA_ACTIVITY_START_MODE,MEDIA_ACTIVITY_START_MODE_PLAY);
                 startActivity(intentMedia);
             }
         }
