@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ll_skin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/iv_ota_local_1"
+            android:layout_width="@dimen/x180"
+            android:layout_height="@dimen/x100"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="@dimen/x64"
+            android:layout_marginTop="@dimen/x48"
+            android:src="@drawable/img_logo_sm" />
+
+        <ImageView
+            android:id="@+id/iv_ota_local_logo"
+            android:layout_width="@dimen/x380"
+            android:layout_height="@dimen/x220"
+            android:layout_below="@+id/iv_ota_local_1"
+            android:layout_marginLeft="@dimen/x770"
+            android:layout_marginTop="@dimen/x240"
+            android:src="@drawable/img_logo_big" />
+
+        <scut.carson_ho.kawaii_loadingview.Kawaii_LoadingView
+            android:id="@+id/lv_ota_local_loading"
+            android:layout_width="@dimen/x380"
+            android:layout_height="@dimen/x220"
+            android:layout_below="@+id/iv_ota_local_1"
+            android:layout_marginLeft="@dimen/x770"
+            android:layout_marginTop="@dimen/x240"
+            android:visibility="invisible"
+            app:blockColor="#ffffff"
+            app:blockInterval="8dp"
+            app:fixBlock_Angle="5"
+            app:half_BlockWidth="15dp"
+            app:initPosition="0"
+            app:isClock_Wise="false"
+            app:lineNumber="3"
+            app:moveBlock_Angle="20"
+            app:moveSpeed="500"
+            app:move_Interpolator="@android:anim/bounce_interpolator" />
+
+        <TextView
+            android:id="@+id/tv_ota_local_update_info"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/x80"
+            android:layout_below="@+id/iv_ota_local_logo"
+            android:layout_margin="@dimen/x20"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/x40" />
+
+        <Button
+            android:id="@+id/bt_ota_local_update"
+            android:layout_width="@dimen/x380"
+            android:layout_height="@dimen/x120"
+            android:layout_alignStart="@+id/iv_ota_local_logo"
+            android:layout_below="@+id/tv_ota_local_update_info"
+            android:layout_marginTop="13dp"
+            android:background="@drawable/button_selector_ota"
+            android:text="@string/str_update_btn"
+            android:textColor="@color/white" />
+    </RelativeLayout>
+
+</LinearLayout>

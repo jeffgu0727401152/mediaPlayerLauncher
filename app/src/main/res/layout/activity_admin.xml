@@ -39,8 +39,19 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="left|center_vertical"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/img_account" />
+                    android:src="@drawable/img_admin_account" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/x80"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/border_down_shape"
+                    android:gravity="center"
+                    android:padding="@dimen/x15"
+                    android:text="@string/title_admin_account"
+                    android:textColor="@color/white"
+                    android:textSize="24sp"
+                    android:visibility="visible" />
 
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 
@@ -66,7 +77,19 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="left|center_vertical"
                     android:scaleType="fitXY"
-                    android:src="@drawable/img_device" />
+                    android:src="@drawable/img_admin_device" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/x80"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/border_down_shape"
+                    android:gravity="center"
+                    android:padding="@dimen/x15"
+                    android:text="@string/title_admin_device_info"
+                    android:textColor="@color/white"
+                    android:textSize="24sp"
+                    android:visibility="visible" />
 
             </com.whitesky.sdk.widget.RoundedFrameLayout>
 

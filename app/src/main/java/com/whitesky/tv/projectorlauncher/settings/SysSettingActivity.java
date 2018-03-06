@@ -49,9 +49,9 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         dispalyPage.setOnClickListener(this);
         dispalyPage.setOnHoverListener(this);
 
-        RoundedFrameLayout soundPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_sound);
-        soundPage.setOnClickListener(this);
-        soundPage.setOnHoverListener(this);
+        RoundedFrameLayout formatPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_format);
+        formatPage.setOnClickListener(this);
+        formatPage.setOnHoverListener(this);
 
         RoundedFrameLayout languagePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_language);
         languagePage.setOnClickListener(this);
@@ -98,8 +98,9 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
                 startActivity(new Intent(Settings.ACTION_DISPLAY_SETTINGS));
                 //SysSettingActivity.this.finish();
                 break;
-            case R.id.rf_sys_sound:
-                startActivity(new Intent(Settings.ACTION_SOUND_SETTINGS));
+            case R.id.rf_sys_format:
+                Intent intentFormat = new Intent(getApplicationContext(), DiskFormatActivity.class);
+                startActivity(intentFormat);
                 //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_language:
@@ -140,7 +141,7 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
                     return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);
                 case R.id.rf_sys_display:
                     return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);
-                case R.id.rf_sys_sound:
+                case R.id.rf_sys_format:
                     return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);
                 case R.id.rf_sys_language:
                     return FocusBorder.OptionsFactory.get(1.1f, 1.1f, 0);

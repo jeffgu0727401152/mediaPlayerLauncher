@@ -1,11 +1,19 @@
 <resources>
+    <!-- 公共标签 -->
     <string name="app_name">whiteskyUI</string>
+    <string name="title_default">敬请期待</string>
+    <string name="title_bg_ok">【  按下确定键更换  】</string>
+
+    <!--Home 页-->
+    <string name="str_home_welcome">欢迎使用皓空巨幕</string>
+    <string name="str_home_peo">个人页面</string>
+    <string name="str_home_media">多媒体</string>
+    <string name="str_home_sys">系统设置</string>
+
     <!-- Admin页面 -->
-    <string name="title_test">whitesky</string>
-    <string name="title_admin">个人页面</string>
-    <string name="title_admin_account">账号</string>
-    <string name="title_admin_account_type_visitor">访客模式</string>
+    <string name="title_admin_account">账号管理</string>
     <string name="title_admin_device_info">设备信息</string>
+    <string name="title_admin_account_type_visitor">访客模式</string>
     <string name="str_admin_device_terminal_model">终端型号</string>
     <string name="str_admin_device_sys_version_date">版本日期</string>
     <string name="str_admin_device_sys_version">系统版本</string>
@@ -18,30 +26,18 @@
     <string name="str_admin_device_mac_adr">有线 MAC地址</string>
     <string name="str_admin_device_wifi_mac_adr">WIFI MAC地址</string>
     <string name="str_admin_device_default">PS500</string>
-    <!-- 公共标签 -->
-    <string name="title_default">敬请期待</string>
-    <string name="title_bg_ok">【  按下确定键更换  】</string>
-    <!--Home 页-->
-    <string name="str_home_welcome">欢迎使用皓空巨幕</string>
-    <string name="str_home_peo">个人页面</string>
-    <string name="str_home_media">多媒体</string>
-    <string name="str_home_sys">系统设置</string>
+
     <!-- 系统设置之设置引导页 -->
     <string name="setup_title_language">语言设置</string>
-    <string name="setup_title_update">系统升级</string>
-    <string name="setup_title_mode">请选择安装模式</string>
-    <string name="setup_title_focuse">对焦</string>
-    <string name="setup_title_trapezoidal">梯形校正</string>
+    <string name="setup_title_update">软件升级</string>
     <string name="setup_title_net">网络设置</string>
     <string name="setup_title_speed">网络测速</string>
-    <string name="setup_title_seo">一键优化</string>
+    <string name="setup_title_seo">内存优化</string>
     <string name="setup_title_wifi">无线网络</string>
     <string name="setup_title_login">注册登陆</string>
+    <string name="setup_title_format">格式化硬盘</string>
     <string name="setup_net_pass_info">选择跳过可直接跳转到主页面，但设备不被激活，是否跳过？</string>
     <string name="setup_net_pass">跳过</string>
-    <!--系统设置页-->
-    <string name="setting_page">系统设置</string>
-    <string name="background_page">背景管理</string>
 
     <!--系统设置之系统升级页-->
     <string name="str_update_found">有可升级的升级包</string>
@@ -60,6 +56,7 @@
     <!--系统设置之内存优化页-->
     <string name="title_memory_footprint">内存占用:</string>
     <string name="title_already_cleanup">已清理</string>
+
     <!--media页-->
     <string name="str_media_file_title">文件名</string>
     <string name="str_media_file_duration">时长</string>
@@ -106,11 +103,6 @@
     <string name="str_media_info_size">大小:</string>
     <string name="str_media_info_bps">码率:</string>
 
-
-    <string-array name="str_arr_trapezoid_vals">
-        <item>on</item>
-        <item>off</item>
-    </string-array>
     <!--网络配置页-->
     <string name="title_net_connected">有线网络已连接</string>
     <string name="str_connect_success">成功连接</string>
