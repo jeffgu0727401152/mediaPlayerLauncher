@@ -25,6 +25,8 @@
 
 #define LOG_TAG    "POLYGON_NATIVE"
 
+#define LINE_WIDTH	6
+
 extern "C" {
     JNIEXPORT void JNICALL Java_com_wsd_android_NativeMask_createPolygonBuffer(
 		JNIEnv * env,
@@ -53,66 +55,76 @@ JNIEXPORT void JNICALL Java_com_wsd_android_NativeMask_createPolygonBuffer(
 {
 	int* polygonBuffer = env->GetIntArrayElements(polygonBufferArray, 0);
 
-#if 0
-	for (int i = 0; i < height/2; i++)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			polygonBuffer[i*width+j] = 0xFFFFFFFF;
-		}
-	}
-
-	for (int i = height/2; i < height; i++)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			polygonBuffer[i*width+j] = 0x00000000;
-		}
-	}
-#else
     int nPolygonCount = env->GetArrayLength(polygonCountArray);
 
 	int* nPolygonCountArray = env->GetIntArrayElements(polygonCountArray, 0);
 	int* xPoint = env->GetIntArrayElements(xPointArray, 0);
 	int* yPoint = env->GetIntArrayElements(yPointArray, 0);
 
+	int alphaOutside = ((unsigned int)outsideColor) >> 24;
+	int alphaInside = ((unsigned int)insideColor) >> 24;
+
 	for (int i = 0; i < height; i++)
 	{
+		int prevInside = 0;
+
 		for (int j = 0; j < width; j++)
 		{
-			int isInsidePolygon = 0;
+			int isInsidePolygon = -1;
 		    int nPointIndex = 0;
 			for (int m = 0; m < nPolygonCount; m++)
 			{
-				if( IsPointInPolygonSides(
+				isInsidePolygon = IsPointInPolygonSides(
 					j,
 					i,
 					xPoint+nPointIndex,
 					yPoint+nPointIndex,
-					nPolygonCountArray[m]) >= 0)
+					nPolygonCountArray[m]);
+				if( isInsidePolygon >= 0)
 				{
-//					__android_log_print(
-//						ANDROID_LOG_INFO,
-//						LOG_TAG,
-//						"point[%d,%d] inside polygon[%d]\n",
-//						j,
-//						i,
-//						m);
-
-					isInsidePolygon = 1;
 					break;
 				}
 
 				nPointIndex += nPolygonCountArray[m];
 			}
 
-			if( isInsidePolygon == 1 )
+			if ( isInsidePolygon == 0 )
 			{
-				polygonBuffer[i*width + j] = insideColor;
+				for (int k = 0; k < LINE_WIDTH && (j+k < width); k++)
+				{
+					int alpha = 0;
+					if (prevInside)
+					{
+						alpha = alphaInside + (alphaOutside - alphaInside) * k / LINE_WIDTH;
+					}
+					else
+					{
+						alpha = alphaOutside + (alphaInside - alphaOutside) * k / LINE_WIDTH;
+					}
+
+					if (alpha > 255)
+					{
+						alpha = 255;
+					}
+					else if (alpha < 0)
+					{
+						alpha = 0;
+					}
+					polygonBuffer[i*width+j+k] = (insideColor & 0x00FFFFFF) | (alpha << 24);
+				}
+
+				prevInside = 1;
+
+				j += LINE_WIDTH-1;
+			}
+			else if ( isInsidePolygon > 0 )
+			{
+				polygonBuffer[i*width+j] = insideColor;
 			}
 			else
 			{
-				polygonBuffer[i*width + j] = outsideColor;
+				polygonBuffer[i*width+j] = outsideColor;
+				prevInside = 0;
 			}
 		}
 	}
@@ -120,7 +132,6 @@ JNIEXPORT void JNICALL Java_com_wsd_android_NativeMask_createPolygonBuffer(
 	env->ReleaseIntArrayElements(xPointArray, xPoint, 0);
 	env->ReleaseIntArrayElements(yPointArray, yPoint, 0);
 	env->ReleaseIntArrayElements(polygonCountArray, nPolygonCountArray, 0);
-#endif
 
 	env->ReleaseIntArrayElements(polygonBufferArray, polygonBuffer, 0);
 }
