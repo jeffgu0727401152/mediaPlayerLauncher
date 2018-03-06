@@ -7,9 +7,14 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
  */
 
 public class PlayListBean {
+    public static final int MEDIA_SCALE_FIT_XY = 0;
+    public static final int MEDIA_SCALE_FIT_CENTER = 1;
+    public static final int MEDIA_SCALE_DEFAULT = MEDIA_SCALE_FIT_XY;
+
+
     private MediaBean mMediaData;
     private boolean isPlaying = false;
-    private int playScale = 0;
+    private int playScale = MEDIA_SCALE_FIT_XY;
 
     public PlayListBean() {
     }

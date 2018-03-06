@@ -51,7 +51,7 @@
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity" />
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name="com.whitesky.tv.projectorlauncher.common.MqttSslService" />
+        <service android:name="com.whitesky.tv.projectorlauncher.service.MqttSslService" />
 
     </application>
 

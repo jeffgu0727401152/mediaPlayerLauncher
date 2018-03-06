@@ -21,6 +21,8 @@ import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
+
 
 /**
  * Created by mac on 17-6-2.
@@ -32,6 +34,7 @@ public class DeviceInfoActivity extends Activity
     private final String TAG = this.getClass().getSimpleName();
     private static final String  EMMC_SERIAL_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
 
+    private TextView mDeviceModel;
     private TextView mTvSysVersion;
     private TextView mTvSysVersionDate;
     private TextView mUIVersion;
@@ -46,6 +49,7 @@ public class DeviceInfoActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
+        mDeviceModel = (TextView)findViewById(R.id.tv_admin_device_device_model);
         mTvSysVersion = (TextView)findViewById(R.id.tv_sys_version);
         mTvSysVersionDate = (TextView)findViewById(R.id.tv_admin_device_sys_version_date);
         mUIVersion = (TextView)findViewById(R.id.tv_admin_device_ui_version);
@@ -53,6 +57,8 @@ public class DeviceInfoActivity extends Activity
         mROMInfo = (TextView)findViewById(R.id.tv_admin_device_rominfo);
         mEthMac = (TextView)findViewById(R.id.tv_admin_device_mac);
         mSysSN = (TextView)findViewById(R.id.tv_admin_device_sys_sn);
+
+        mDeviceModel.setText(PROJECT_NAME);
 
         if (!TextUtils.isEmpty(getSysVersion()))
         {
@@ -92,17 +98,12 @@ public class DeviceInfoActivity extends Activity
         layout.setBackgroundResource(R.drawable.shape_background);
     }
     
-    private String getSysVersion()
+    private static String getSysVersion()
     {
-        return SystemProperties.get("ro.sw.ver", "1.0.0");
+        return SystemProperties.get("ro.build.version.release", "4.4.0");
     }
-    
-    private String getTerminalModel()
-    {
-        return null;
-    }
-    
-    private String getSysVersionDate()
+
+    private static String getSysVersionDate()
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyy-MM-dd HH:mm");
         long lt = Long.valueOf(SystemProperties.get("ro.build.date.utc", "1513328136"));
@@ -139,12 +140,12 @@ public class DeviceInfoActivity extends Activity
         return null;
     }
 
-    private String getRamInfo()
+    private static String getRamInfo()
     {
-        return null;
+        return SystemProperties.get("ro.product.mem.size","1G");
     }
     
-    private String getRomInfo()
+    private static String getRomInfo()
     {
         return null;
     }
@@ -154,7 +155,7 @@ public class DeviceInfoActivity extends Activity
      * @param context
      * @return
      */
-    public String getVersionCode(Context context){
+    public static String getVersionCode(Context context){
         PackageManager packageManager=context.getPackageManager();
         PackageInfo packageInfo;
         String versionCode="";
@@ -172,7 +173,7 @@ public class DeviceInfoActivity extends Activity
      * @param context
      * @return
      */
-    public String getVersionName(Context context){
+    public static String getVersionName(Context context){
         PackageManager packageManager=context.getPackageManager();
         PackageInfo packageInfo;
         String versionName="";
@@ -185,7 +186,7 @@ public class DeviceInfoActivity extends Activity
         return versionName;
     }
 
-    private String getEthMacAddr()
+    private static String getEthMacAddr()
     {
         String macAddress = null;
         StringBuffer buf = new StringBuffer();
@@ -210,7 +211,7 @@ public class DeviceInfoActivity extends Activity
         return macAddress;
     }
     
-    private String getWifiMacAddr()
+    private static String getWifiMacAddr()
     {
         String macAddress = null;
         StringBuffer buf = new StringBuffer();

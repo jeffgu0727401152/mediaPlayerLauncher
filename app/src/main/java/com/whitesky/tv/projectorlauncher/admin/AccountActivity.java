@@ -24,7 +24,7 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.adapter.AccountAdapter;
 import com.whitesky.tv.projectorlauncher.admin.bean.LoginBean;
 import com.whitesky.tv.projectorlauncher.common.Contants;
-import com.whitesky.tv.projectorlauncher.common.HttpConsts;
+import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.common.bean.ListViewBean;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 
@@ -41,8 +41,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static com.whitesky.tv.projectorlauncher.common.HttpConsts.LOGIN_STATUS_SUCCESS;
-import static com.whitesky.tv.projectorlauncher.common.HttpConsts.URL_LOGIN_PROJECT_NAME;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.URL_LOGIN_PROJECT_NAME;
 
 /**
  * Created by mac on 17-6-2.
@@ -126,7 +126,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         mLoginDialog = new Dialog(this, R.style.ReasonDialog);
         mLoginDialog.setContentView(view);
         ImageView imageView = (ImageView)view.findViewById(R.id.iv_admin_dialog_login);
-        String loginURL = HttpConsts.URL_LOGIN + DeviceInfoActivity.getSysSN() + URL_LOGIN_PROJECT_NAME;
+        String loginURL = HttpConstants.URL_LOGIN + DeviceInfoActivity.getSysSN() + URL_LOGIN_PROJECT_NAME;
         Bitmap bitmap = new QREncode.Builder(this).setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
             // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型
             .setContents(loginURL)                         // 二维码内容
@@ -189,7 +189,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
             public void run()
             {
                 OkHttpClient mClient = new OkHttpClient();
-                if (HttpConsts.URL_GET_LOGIN_INFO.contains("https"))
+                if (HttpConstants.URL_GET_LOGIN_INFO.contains("https"))
                 {
                     try
                     {
@@ -208,11 +208,10 @@ public class AccountActivity extends Activity implements View.OnClickListener
                 }
                 
                 FormBody body = new FormBody.Builder()
-                        .add("method", "post")
                         .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
 
-                Request request = new Request.Builder().url(HttpConsts.URL_GET_LOGIN_INFO).post(body).build();
+                Request request = new Request.Builder().url(HttpConstants.URL_GET_LOGIN_INFO).post(body).build();
                 Call call = mClient.newCall(request);
                 call.enqueue(new okhttp3.Callback() {
                     // 失败
@@ -227,13 +226,20 @@ public class AccountActivity extends Activity implements View.OnClickListener
                         throws IOException
                     {
                         if (!response.isSuccessful()) {
-                            Log.e(TAG,"getAccountInfo response not success!");
+                            throw new IOException("Unexpected code " + response);
 
-                        } else if (response.code() == HttpConsts.HTTP_STATUS_SUCCESS) {
+                        } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                             String htmlBody = response.body().string();
-                            mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
 
-                            if (mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                            try {
+                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+                            } catch (IllegalStateException e) {
+                                mLoginBean = null;
+                                Log.e(TAG,"Gson parse error!");
+                            }
+
+
+                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
                                 if (mLoginBean.getResult() != null) {
                                     mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
                                 }
@@ -253,7 +259,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
             @Override
             public void run() {
                 OkHttpClient mClient;
-                if (HttpConsts.URL_DEVICE_LOGOUT.contains("https")) {
+                if (HttpConstants.URL_DEVICE_LOGOUT.contains("https")) {
                     try {
                         mClient = new OkHttpClient.Builder()
                                 .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
@@ -268,11 +274,10 @@ public class AccountActivity extends Activity implements View.OnClickListener
                 }
                 
                 FormBody body = new FormBody.Builder()
-                        .add("method", "post")
                         .add("sn", DeviceInfoActivity.getSysSN())
                         .build();
 
-                Request request = new Request.Builder().url(HttpConsts.URL_DEVICE_LOGOUT).post(body).build();
+                Request request = new Request.Builder().url(HttpConstants.URL_DEVICE_LOGOUT).post(body).build();
                 Call call = mClient.newCall(request);
                 call.enqueue(new okhttp3.Callback()
                 {
@@ -289,17 +294,24 @@ public class AccountActivity extends Activity implements View.OnClickListener
                         throws IOException
                     {
                         if (!response.isSuccessful()) {
-                            Log.e(TAG,"logout response not success!");
+                            throw new IOException("Unexpected code " + response);
 
-                        } else if (response.code() == HttpConsts.HTTP_STATUS_SUCCESS) {
-                            String htmlStr = response.body().string();
-                            mLoginBean = new Gson().fromJson(htmlStr, LoginBean.class);
+                        } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                            String htmlBody = response.body().string();
 
-                            if (mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS))
+                            try {
+                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+                            } catch (IllegalStateException e) {
+                                mLoginBean = null;
+                                Log.e(TAG,"Gson parse error!");
+                            }
+
+                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS))
                             {
                                 SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
                                 shared.putBoolean(Contants.IS_SETUP_PASS, false);
                                 shared.putBoolean(Contants.IS_ACTIVATE, false);
+                                // todo modify
                                 getAccountInfo();
                             }
                         } else {

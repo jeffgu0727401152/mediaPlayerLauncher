@@ -47,7 +47,7 @@ public class MqttUtil {
     private boolean mMqttCleanSession = true;
     private boolean mMqttMsgRetained = false;
     private int mMqttTimeout_s = 10;
-    private int mMqttHeartBeat_s = 20;
+    private int mMqttHeartBeat_s = 60;
     private int mMqttRetryDelay_ms = 100000;
     private int mMqttMsgQos = 1;
 
@@ -93,7 +93,7 @@ public class MqttUtil {
                 e.printStackTrace();
             }
         } else {
-            Log.e(TAG,"could not connect!");
+            Log.e(TAG,"already connected!");
         }
     }
 

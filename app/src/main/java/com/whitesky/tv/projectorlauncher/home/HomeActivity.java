@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -23,20 +25,22 @@ import com.whitesky.sdk.widget.TvScrollTextView;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
-import com.whitesky.tv.projectorlauncher.common.MqttSslService;
+import com.whitesky.tv.projectorlauncher.service.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
-import com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.settings.SysSettingActivity;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.net.ssl.SSLContext;
+
+import okhttp3.OkHttpClient;
 
 
 public class HomeActivity extends Activity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
     private final String TAG = this.getClass().getSimpleName();
+
+    private final static int MSG_HOME_REPORT_INFO = 1;
+
     private ImageView mEthConnectImg;
     private ImageView mWifiConnectImg;
 
@@ -130,7 +134,6 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     public void setFocusableInTouchMode(boolean focusableInTouchMode) {
         this.focusableInTouchMode = focusableInTouchMode;
     }
-
 
     // 监听网络状态变化的广播接收器
     public class NetworkStateBroadcastReceiver extends BroadcastReceiver
@@ -252,6 +255,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         }
         return super.onKeyDown(keyCode, event);
     }
+
 
     private void initBorder()
     {

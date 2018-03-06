@@ -20,7 +20,7 @@ public class MediaDatabaseHelper extends OrmLiteSqliteOpenHelper {
     // 数据库名称
     public static final String DATABASE_NAME = "media.db";
 
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     // 本类的单例实例
     private static MediaDatabaseHelper instance;

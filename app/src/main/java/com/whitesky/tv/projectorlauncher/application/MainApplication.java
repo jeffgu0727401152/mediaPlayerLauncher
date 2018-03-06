@@ -12,9 +12,14 @@ import android.app.Application;
  */
 public class MainApplication extends Application
 {
+    public boolean mInitDone = false;
+    public boolean isFullScreenPlaying = false;
+
     @Override
     public void onCreate()
     {
+        mInitDone = false;
+        isFullScreenPlaying = false;
         super.onCreate();
 //        if (LeakCanary.isInAnalyzerProcess(this)) {//1
 //            // This process is dedicated to LeakCanary for heap analysis.

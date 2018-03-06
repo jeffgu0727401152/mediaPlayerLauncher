@@ -30,6 +30,7 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
@@ -71,6 +72,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 
@@ -208,11 +210,14 @@ public class MediaActivity extends Activity
         Log.d(TAG, "MediaPlayFullScreenSwitch fullScreen:" + fullScreen);
 
         if (fullScreen) {
+            ((MainApplication)getApplication()).isFullScreenPlaying = true;
+
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayer.getLayoutParams();
             llp.topMargin = 0;
             llp.leftMargin = 0;
             mPlayer.setLayoutParams(llp);
         } else {
+            ((MainApplication)getApplication()).isFullScreenPlaying = false;
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayer.getLayoutParams();
             llp.topMargin = mOriginPlayerMarginTop;
             llp.leftMargin = mOriginPlayerMarginLeft;
@@ -310,10 +315,9 @@ public class MediaActivity extends Activity
     }
 
     public static boolean hasPlaylistConfig(Context context) {
-        Gson gson = new Gson();
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
-        String jsonStr = config.getString(CONFIG_PLAYLIST, "");
-        if (jsonStr==null || jsonStr.isEmpty() || jsonStr.equals("[]")) {
+        String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
+        if (jsonStr.equals("[]")) {
             return false;
         } else {
             return true;
@@ -323,20 +327,18 @@ public class MediaActivity extends Activity
     private void loadPlaylistFromConfig() {
         Gson gson = new Gson();
         SharedPreferencesUtil config = new SharedPreferencesUtil(this, Contants.PERF_CONFIG);
-        String jsonStr = config.getString(CONFIG_PLAYLIST, null);
-        Type type = new TypeToken<List<PlayListBean>>(){}.getType();
-        if (jsonStr!=null)
-        {
-            List<PlayListBean> data = gson.fromJson(jsonStr,type);
-            mPlayListBeans.clear();
-            for(int i = 0; i < data.size(); i++)
-            {
-                mPlayListBeans.add(data.get(i));
-            }
+        String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
+        Type type = new TypeToken<List<PlayListBean>>() {
+        }.getType();
 
-            if (mPlayListAdapter!=null) {
-                mPlayListAdapter.refresh();
-            }
+        List<PlayListBean> data = gson.fromJson(jsonStr, type);
+        mPlayListBeans.clear();
+        for (int i = 0; i < data.size(); i++) {
+            mPlayListBeans.add(data.get(i));
+        }
+
+        if (mPlayListAdapter != null) {
+            mPlayListAdapter.refresh();
         }
     }
 
@@ -925,7 +927,7 @@ public class MediaActivity extends Activity
                     int duration = b.getInt(BUNDLE_KEY_MEDIA_DURATION);
                     long size = b.getLong(BUNDLE_KEY_MEDIA_SIZE);
 
-                    MediaBean data = new MediaBean(name, type, MediaBean.SOURCE_LOCAL, path, duration, size, true);
+                    MediaBean data = new MediaBean(name, ID_LOCAL, type, MediaBean.SOURCE_LOCAL, path, duration, size, true);
                     new MediaBeanDao(MediaActivity.this).insert(data);
                     break;
 

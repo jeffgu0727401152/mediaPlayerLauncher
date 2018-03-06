@@ -11,6 +11,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class MediaBean {
     // 定义字段在数据库中的字段名
     public static final String COLUMNNAME_TITLE = "title";
+    public static final String COLUMNNAME_ID = "id";
     public static final String COLUMNNAME_DESCRIPTION = "description";
     public static final String COLUMNNAME_SOURCE = "source";
     public static final String COLUMNNAME_TYPE = "type";
@@ -18,6 +19,8 @@ public class MediaBean {
     public static final String COLUMNNAME_DURATION = "duration";
     public static final String COLUMNNAME_SIZE = "size";
     public static final String COLUMNNAME_ISDOWNLOAD = "isDownload";
+
+    public static final int ID_LOCAL = 0;
 
     // 媒体文件类型定义
     public static final int MEDIA_UNKNOWN = 0;
@@ -36,6 +39,10 @@ public class MediaBean {
     //文件的存储路径,全局唯一作为主键
     @DatabaseField(id = true, columnName = COLUMNNAME_PATH, useGetSet = true, canBeNull = false,unique = true)
     private String path;
+
+    // 文件id,本地用U盘拷入的文件ID都为0,从云端下载的媒体文件才有有效ID
+    @DatabaseField(columnName = COLUMNNAME_ID, useGetSet = true, canBeNull = false, unique = false)
+    private int id;
 
     // 文件的UI显示名,一般就是去掉了扩展名的文件名
     @DatabaseField(columnName = COLUMNNAME_TITLE, useGetSet = true, canBeNull = false, unique = false)
@@ -75,14 +82,23 @@ public class MediaBean {
         isDownload = false;
     }
 
-    public MediaBean(String name, int type, int source, String path, int duration, long size, boolean isDownload) {
+    public MediaBean(String name, int id, int type, int source, String path, int duration, long size, boolean isDownload) {
         this.title = name;
         this.type = type;
+        this.id = id;
         this.source = source;
         this.path = path;
         this.duration = duration;
         this.size = size;
         this.isDownload = isDownload;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -161,6 +177,7 @@ public class MediaBean {
     public String toString() {
         return "MediaBean{" +
                 ", path=" + path +
+                ", id=" + id +
                 ", title=" + title +
                 ", description=" + description +
                 ", type=" + type +

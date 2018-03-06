@@ -55,6 +55,8 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPl
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE;
+import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_CENTER;
+import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_XY;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -65,9 +67,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 
 public class PictureVideoPlayer extends FrameLayout implements View.OnClickListener{
     private final String TAG = this.getClass().getSimpleName();
-
-    public static final int MEDIA_SCALE_FIT_XY = 0;
-    public static final int MEDIA_SCALE_FIT_CENTER = 1;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
