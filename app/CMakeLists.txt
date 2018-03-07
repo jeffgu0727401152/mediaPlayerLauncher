@@ -6,20 +6,11 @@ include_directories(
 
 #=================添加需要编译的库(开始)==============================================================
 add_library(
-    PolygonMask                          #希望so库被编译出来的名称，java代码loadlibrary用这个名称
+    AtcCert                             #希望so库被编译出来的名称，java代码loadlibrary用这个名称
     SHARED
-    src/main/cpp/polygon_native_lib.cpp     #cpp代码文件的路径 从这里往下可以随意添加c、c++文件
-    src/main/cpp/PolygonBuffer.cpp
-)
-
-add_library(
-    AtcCert
-    SHARED
-    src/main/cpp/atc_native_lib.cpp
+    src/main/cpp/atc_native_lib.cpp     #cpp代码文件的路径 从这里往下可以随意添加c、c++文件
 )
 #=================添加需要编译的库(结束)==============================================================
-
-
 
 
 #=================添加需要的链接库(开始)===================================================
@@ -30,14 +21,7 @@ find_library(       #定位NDK中的库,需传入两个参数(path变量名、nd
 #=================添加需要的链接库(结束)===================================================
 
 
-
-
 #=================链接规则(开始)========================================
-target_link_libraries(
-    PolygonMask
-    ${log-lib}
-)
-
 target_link_libraries(
     AtcCert
     ${log-lib}

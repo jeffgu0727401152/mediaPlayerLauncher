@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -210,93 +211,20 @@ public class PaintPolygonView extends AppCompatImageView {
         return currentPolygonPoints.size() > 2;
     }
 
-    /**
-     * 获取目前所有的点 所组成的 多变形的数量 以及 各多边形的点数
-     * @return 描述多边形的数组,可能为null
-     */
-    public int[] getPolygonPointsCount() {
-        int donePolygonCount = totalPolygonPoints.size();
-        int currentPolygonCount = (currentPolygonPoints.size()>0) ? 1:0;
 
-
-        if (donePolygonCount > 0 || currentPolygonCount > 0) {
-
-            int[] retCount = new int[donePolygonCount + currentPolygonCount];
-
-            for (int i=0; i<donePolygonCount; i++) {
-                retCount[i] = totalPolygonPoints.get(i).size();
+    public List<List<Point>> getPolygonPoints(){
+        List<List<Point>> ret =  new ArrayList<List<Point>>();
+        for (List<Point> tmp : totalPolygonPoints) {
+            List<Point> copyList = new ArrayList<Point>();
+            for (Point p : tmp) {
+                Point copyPoint = new Point();
+                copyPoint.x = p.x;
+                copyPoint.y = p.y;
+                copyList.add(copyPoint);
             }
-
-            if (currentPolygonCount > 0) {
-                retCount[donePolygonCount + currentPolygonCount - 1] = currentPolygonPoints.size();
-            }
-
-            return retCount;
-
-        } else {
-            Log.e(TAG,"nothing to return!");
-            return null;
-
+            ret.add(copyList);
         }
-    }
-
-    /**
-     * 获取目前所有的点的x与y
-     * @outparam xArray 所有点的横坐标
-     * @outparam yArray 所有点的纵坐标
-     * @return
-     */
-    public void getPolygonPointsXY(int[] xArray, int[] yArray) {
-        int donePolygonCount = totalPolygonPoints.size();
-        int currentPolygonCount = (currentPolygonPoints.size()>0) ? 1:0;
-        int retArrayLength = 0;
-        int pointIdx = 0;
-
-        if (xArray!=null && yArray!=null && xArray.length==yArray.length)
-        {
-            retArrayLength = xArray.length;
-        } else {
-            Log.e(TAG,"param array error!");
-            return;
-        }
-
-        if (donePolygonCount > 0 || currentPolygonCount > 0) {
-
-            for (int i=0; i<donePolygonCount; i++) {
-
-                for (Point p:totalPolygonPoints.get(i)) {
-
-                    if (retArrayLength <= pointIdx) {
-                        Log.e(TAG,"param array to short!");
-                        return;
-                    }
-
-                    xArray[pointIdx] = p.x;
-                    yArray[pointIdx] = p.y;
-                    pointIdx++;
-                }
-            }
-
-            if (currentPolygonCount > 0) {
-
-                for (Point p:currentPolygonPoints) {
-
-                    if (retArrayLength <= pointIdx) {
-                        Log.e(TAG,"param array to short!");
-                        return;
-                    }
-
-                    xArray[pointIdx] = p.x;
-                    yArray[pointIdx] = p.y;
-                    pointIdx++;
-                }
-            }
-            return;
-
-        } else {
-            Log.e(TAG,"nothing to return!");
-            return;
-        }
+        return ret;
     }
 
     private void drawPoint(Canvas canvas, Point point, Paint p)

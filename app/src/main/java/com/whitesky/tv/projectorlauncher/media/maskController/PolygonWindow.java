@@ -2,6 +2,9 @@ package com.whitesky.tv.projectorlauncher.media.maskController;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
@@ -18,7 +21,9 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 
 import com.whitesky.tv.projectorlauncher.R;
-import com.wsd.android.NativeMask;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by jeff on 18-2-22.
@@ -112,44 +117,33 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
             case R.id.btn_paint_cancel:
                 paintView.clearAllPolygonPoints();
                 updateBtnActiveState();
-                if (eventListener!=null) {
+                if (eventListener != null) {
                     eventListener.onCancel();
                 }
                 break;
 
             case R.id.btn_paint_done:
 
-                if (eventListener!=null) {
+                if (eventListener != null) {
                     eventListener.onGenerateBegin();
                 }
 
                 paintView.drawNextPolygonPoints();
-                final int polygonCountArray[] = paintView.getPolygonPointsCount();
-                int totalPointCount = 0;
 
-                if (polygonCountArray!=null) {
-                    for (int i:polygonCountArray){
-                        totalPointCount += i;
-                    }
-                }
+                final List<List<Point>> target = paintView.getPolygonPoints();
 
-                if (totalPointCount>2){
-                    final int xPointArray[] = new int[totalPointCount];
-                    final int yPointArray[] = new int[totalPointCount];
+                if (target.size() >= 1) {
 
-                    paintView.getPolygonPointsXY(xPointArray,yPointArray);
-
-                    new Thread(){
-                        public void run(){
-
-                            Bitmap bmp = generateBitmap(polygonCountArray,xPointArray,yPointArray);
-
+                    new Thread() {
+                        public void run() {
+                            Bitmap map = generateBitmap(target);
                             Message msg = generateDoneHandler.obtainMessage();
                             msg.what = 0;
-                            msg.obj = bmp;
+                            msg.obj = map;
                             generateDoneHandler.sendMessage(msg);
                         }
                     }.start();
+
                 } else {
                     // 用户没有画点,发送null
                     Message msg = generateDoneHandler.obtainMessage();
@@ -157,6 +151,7 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
                     msg.obj = null;
                     generateDoneHandler.sendMessage(msg);
                 }
+
                 break;
 
             case R.id.btn_paint_undo:
@@ -247,39 +242,49 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     }
 
     // 参数中传入的都是原始鼠标点击屏幕的位置,如果设置bmp图片的宽高比屏幕小,则在此处会进行比例缩小
-    private Bitmap generateBitmap(int[] polygonCountArray,int[] xPointArray,int [] yPointArray)
+    private Bitmap generateBitmap(List<List<Point>> target)
     {
-        int[] polygonBufferArray = new int[bmpWidth * bmpHeight];
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setColor(outsideColor);
+        paint.setStyle(Paint.Style.FILL);
 
-        if (displayHeight != bmpHeight) {
-            float scale = (float)(bmpHeight)/(float)displayHeight;
-            for (int i = 0; i<yPointArray.length; i++) {
-                yPointArray[i] = (int)((float)(yPointArray[i])*scale);
+        Bitmap bitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888);
+        bitmap.eraseColor(insideColor);
+
+        Canvas bmpCanvas = new Canvas(bitmap);
+        List<Path> polygonPaths = new ArrayList<Path>();
+
+        if (displayHeight != bmpHeight || displayWidth != bmpWidth) {
+            float yScale = (float) (bmpHeight) / (float) displayHeight;
+            float xScale = (float) (bmpWidth) / (float) displayWidth;
+            for (int i = 0; i < target.size(); i++) {
+                for (int j = 0; j < target.get(i).size(); j++) {
+                    target.get(i).get(j).x = (int) ((float) (target.get(i).get(j).x) * xScale);
+                    target.get(i).get(j).y = (int) ((float) (target.get(i).get(j).y) * yScale);
+                }
             }
         }
 
-        if (displayWidth != bmpWidth) {
-            float scale = (float)(bmpWidth)/(float)displayWidth;
-            for (int i = 0; i<xPointArray.length; i++) {
-                xPointArray[i] = (int)((float)(xPointArray[i])*scale);
+        for (int i = 0; i < target.size(); i++) {
+            Path tmp = new Path();
+            for (int j = 0; j < target.get(i).size(); j++) {
+                if (j == 0) {
+                    tmp.moveTo(target.get(i).get(j).x, target.get(i).get(j).y);
+                } else {
+                    tmp.lineTo(target.get(i).get(j).x, target.get(i).get(j).y);
+                }
             }
+            tmp.close();
+            polygonPaths.add(tmp);
         }
 
-        NativeMask.createPolygonBuffer(
-                polygonBufferArray,
-                bmpWidth,
-                bmpHeight,
-                polygonCountArray,
-                xPointArray,
-                yPointArray,
-                insideColor,
-                outsideColor);
+        polygonPaths.get(0).setFillType(Path.FillType.INVERSE_EVEN_ODD);
+        for (int i = 1; i < polygonPaths.size(); i++) {
+            polygonPaths.get(0).op(polygonPaths.get(i),Path.Op.DIFFERENCE);
+        }
 
-        Bitmap bitmap = Bitmap.createBitmap(
-                polygonBufferArray,
-                bmpWidth,
-                bmpHeight,
-                Bitmap.Config.ARGB_8888);
+        bmpCanvas.drawPath(polygonPaths.get(0), paint);
 
         return bitmap;
     }
