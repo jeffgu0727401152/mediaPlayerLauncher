@@ -9,6 +9,9 @@ public class Contants
 {
     public static final String PROJECT_NAME = "PS500";
 
+    public static final String ACTION_PUSH_PLAYLIST = "com.whitesky.tv.push.playlist";
+    public static final String EXTRA_PUSH_CONTEXT = "playlist";
+
     public static final String PERF_CONFIG = "PERF_CONFIG";// 存放用户信息
     public static final String CONFIG_PLAYLIST = "playList";
     public static final String CONFIG_PLAYMODE = "playMode";

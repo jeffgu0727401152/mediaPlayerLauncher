@@ -14,7 +14,8 @@ public class HttpConstants
     public static final String URL_DEVICE_LOGOUT = "https://screen.whiteskycn.com/api/deviceLogout";
     public static final String URL_CHECK_VERSION = "https://screen.whiteskycn.com/api/checkVersion";
     public static final String URL_HEARTBEAT = "https://screen.whiteskycn.com/api/heartBeat";
-    
+    public static final String URL_GET_SHARE_LIST = "https://screen.whiteskycn.com/api/getShareList";
+
     public static final String LOGIN_STATUS_SUCCESS = "000000";
     public static final String VERSION_CHECK_STATUS_SUCCESS = "000000";
 

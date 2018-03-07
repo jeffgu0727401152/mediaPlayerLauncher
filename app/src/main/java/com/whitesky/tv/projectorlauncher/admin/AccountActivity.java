@@ -180,147 +180,123 @@ public class AccountActivity extends Activity implements View.OnClickListener
         AccountActivity.this.finish();
         super.onBackPressed();
     }
-    
-    public void getAccountInfo()
-    {
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                OkHttpClient mClient = new OkHttpClient();
-                if (HttpConstants.URL_GET_LOGIN_INFO.contains("https"))
-                {
-                    try
-                    {
-                        mClient = new OkHttpClient.Builder()
-                                .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                                .build();
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-                else
-                {
-                    mClient = new OkHttpClient();
-                }
-                
-                FormBody body = new FormBody.Builder()
-                        .add("sn", DeviceInfoActivity.getSysSN())
+
+    public void getAccountInfo() {
+        OkHttpClient mClient = new OkHttpClient();
+        if (HttpConstants.URL_GET_LOGIN_INFO.contains("https")) {
+            try {
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                         .build();
-
-                Request request = new Request.Builder().url(HttpConstants.URL_GET_LOGIN_INFO).post(body).build();
-                Call call = mClient.newCall(request);
-                call.enqueue(new okhttp3.Callback() {
-                    // 失败
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        e.printStackTrace();
-                    }
-                    
-                    // 成功
-                    @Override
-                    public void onResponse(Call call, Response response)
-                        throws IOException
-                    {
-                        if (!response.isSuccessful()) {
-                            throw new IOException("Unexpected code " + response);
-
-                        } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
-                            String htmlBody = response.body().string();
-
-                            try {
-                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
-                            } catch (IllegalStateException e) {
-                                mLoginBean = null;
-                                Log.e(TAG,"Gson parse error!");
-                            }
-
-
-                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-                                if (mLoginBean.getResult() != null) {
-                                    mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
-                                }
-                            }
-
-                        } else {
-                            Log.e(TAG,"getAccountInfo response http code undefine!");
-                        }
-                    }
-                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }).start();
-    }
-    
-    public void accountLogout() {
-        new Thread(new Runnable() {
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body = new FormBody.Builder()
+                .add("sn", DeviceInfoActivity.getSysSN())
+                .build();
+
+        Request request = new Request.Builder().url(HttpConstants.URL_GET_LOGIN_INFO).post(body).build();
+        Call call = mClient.newCall(request);
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
             @Override
-            public void run() {
-                OkHttpClient mClient;
-                if (HttpConstants.URL_DEVICE_LOGOUT.contains("https")) {
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
                     try {
-                        mClient = new OkHttpClient.Builder()
-                                .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                                .build();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        mClient = new OkHttpClient();
+                        mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+                    } catch (IllegalStateException e) {
+                        mLoginBean = null;
+                        Log.e(TAG, "Gson parse error!");
+                    }
+
+
+                    if (mLoginBean != null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                        if (mLoginBean.getResult() != null) {
+                            mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
+                        }
                     }
 
                 } else {
-                    mClient = new OkHttpClient();
+                    Log.e(TAG, "getAccountInfo response http code undefine!");
                 }
-                
-                FormBody body = new FormBody.Builder()
-                        .add("sn", DeviceInfoActivity.getSysSN())
-                        .build();
-
-                Request request = new Request.Builder().url(HttpConstants.URL_DEVICE_LOGOUT).post(body).build();
-                Call call = mClient.newCall(request);
-                call.enqueue(new okhttp3.Callback()
-                {
-                    // 失败
-                    @Override
-                    public void onFailure(Call call, IOException e)
-                    {
-                        e.printStackTrace();
-                    }
-                    
-                    // 成功
-                    @Override
-                    public void onResponse(Call call, Response response)
-                        throws IOException
-                    {
-                        if (!response.isSuccessful()) {
-                            throw new IOException("Unexpected code " + response);
-
-                        } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
-                            String htmlBody = response.body().string();
-
-                            try {
-                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
-                            } catch (IllegalStateException e) {
-                                mLoginBean = null;
-                                Log.e(TAG,"Gson parse error!");
-                            }
-
-                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS))
-                            {
-                                SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
-                                shared.putBoolean(Contants.IS_SETUP_PASS, false);
-                                shared.putBoolean(Contants.IS_ACTIVATE, false);
-                                // todo modify
-                                getAccountInfo();
-                            }
-                        } else {
-                            Log.e(TAG,"logout response http code undefine!");
-                        }
-                    }
-                });
             }
-        }).start();
+        });
+    }
+
+    public void accountLogout() {
+        OkHttpClient mClient;
+        if (HttpConstants.URL_DEVICE_LOGOUT.contains("https")) {
+            try {
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        .build();
+            } catch (Exception e) {
+                e.printStackTrace();
+                mClient = new OkHttpClient();
+            }
+
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body = new FormBody.Builder()
+                .add("sn", DeviceInfoActivity.getSysSN())
+                .build();
+
+        Request request = new Request.Builder().url(HttpConstants.URL_DEVICE_LOGOUT).post(body).build();
+        Call call = mClient.newCall(request);
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
+                    try {
+                        mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+                    } catch (IllegalStateException e) {
+                        mLoginBean = null;
+                        Log.e(TAG, "Gson parse error!");
+                    }
+
+                    if (mLoginBean != null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                        SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
+                        shared.putBoolean(Contants.IS_SETUP_PASS, false);
+                        shared.putBoolean(Contants.IS_ACTIVATE, false);
+                        // todo modify remove IS_SETUP_PASS
+                        getAccountInfo();
+                    }
+                } else {
+                    Log.e(TAG, "logout response http code undefine!");
+                }
+            }
+        });
     }
     
     private static class AccountInfoHandler extends Handler

@@ -7,24 +7,18 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whitesky.tv.projectorlauncher.R;
-import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
-import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 
 
-import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
-import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -148,6 +142,15 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+        if (mOnPlaylistItemEventListener != null) {
+            mOnPlaylistItemEventListener.onPlaylistChange();
+        }
+        refresh();
     }
 
     @Override

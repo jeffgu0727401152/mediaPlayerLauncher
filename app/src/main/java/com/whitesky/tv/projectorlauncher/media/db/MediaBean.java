@@ -181,7 +181,7 @@ public class MediaBean {
                 ", title=" + title +
                 ", description=" + description +
                 ", type=" + type +
-                ", source='" + source +
+                ", source=" + source +
                 ", duration=" + duration +
                 ", isDownload=" + isDownload +
                 '}';

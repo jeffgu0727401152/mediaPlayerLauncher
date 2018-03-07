@@ -6,9 +6,11 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Parcelable;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -22,6 +24,7 @@ import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
+import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
@@ -63,34 +66,37 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 {
     private final static int SERVICE_ID = 1001;
 
-    private final String STR_MQTT_MSG_TYPE_CMD = "command~~~~~";
-    private final String STR_MQTT_MSG_TYPE_REQ = "request~~~~~";
+    private final String STR_MQTT_MSG_TYPE_CMD  = "command~~~~~";
+    private final String STR_MQTT_MSG_TYPE_REQ  = "request~~~~~";
 
-    private final String STR_MQTT_MSG_TYPE_RET = "return~~~~~~";
-    private final String STR_MQTT_MSG_TYPE_PUSH = "push~~~~~~~";
+    private final String STR_MQTT_MSG_TYPE_RET  = "return~~~~~~";
+    private final String STR_MQTT_MSG_TYPE_PUSH = "push~~~~~~~~";
 
-    private final String STR_MQTT_CMD_ACTION_LOGINDONE = "logindone";
-    private final String STR_MQTT_CMD_ACTION_REBOOT = "reboot";
-    private final String STR_MQTT_CMD_ACTION_SHUTDOWN = "shutdown";
-    private final String STR_MQTT_CMD_ACTION_OTA = "otaupdate";
+    private final String STR_MQTT_CMD_ACTION_LOGINDONE  = "logindone";
+    private final String STR_MQTT_CMD_ACTION_REBOOT     = "reboot";
+    private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
 
-    private final String STR_MQTT_REQ_ACTION_INFO = "info";// 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息，地理位置）
-    private final String STR_MQTT_CMD_ACTION_SHARELIST = "sharelist";//请求回应设备当前硬盘中 共享中已下载的文件列表
-    private final String STR_MQTT_CMD_ACTION_LOCALLIST = "locallist";//本地U盘导入的私有文件列表
-    private final String STR_MQTT_CMD_ACTION_PLAYLIST = "playlist";// 当前的播放列表
+    private final String STR_MQTT_REQ_ACTION_INFO       = "info";// 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息，地理位置）
+    private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist";//请求回应设备当前硬盘中 共享中已下载的文件列表
+    private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist";//本地U盘导入的私有文件列表
+    private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";// 当前的播放列表
+
+    private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";// 当前的播放列表
 
 
     private final static int MSG_NONE = 0;
 
     // command
-    private final static int MSG_DEVICE_LOGIN_DONE = 200;
-    private final static int MSG_DEVICE_REBOOT = 201;
-    private final static int MSG_DEVICE_OTA = 202;
+    private final static int MSG_CMD_LOGIN_DONE = 200;
+    private final static int MSG_CMD_REBOOT = 201;
+    private final static int MSG_CMD_OTA = 202;
     // request
     private final static int MSG_REQUEST_INFO = 300;
     private final static int MSG_REQUEST_PLAYLIST = 301;
     private final static int MSG_REQUEST_LOCALLIST = 302;
     private final static int MSG_REQUEST_SHARELIST = 303;
+
+    private final static int MSG_PUSH_PLAYLIST = 400;
 
     private final String TAG = this.getClass().getSimpleName();
     private final String keyStorePassword = "wxgh#2561";
@@ -99,7 +105,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private ExecutorService mHeartBeatWorker = Executors.newSingleThreadExecutor();
 
     private boolean mHeartBeatRunnig = false;
-private final static int HEARTBEAT_INTERVAL_S = 10;
+    private final static int HEARTBEAT_INTERVAL_S = 60 * 3;
+
     // MQTT Util callback +++
     @Override
     public void onDistributeMessage(String msg) {
@@ -144,6 +151,8 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
 
         heartBeat();
 
+        Log.d(TAG,"~~debug~~service onStartCommand!");
+
         return super.onStartCommand(intent, flags, startId);
     }
     
@@ -157,6 +166,8 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
         }
 
         super.onDestroy();
+
+        Log.d(TAG,"~~debug~~service onDestroy!");
 
         Log.d(TAG,"service onDestroy auto restart!");
         Intent localIntent = new Intent();
@@ -194,8 +205,7 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
         }
     }
 
-    private void heartBeat()
-    {
+    private void heartBeat() {
         mHeartBeatWorker.execute(new Runnable()
         {
             @Override
@@ -252,6 +262,8 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
 
                                 Log.d(TAG, "heartBeat success");
 
+                                Log.d(TAG,"~~debug~~service heartBeat success!");
+
                             } else {
 
                                 Log.e(TAG, "heartBeat response http code undefine!");
@@ -268,91 +280,75 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
         });
     }
 
-    private void reportVersionInfo()
-    {
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                OkHttpClient mClient = new OkHttpClient();
-                if (HttpConstants.URL_CHECK_VERSION.contains("https"))
-                {
-                    try
-                    {
-                        mClient =
-                                new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                                        .build();
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-                else
-                {
-                    mClient = new OkHttpClient();
-                }
-
-                FormBody body =
-                        new FormBody.Builder()
-                                .add("project", PROJECT_NAME)
-                                .add("appVer", DeviceInfoActivity.getVersionName(getApplicationContext()))
-                                .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
-                                .add("sn", DeviceInfoActivity.getSysSN())
+    private void reportVersionInfo() {
+        OkHttpClient mClient = new OkHttpClient();
+        if (HttpConstants.URL_CHECK_VERSION.contains("https")) {
+            try {
+                mClient =
+                        new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                                 .build();
-                Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
-                Call call = mClient.newCall(request);
-                call.enqueue(new okhttp3.Callback() {
-                    // 失败
-                    @Override
-                    public void onFailure(Call call, IOException e)
-                    {
-                        e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body =
+                new FormBody.Builder()
+                        .add("project", PROJECT_NAME)
+                        .add("appVer", DeviceInfoActivity.getVersionName(getApplicationContext()))
+                        .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
+                        .add("sn", DeviceInfoActivity.getSysSN())
+                        .build();
+        Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
+        Call call = mClient.newCall(request);
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
+                    VersionCheckResultBean serverResponse = null;
+
+                    try {
+                        serverResponse = new Gson().fromJson(htmlBody, VersionCheckResultBean.class);
+                    } catch (IllegalStateException e) {
+                        serverResponse = null;
+                        Log.e(TAG, "Gson parse error!" + e);
                     }
 
-                    // 成功
-                    @Override
-                    public void onResponse(Call call, Response response)
-                            throws IOException
-                    {
-                        if (!response.isSuccessful()) {
-                            throw new IOException("Unexpected code " + response);
-
-                        } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
-                            String htmlBody = response.body().string();
-
-                            VersionCheckResultBean result = null;
-
-                            try {
-                                result = new Gson().fromJson(htmlBody, VersionCheckResultBean.class);
-                            } catch (IllegalStateException e) {
-                                result = null;
-                                Log.e(TAG,"Gson parse error!" + e);
+                    if (serverResponse != null) {
+                        if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_SUCCESS)) {
+                            if (serverResponse.getResult() != null) {
+                                Log.d(TAG, "VersionInfo success");
                             }
-
-                            if (result!=null) {
-                                if (result.getStatus().equals(VERSION_CHECK_STATUS_SUCCESS)) {
-                                    if (result.getResult() != null) {
-                                        Log.d(TAG, "success");
-                                    }
-                                    // todo 检查版本是否为null,不是再比较版本,然后再download
-                                    Log.d(TAG, htmlBody);
+                            // todo 检查版本是否为null,不是再比较版本,然后再download
+                            Log.d(TAG, htmlBody);
 //                                    Log.d(TAG, result.getResult().getAppVer());
 //                                    Log.d(TAG, result.getResult().getSysVer());
 //                                    Log.d(TAG, "size:" + result.getResult().getSize());
 //                                    Log.d(TAG, "time:" + result.getResult().getCreatedAt());
 //                                    Log.d(TAG, result.getResult().getUrl());
-                                }
-                            }
-
-                        } else {
-                            Log.e(TAG,"VersionInfo response http code undefine!");
                         }
                     }
-                });
+
+                } else {
+                    Log.e(TAG, "VersionInfo response http code undefine!");
+                }
             }
-        }).start();
+        });
     }
 
     private void parserMqttMessage(String mqttMessage) {
@@ -363,13 +359,13 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
             // command 用于管理端向设备发送控制命令
 
             if (mqttMessage.contains(STR_MQTT_CMD_ACTION_LOGINDONE)) {
-                message.what = MSG_DEVICE_LOGIN_DONE;
+                message.what = MSG_CMD_LOGIN_DONE;
 
             } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_REBOOT)) {
-                message.what = MSG_DEVICE_REBOOT;
+                message.what = MSG_CMD_REBOOT;
 
             } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_OTA)) {
-                message.what = MSG_DEVICE_OTA;
+                message.what = MSG_CMD_OTA;
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -379,12 +375,20 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
 
             if (mqttMessage.contains(STR_MQTT_REQ_ACTION_INFO)) {
                 message.what = MSG_REQUEST_INFO;
-            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_SHARELIST)) {
+            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_SHARELIST)) {
                 message.what = MSG_REQUEST_SHARELIST;
-            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_LOCALLIST)) {
+            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_LOCALLIST)) {
                 message.what = MSG_REQUEST_LOCALLIST;
-            }else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_PLAYLIST)) {
+            }else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_PLAYLIST)) {
                 message.what = MSG_REQUEST_PLAYLIST;
+            } else {
+                Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
+            }
+
+        } else if (mqttMessage.indexOf(STR_MQTT_MSG_TYPE_PUSH) == 20) {
+
+            if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYLIST)) {
+                message.what = MSG_PUSH_PLAYLIST;
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -413,11 +417,11 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
             Gson gson = new Gson();
             String jsonStr;
             List<MediaListResponseBean> responseDataList = new ArrayList<MediaListResponseBean>();
+            List<PlayListBean> pList;
 
             switch (msg.what) {
 
-                case MSG_DEVICE_LOGIN_DONE:
-                    Log.i(TAG, "mqtt login done!");
+                case MSG_CMD_LOGIN_DONE:
                     SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
                     shared.putBoolean(Contants.IS_ACTIVATE, true);
                     shared.putBoolean(Contants.IS_SETUP_PASS, true);
@@ -427,12 +431,13 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
                     startActivity(homeIntent);
                     break;
 
-                case MSG_DEVICE_REBOOT:
+                case MSG_CMD_REBOOT:
                     PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
                     powerManager.reboot("mqtt request");
                     break;
 
-                case MSG_DEVICE_OTA:
+                case MSG_CMD_OTA:
+                    // todo ota
                     break;
 
                 case MSG_REQUEST_INFO:
@@ -451,11 +456,14 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
                     info.setTotalMemory(totalMemorySize);
                     info.setFreeCapacity(FileUtil.getAvailableCapacity(LOCAL_MASS_STORAGE_PATH));
                     info.setTotalCapacity(FileUtil.getTotalCapacity(LOCAL_MASS_STORAGE_PATH));
-                    info.setPlaying(((MainApplication)getApplication()).isFullScreenPlaying ==true?1:0);
+                    info.setPlaying(((MainApplication)getApplication()).isMediaActivityFullScreenPlaying ==true?1:0);
 
                     jsonStr = gson.toJson(info);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
                     MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+                    break;
+
+                case MSG_REQUEST_SHARELIST:
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
@@ -464,10 +472,10 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
                     Type type = new TypeToken<List<PlayListBean>>() {
                     }.getType();
 
-                    List<PlayListBean> dataList = gson.fromJson(jsonStr, type);
+                    pList = gson.fromJson(jsonStr, type);
                     responseDataList.clear();
-                    for (int i = 0; i < dataList.size(); i++) {
-                        responseDataList.add(new MediaListResponseBean(dataList.get(i)));
+                    for (int i = 0; i < pList.size(); i++) {
+                        responseDataList.add(new MediaListResponseBean(pList.get(i)));
                     }
 
                     jsonStr = gson.toJson(responseDataList);
@@ -489,6 +497,31 @@ private final static int HEARTBEAT_INTERVAL_S = 10;
                     MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
 
                     Log.d(TAG,"LOCALLIST~~~~"+rawStr + jsonStr);
+                    break;
+
+                case MSG_PUSH_PLAYLIST:
+                    type = new TypeToken<List<MediaListPushBean>>(){ }.getType();
+                    ArrayList<MediaListPushBean> pushList = gson.fromJson(rawStr.substring(100), type);
+
+                    if (((MainApplication)getApplication()).isMediaActivityForeground) {
+
+                        Intent intent=new Intent(Contants.ACTION_PUSH_PLAYLIST);
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, pushList);
+                        intent.putExtras(bundle);
+                        sendBroadcast(intent);
+
+                    } else {
+
+                        pList = new ArrayList<>();
+                        MediaActivity.covertList(getApplicationContext(), pList, pushList);
+
+                        if (!pList.isEmpty()) {
+                            MediaActivity.savePlaylistToConfig(getApplication(), pList);
+                            startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        }
+                    }
+
                     break;
 
                 default:

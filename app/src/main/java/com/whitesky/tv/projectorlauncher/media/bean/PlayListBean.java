@@ -44,6 +44,6 @@ public class PlayListBean {
     }
 
     public void setPlayScale(int playScale) {
-        this.playScale = playScale;
+        this.playScale = (playScale==0 ? 0 : 1);
     }
 }

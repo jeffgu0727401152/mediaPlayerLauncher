@@ -30,8 +30,10 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
+import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter;
@@ -41,6 +43,7 @@ import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -65,6 +68,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.net.ssl.SSLContext;
+
+import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYMODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
@@ -72,6 +83,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -177,7 +189,37 @@ public class MediaActivity extends Activity
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;
 
-    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mqttEventReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(Contants.ACTION_PUSH_PLAYLIST)) {
+
+                ArrayList<MediaListPushBean> pushList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+
+                if (pushList==null || pushList.size()==0) {
+                    Log.e(TAG,"mqtt receive a empty playlist!");
+                    return;
+                }
+
+                mPlayer.mediaStop();
+
+                covertList(getApplicationContext(),mPlayListBeans,pushList);
+
+                mPlayListAdapter.refresh();
+                savePlaylistToConfig();
+                mPlayer.mediaPlay(0);
+
+                for (PlayListBean tmp:mPlayListAdapter.getListDatas()) {
+                    Log.e(TAG,"~!~"+tmp.getMediaData().toString() + "!" + tmp.getPlayScale());
+                }
+
+                ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_playlist_toast));
+            }
+        }
+    };
+
+    private final BroadcastReceiver usbMountEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -210,14 +252,17 @@ public class MediaActivity extends Activity
         Log.d(TAG, "MediaPlayFullScreenSwitch fullScreen:" + fullScreen);
 
         if (fullScreen) {
-            ((MainApplication)getApplication()).isFullScreenPlaying = true;
+
+            ((MainApplication)getApplication()).isMediaActivityFullScreenPlaying = true;
 
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayer.getLayoutParams();
             llp.topMargin = 0;
             llp.leftMargin = 0;
             mPlayer.setLayoutParams(llp);
         } else {
-            ((MainApplication)getApplication()).isFullScreenPlaying = false;
+
+            ((MainApplication)getApplication()).isMediaActivityFullScreenPlaying = false;
+
             LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) mPlayer.getLayoutParams();
             llp.topMargin = mOriginPlayerMarginTop;
             llp.leftMargin = mOriginPlayerMarginLeft;
@@ -280,6 +325,27 @@ public class MediaActivity extends Activity
         shared.putInt(CONFIG_PLAYMODE, checkedId);
     }
 
+    public static void covertList(Context context, List<PlayListBean> pList, List<MediaListPushBean> pushList) {
+        if (pList==null || pushList==null) {
+            return;
+        }
+
+        pList.clear();
+        for (int i = 0; i < pushList.size(); i++) {
+            MediaBean media =  new MediaBeanDao(context).queryById(pushList.get(i).getName());
+            if (media != null) {
+                if (media.getType() == MediaBean.MEDIA_PICTURE) {
+                    // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
+                    media.setDuration(pushList.get(i).getDuration()>=5000 ? pushList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
+                }
+
+                PlayListBean pListItem = new PlayListBean(media);
+                pListItem.setPlayScale(pushList.get(i).getScale());
+                pList.add(pListItem);
+            }
+        }
+    }
+
     private void LoadPlayModeFromConfig() {
         // 加载播放模式,如果没有配置,则默认为全部循环
         SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
@@ -288,7 +354,7 @@ public class MediaActivity extends Activity
         onCheckedChanged(null,playMode);
     }
 
-    private void loadListFromDatabase() {
+    private void loadMediaListFromDatabase() {
         // 初始化本地媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
@@ -307,10 +373,75 @@ public class MediaActivity extends Activity
         }
     }
 
+    private void loadMediaListFromCloud() {
+        // 初始化云端媒体列表
+        OkHttpClient mClient = new OkHttpClient();
+        if (HttpConstants.URL_GET_SHARE_LIST.contains("https")) {
+            try {
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        .build();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body = new FormBody.Builder()
+                .add("sn", DeviceInfoActivity.getSysSN())
+                .build();
+
+        Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
+        Call call = mClient.newCall(request);
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
+                    Log.d(TAG, "~~~~" + htmlBody);
+
+//                            try {
+//                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
+//                            } catch (IllegalStateException e) {
+//                                mLoginBean = null;
+//                                Log.e(TAG,"Gson parse error!");
+//                            }
+//
+//
+//                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+//                                if (mLoginBean.getResult() != null) {
+//                                    mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
+//                                }
+//                            }
+
+                } else {
+                    Log.e(TAG, "response http code undefine!");
+                }
+            }
+        });
+    }
+
     public void savePlaylistToConfig() {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(this, Contants.PERF_CONFIG);
+        savePlaylistToConfig(this,mPlayListBeans);
+    }
+
+    public static void savePlaylistToConfig(Context context, List<PlayListBean> pList) {
+        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
         Gson gson = new Gson();
-        String jsonStr = gson.toJson(mPlayListBeans);
+        String jsonStr = gson.toJson(pList);
         shared.putString(CONFIG_PLAYLIST, jsonStr);
     }
 
@@ -593,8 +724,6 @@ public class MediaActivity extends Activity
 
         mReplayModeRadioGroup.setOnCheckedChangeListener(this);
 
-        // 在设置播放列表之前load出playlist的数据
-        loadPlaylistFromConfig();
         initListView();
 
         mPlayer.setPlayList(mPlayListBeans);
@@ -672,12 +801,6 @@ public class MediaActivity extends Activity
                 mHandler.sendMessage(msg);
             }
         });
-
-        LoadPlayModeFromConfig();
-
-        loadListFromDatabase();
-
-        updateMultiActionButtonState();
     }
 
     @Override
@@ -686,23 +809,37 @@ public class MediaActivity extends Activity
         LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
+        // mqtt更改了配置,并将mediaActivity叫起来
+        loadPlaylistFromConfig();
+        LoadPlayModeFromConfig();
+        loadMediaListFromDatabase();
+        updateMultiActionButtonState();
+
+        loadMediaListFromCloud();
+
         // 监听usb插拔事件
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
         usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
         usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
         usbFilter.addDataScheme("file");
-        registerReceiver(usbReceiver, usbFilter);
+        registerReceiver(usbMountEventReceiver, usbFilter);
+
+        // 监听mqtt控制命令
+        IntentFilter mqttFilter = new IntentFilter();
+        mqttFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
+        registerReceiver(mqttEventReceiver, mqttFilter);
+
 
         mPlayer.setStartRightNow(true);
-
-        updateMultiActionButtonState();
 
         // 主动枚举一次usb设备,防止在此activity无法接受usbReceiver的时候有u盘设备插上
         discoverMountDevice();
 
         // 开线程去查询本地容量
         updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
+
+        ((MainApplication)getApplication()).isMediaActivityForeground = true;
     }
 
     @Override
@@ -710,8 +847,12 @@ public class MediaActivity extends Activity
         if (mPlayer != null) {
             mPlayer.mediaStop();
         }
-        unregisterReceiver(usbReceiver);
+        unregisterReceiver(usbMountEventReceiver);
+        unregisterReceiver(mqttEventReceiver);
+
         super.onPause();
+
+        ((MainApplication)getApplication()).isMediaActivityForeground = false;
     }
 
     @Override

@@ -32,8 +32,6 @@ public class MediaListResponseBean {
         this.duration = data.getDuration();
     }
 
-    // todo 反查数据库,建立新的列表
-
     public int getId() {
         return id;
     }

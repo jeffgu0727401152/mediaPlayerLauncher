@@ -188,7 +188,6 @@ public class SpeedTestActivity extends Activity implements OnClickListener
                             }
                             catch (InterruptedException e)
                             {
-                                // TODO Auto-generated catch block
                                 e.printStackTrace();
                             }
                             handler.sendEmptyMessage(SPEEDUPDATE);
@@ -208,7 +207,6 @@ public class SpeedTestActivity extends Activity implements OnClickListener
                     @Override
                     public void run()
                     {
-                        // TODO Auto-generated method stub
                         while (PROGRESSTHREADCANRUN)
                         {
                             try
@@ -217,7 +215,6 @@ public class SpeedTestActivity extends Activity implements OnClickListener
                             }
                             catch (InterruptedException e)
                             {
-                                // TODO Auto-generated catch block
                                 e.printStackTrace();
                             }
                             handler.sendEmptyMessage(PROGRESSCHANGE);
