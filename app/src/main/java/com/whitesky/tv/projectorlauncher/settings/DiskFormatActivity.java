@@ -20,7 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
-import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -129,9 +128,18 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
         isFormatPadding = false;
         mIvLogo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setVisibility(View.VISIBLE);
-        mTvFormatInfo.setText(R.string.str_format_description);
+        mTvFormatInfo.setText(R.string.str_format_description_default);
         mLvFormatPaddingView.setVisibility(View.INVISIBLE);
         mBtnFormat.setVisibility(View.VISIBLE);
+    }
+
+    private void showSataFormatDoneView() {
+        isFormatPadding = false;
+        mIvLogo.setVisibility(View.VISIBLE);
+        mTvFormatInfo.setVisibility(View.VISIBLE);
+        mTvFormatInfo.setText(R.string.str_format_description_done);
+        mLvFormatPaddingView.setVisibility(View.INVISIBLE);
+        mBtnFormat.setVisibility(View.INVISIBLE);
     }
 
     private void showSataNotFoundView() {
@@ -241,7 +249,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
                         activity.showFormatPadding();
                         break;
                     case MSG_FORMAT_DONE:
-                        activity.showDefaultView();
+                        activity.showSataFormatDoneView();
                         break;
                     case MSG_FORMAT_NONE:
                         activity.showSataNotFoundView();
