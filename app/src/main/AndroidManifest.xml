@@ -39,6 +39,7 @@
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTAActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTALocalActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.SpeedTestActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.DiskFormatActivity" />
         <activity
             android:name="com.whitesky.tv.projectorlauncher.settings.QuickenActivity"
             android:theme="@style/transcutestyle" />

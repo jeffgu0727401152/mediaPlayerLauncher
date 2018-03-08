@@ -412,14 +412,15 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            if (mPlayList != null
-                    && mPlayList.size() > 0
+            Log.i(TAG, "SurfaceHolder surfaceCreated");
+            if (mPlayList != null && mPlayList.size() > 0
                     && mStartRightNow==true) {
+                // 每次surface从隐藏到出现都是一次surfaceCreated,所以这里必须mStartRightNow来标志这次的surfaceCreated是由于MediaActivity onResume引起的
                 mediaPlay(0);
                 fullScreenSwitch(true);
                 mStartRightNow = false;
+                Log.i(TAG, "SurfaceHolder auto play media");
             }
-            Log.i(TAG, "SurfaceHolder create");
         }
 
         @Override
@@ -556,7 +557,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
     public void mediaPlay(int position)
     {
-        Log.d(TAG,"mediaPlay position = " + position);
+        Log.d(TAG,",mediaPlay position = " + position);
         String path="";
         int type = MEDIA_UNKNOWN;
         int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
@@ -740,6 +741,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         File file = new File(path);
         if (!file.exists()) {
             ToastUtil.showToast(mContext, R.string.str_media_play_path_error);
+            Log.e(TAG,"videoPlay file not exists!");
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
@@ -910,6 +912,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         File file = new File(path);
         if (!file.exists()) {
             ToastUtil.showToast(mContext, R.string.str_media_play_path_error);
+            Log.e(TAG,"picturePlay file not exists!");
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {

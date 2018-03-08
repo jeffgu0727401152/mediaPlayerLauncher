@@ -39,6 +39,14 @@
     <string name="setup_net_pass_info">选择跳过可直接跳转到主页面，但设备不被激活，是否跳过？</string>
     <string name="setup_net_pass">跳过</string>
 
+    <!--系统设置之磁盘格式化页-->
+    <string name="str_format_description">格式化设备SATA口上的硬盘</string>
+    <string name="str_format_btn">点击格式化</string>
+    <string name="str_format_warning">格式化硬盘将失去硬盘数据,您确认需要格式化吗?</string>
+    <string name="str_format_search_sata_disk">寻找SATA硬盘中...</string>
+    <string name="str_format_not_found_sata">找不到SATA硬盘,请确认SATA硬盘的存在(SATA硬盘不能带电插拔)!</string>
+    <string name="str_format_padding">格式化进行中，请耐心等待，勿操作硬盘或断开电源！！！</string>
+
     <!--系统设置之系统升级页-->
     <string name="str_update_found">有可升级的升级包</string>
     <string name="str_update_btn">点击升级</string>

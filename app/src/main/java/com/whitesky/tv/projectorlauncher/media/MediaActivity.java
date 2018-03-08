@@ -83,6 +83,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
@@ -210,10 +211,6 @@ public class MediaActivity extends Activity
                 savePlaylistToConfig();
                 mPlayer.mediaPlay(0);
 
-                for (PlayListBean tmp:mPlayListAdapter.getListDatas()) {
-                    Log.e(TAG,"~!~"+tmp.getMediaData().toString() + "!" + tmp.getPlayScale());
-                }
-
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_playlist_toast));
             }
         }
@@ -305,6 +302,7 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayError() {
         //todo error handler,在播放列表里标记出来
+        Log.e(TAG,"~~debug~~ onMediaPlayError");
         //mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
     }
     // 媒体播放的回调函数=============结束
@@ -629,7 +627,7 @@ public class MediaActivity extends Activity
 
             @Override
             public void onScaleChange(int position, int scaleType) {
-                if (mPlayer.getPlayState()!= PictureVideoPlayer.MediaPlayState.MEDIA_IDLE
+                if (mPlayer.getPlayState()!= MEDIA_IDLE
                         && mPlayer.getPlayState()!= PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_COMPLETE
                         && !mPlayer.isPreview()) {
                     if (mPlayer.getCurPlaylistBean().equals(mPlayListAdapter.getItem(position))) {
@@ -812,6 +810,9 @@ public class MediaActivity extends Activity
         // mqtt更改了配置,并将mediaActivity叫起来
         loadPlaylistFromConfig();
         LoadPlayModeFromConfig();
+
+        Log.i(TAG, "~~debug~~,onResume create");
+
         loadMediaListFromDatabase();
         updateMultiActionButtonState();
 
@@ -1013,7 +1014,17 @@ public class MediaActivity extends Activity
             switch (msg.what) {
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
-                    discoverMountDevice();
+
+                    if (Arrays.asList(mMountExceptList).contains(storagePath)) {
+                        //可能是开机,等待这里的设备挂载以后再去播放
+                        Log.i(TAG, "mount device in ExceptList, power on complete, start play media");
+                        if (mPlayer.getPlayState()==MEDIA_IDLE) {
+                            mPlayer.fullScreenSwitch(true);
+                            mPlayer.mediaPlay(0);
+                        }
+                    } else {
+                        discoverMountDevice();
+                    }
                     break;
 
                 case MSG_USB_PLUG_OUT:
@@ -1093,6 +1104,7 @@ public class MediaActivity extends Activity
                     mMediaListRefreshBtn.setEnabled(false);
                     mAllMediaListAdapter.clear();
                     mAllMediaListAdapter.refresh();
+                    new MediaBeanDao(MediaActivity.this).deleteAll();
                     break;
 
                 case MSG_USB_COPY_TO_INTERNAL:

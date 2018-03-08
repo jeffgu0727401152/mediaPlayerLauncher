@@ -75,11 +75,11 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ota_local);
-        mBtUpdate = (Button)findViewById(R.id.bt_ota_local_update);
+        mBtUpdate = (Button)findViewById(R.id.bt_local_update);
         mBtUpdate.setVisibility(View.INVISIBLE);
-        mTvUpdateInfo = (TextView)findViewById(R.id.tv_ota_local_update_info);
-        mLvLoadingView = (Kawaii_LoadingView)findViewById(R.id.lv_ota_local_loading);
-        mIvLogo = (ImageView)findViewById(R.id.iv_ota_local_logo);
+        mTvUpdateInfo = (TextView)findViewById(R.id.tv_ota_update_info);
+        mLvLoadingView = (Kawaii_LoadingView)findViewById(R.id.lv_ota_update_padding);
+        mIvLogo = (ImageView)findViewById(R.id.iv_ota_local_logo_big);
         mBtUpdate.setOnClickListener(this);
     }
 
@@ -172,7 +172,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     {
         switch (view.getId())
         {
-            case R.id.bt_ota_local_update:
+            case R.id.bt_format_disk:
                 File file = new File(updateApkPath);
                 if (file.exists() && !file.isDirectory()) {
                     installApk(file);
