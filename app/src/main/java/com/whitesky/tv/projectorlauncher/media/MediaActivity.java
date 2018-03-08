@@ -198,8 +198,8 @@ public class MediaActivity extends Activity
 
                 ArrayList<MediaListPushBean> pushList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
 
-                if (pushList==null || pushList.size()==0) {
-                    Log.e(TAG,"mqtt receive a empty playlist!");
+                if (pushList==null) {
+                    Log.e(TAG,"mqtt receive a error format pushlist!");
                     return;
                 }
 
@@ -209,7 +209,11 @@ public class MediaActivity extends Activity
 
                 mPlayListAdapter.refresh();
                 savePlaylistToConfig();
-                mPlayer.mediaPlay(0);
+
+                if (mPlayListBeans.size()>0) {
+                    mPlayer.fullScreenSwitch(true);
+                    mPlayer.mediaPlay(0);
+                }
 
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_playlist_toast));
             }
@@ -1238,7 +1242,7 @@ public class MediaActivity extends Activity
                                 Message msg = mHandler.obtainMessage();
                                 msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                                 Bundle b = new Bundle();
-                                b.putString(BUNDLE_KEY_MEDIA_NAME, FileUtil.getFilePrefix(path));
+                                b.putString(BUNDLE_KEY_MEDIA_NAME, FileUtil.getFileName(path));
                                 b.putInt(BUNDLE_KEY_MEDIA_TYPE, MediaScanUtil.getMediaTypeFromPath(path));
                                 b.putInt(BUNDLE_KEY_MEDIA_DURATION, mLocalMediaScanner.getMediaDuration(path));
                                 b.putString(BUNDLE_KEY_MEDIA_PATH, path);
@@ -1304,7 +1308,7 @@ public class MediaActivity extends Activity
             long time = System.currentTimeMillis();
             param = params[0];
             try {
-                long total = 0;
+                long totalNow = 0;
 
                 Log.i(TAG, "Copy file(s) total length: " + param.totalSize);
 
@@ -1327,12 +1331,9 @@ public class MediaActivity extends Activity
                     int count;
                     while ((count = input.read(bytes)) != -1) {
                         out.write(bytes, 0, count);
-                        total += count;
-                        int progress = (int) total;
-                        if (param.totalSize > Integer.MAX_VALUE) {
-                            progress = (int) (total / 1024);
-                        }
-                        publishProgress(progress);
+                        totalNow += count;
+                        float progress = (float)totalNow/(float)param.totalSize*100;
+                        publishProgress((int)progress);
                     }
 
                     // 不在此处查询文件的播放时间与文件大小，因为额外的emmc访问会影响到拷贝操作的速度，这边假如队列
@@ -1380,12 +1381,6 @@ public class MediaActivity extends Activity
 
         @Override
         protected void onProgressUpdate(Integer... values) {
-            int max = (int) param.totalSize;
-            if (param.totalSize > Integer.MAX_VALUE) {
-                max = (int) (param.totalSize) / 1024;
-            }
-
-            dialog.setMax(max);
             dialog.setProgress(values[0]);
         }
     }

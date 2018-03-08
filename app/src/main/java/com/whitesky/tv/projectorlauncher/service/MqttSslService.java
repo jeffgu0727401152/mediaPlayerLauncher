@@ -232,7 +232,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 }
 
                 Request request = new Request.Builder()
-                        .url(HttpConstants.URL_HEARTBEAT + "?sn=" +DeviceInfoActivity.getSysSN())
+                        .url(HttpConstants.URL_HEARTBEAT + "?sn=" + SN )
                         .get()
                         .build();
 
@@ -261,8 +261,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
 
                                 Log.d(TAG, "heartBeat success");
-
-                                Log.d(TAG,"~~debug~~service heartBeat success!");
 
                             } else {
 
@@ -299,7 +297,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         .add("project", PROJECT_NAME)
                         .add("appVer", DeviceInfoActivity.getVersionName(getApplicationContext()))
                         .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
-                        .add("sn", DeviceInfoActivity.getSysSN())
+                        .add("sn", SN)
                         .build();
         Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
         Call call = mClient.newCall(request);
@@ -515,9 +513,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                         pList = new ArrayList<>();
                         MediaActivity.covertList(getApplicationContext(), pList, pushList);
-
+                        MediaActivity.savePlaylistToConfig(getApplication(), pList);
                         if (!pList.isEmpty()) {
-                            MediaActivity.savePlaylistToConfig(getApplication(), pList);
+                            // 立刻开始播放
                             startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                         }
                     }

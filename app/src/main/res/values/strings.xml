@@ -79,7 +79,7 @@
     <string name="str_media_play_path_error">媒体文件路径错误</string>
     <string name="str_media_play_list_empty">请先添加文件到播放列表</string>
 
-    <string name="str_media_mqtt_push_playlist_toast">播放列表远程更新</string>
+    <string name="str_media_mqtt_push_playlist_toast">播放列表被远程更新</string>
     <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>
     <string name="str_media_usb_device_plug_out_toast">usb设备拔出:</string>
     <string name="str_media_wait_capacity">--G/--G</string>
