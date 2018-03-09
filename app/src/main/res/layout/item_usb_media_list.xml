@@ -35,13 +35,13 @@
 
     <TextView
         android:id="@+id/tv_media_title"
-        android:layout_width="@dimen/x200"
+        android:layout_width="@dimen/x290"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="15sp"
         android:singleLine="true"
         android:ellipsize="middle"/>
 
@@ -49,17 +49,17 @@
         android:id="@+id/tv_media_size"
         android:layout_width="@dimen/x100"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x10"
+        android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x160"
+        android:layout_width="@dimen/x140"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x130"
+        android:layout_marginLeft="@dimen/x50"
         android:layout_gravity="left|center_vertical"
         android:textAlignment="inherit"
         android:textColor="@color/white"

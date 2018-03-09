@@ -148,7 +148,7 @@
                     android:id="@+id/tv_media_play_list_file_name"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x70"
+                    android:layout_marginLeft="@dimen/x100"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -159,7 +159,7 @@
                     android:id="@+id/tv_media_play_list_file_duration"
                     android:layout_width="@dimen/x100"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x100"
+                    android:layout_marginLeft="@dimen/x80"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -181,7 +181,7 @@
                     android:id="@+id/tv_media_play_list_file_state"
                     android:layout_width="@dimen/x140"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_marginLeft="@dimen/x30"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -267,28 +267,39 @@
                     android:layout_centerVertical="true"
                     android:layout_gravity="center"/>
                 <Button
-                    android:id="@+id/bt_media_all_list_refresh"
+                    android:id="@+id/bt_media_local_list_refresh"
                     android:layout_width="@dimen/x30"
                     android:layout_height="@dimen/x28"
                     android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="center_vertical"
                     android:background="@drawable/selector_media_refresh_btn"/>
+
                 <TextView
                     android:id="@+id/tv_media_all_list_name"
                     android:layout_width="@dimen/x100"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x10"
+                    android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="left|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:text="@string/str_media_list_cloud"/>
+                    android:text="@string/str_media_list_all"/>
+
+                <Button
+                    android:id="@+id/bt_media_cloud_list_refresh"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x28"
+                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/selector_media_refresh_btn"
+                    android:visibility="invisible"/>
+
                 <TextView
                     android:id="@+id/tv_media_all_list_capacity"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x430"
+                    android:layout_marginLeft="@dimen/x370"
                     android:layout_gravity="right|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
@@ -381,7 +392,7 @@
 
                 <TextView
                     android:id="@+id/tv_media_usb_list_name"
-                    android:layout_width="@dimen/x200"
+                    android:layout_width="@dimen/x170"
                     android:layout_height="wrap_content"
                     android:layout_gravity="left|center_vertical"
                     android:layout_marginLeft="@dimen/x20"
@@ -400,10 +411,10 @@
 
                 <TextView
                     android:id="@+id/tv_media_usb_list_capacity"
-                    android:layout_width="@dimen/x200"
+                    android:layout_width="@dimen/x180"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
-                    android:layout_marginLeft="@dimen/x180"
+                    android:layout_marginLeft="@dimen/x220"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"
                     android:textSize="16sp"

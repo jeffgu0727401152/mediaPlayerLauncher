@@ -172,7 +172,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     {
         switch (view.getId())
         {
-            case R.id.bt_format_disk:
+            case R.id.bt_local_update:
                 File file = new File(updateApkPath);
                 if (file.exists() && !file.isDirectory()) {
                     installApk(file);

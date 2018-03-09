@@ -71,7 +71,7 @@
     <string name="str_media_file_duration">时长</string>
     <string name="str_media_display_scale">比例</string>
     <string name="str_media_file_state">状态</string>
-    <string name="str_media_list_cloud">云分区</string>
+    <string name="str_media_list_all">媒体库</string>
     <string name="str_media_list_usb">移动盘</string>
 
     <string name="str_media_play_pause">暂停播放</string>

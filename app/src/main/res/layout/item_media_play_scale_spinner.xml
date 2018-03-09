@@ -7,8 +7,8 @@
         android:id="@+id/tv_media_play_scale_idx"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x4"
-        android:textAlignment="inherit"
+        android:layout_marginLeft="@dimen/x10"
+        android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="16sp" />/>
+        android:textSize="14sp" />
 </LinearLayout>

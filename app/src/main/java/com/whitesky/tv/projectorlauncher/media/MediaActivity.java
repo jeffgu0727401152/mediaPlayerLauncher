@@ -39,6 +39,7 @@ import com.whitesky.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.UsbMediaListAdapter;
 import com.whitesky.tv.projectorlauncher.media.bean.AllMediaListBean;
+import com.whitesky.tv.projectorlauncher.media.bean.CloudListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
@@ -83,6 +84,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
@@ -139,13 +141,14 @@ public class MediaActivity extends Activity
 
     private PictureVideoPlayer mPlayer;
 
-    private Button mMediaMultiCopyToLeftBtn;
-    private Button mMediaMultiDeleteBtn;
-    private Button mMediaMultiAddToPlayListBtn;
-    private Button mMediaMultiDownloadBtn;
-    private Button mMediaMultiCopyToRightBtn;
+    private Button mMultiCopyToLocalBtn;
+    private Button mMultiDeleteLocalBtn;
+    private Button mMultiAddToPlayListBtn;
+    private Button mMultiDownloadBtn;
+    private Button mMultiCopyToUsbBtn;
 
-    private Button mMediaListRefreshBtn;
+    private Button mLocalMediaListRefreshBtn;
+    private Button mCloudMediaListRefreshBtn;
 
     private TextView mMediaInfoNameTextView;
     private TextView mMediaInfoTypeTextView;
@@ -415,19 +418,18 @@ public class MediaActivity extends Activity
 
                     Log.d(TAG, "~~~~" + htmlBody);
 
-//                            try {
-//                                mLoginBean = new Gson().fromJson(htmlBody, LoginBean.class);
-//                            } catch (IllegalStateException e) {
-//                                mLoginBean = null;
-//                                Log.e(TAG,"Gson parse error!");
-//                            }
-//
-//
-//                            if (mLoginBean!=null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-//                                if (mLoginBean.getResult() != null) {
-//                                    mHandler.sendEmptyMessage(MSG_UPDATE_ACCOUNT_INFO);
-//                                }
-//                            }
+                    CloudListBean cloudList;
+                    try {
+                        cloudList = new Gson().fromJson(htmlBody, CloudListBean.class);
+                    } catch (IllegalStateException e) {
+                        cloudList = null;
+                        Log.e(TAG, "Gson parse error!");
+                    }
+
+                    if (cloudList != null && cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                        Log.e(TAG,"result size:"+cloudList.getResult().size());
+                        // todo insert to table
+                    }
 
                 } else {
                     Log.e(TAG, "response http code undefine!");
@@ -480,13 +482,14 @@ public class MediaActivity extends Activity
 
         mPlayer = (com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer) findViewById(R.id.pictureVideoPlayer_playArea);
 
-        mMediaMultiCopyToLeftBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_left);
-        mMediaMultiDeleteBtn = (Button) findViewById(R.id.bt_media_multi_delete);
-        mMediaMultiAddToPlayListBtn = (Button) findViewById(R.id.bt_media_multi_add);
-        mMediaMultiDownloadBtn = (Button) findViewById(R.id.bt_media_multi_download);
-        mMediaMultiCopyToRightBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_right);
+        mMultiCopyToLocalBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_left);
+        mMultiDeleteLocalBtn = (Button) findViewById(R.id.bt_media_multi_delete);
+        mMultiAddToPlayListBtn = (Button) findViewById(R.id.bt_media_multi_add);
+        mMultiDownloadBtn = (Button) findViewById(R.id.bt_media_multi_download);
+        mMultiCopyToUsbBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_right);
 
-        mMediaListRefreshBtn = (Button) findViewById(R.id.bt_media_all_list_refresh);
+        mLocalMediaListRefreshBtn = (Button) findViewById(R.id.bt_media_local_list_refresh);
+        mCloudMediaListRefreshBtn = (Button) findViewById(R.id.bt_media_cloud_list_refresh);
 
         mMediaInfoNameTextView = (TextView) findViewById(R.id.tv_media_play_info_name);
         mMediaInfoTypeTextView = (TextView) findViewById(R.id.tv_media_play_info_type);
@@ -716,13 +719,14 @@ public class MediaActivity extends Activity
         mAllMediaListCheckBox.setOnClickListener(this);
         mUsbMediaListCheckBox.setOnClickListener(this);
 
-        mMediaMultiCopyToLeftBtn.setOnClickListener(this);
-        mMediaMultiDeleteBtn.setOnClickListener(this);
-        mMediaMultiAddToPlayListBtn.setOnClickListener(this);
-        mMediaMultiDownloadBtn.setOnClickListener(this);
-        mMediaMultiCopyToRightBtn.setOnClickListener(this);
+        mMultiCopyToLocalBtn.setOnClickListener(this);
+        mMultiDeleteLocalBtn.setOnClickListener(this);
+        mMultiAddToPlayListBtn.setOnClickListener(this);
+        mMultiDownloadBtn.setOnClickListener(this);
+        mMultiCopyToUsbBtn.setOnClickListener(this);
 
-        mMediaListRefreshBtn.setOnClickListener(this);
+        mLocalMediaListRefreshBtn.setOnClickListener(this);
+        mCloudMediaListRefreshBtn.setOnClickListener(this);
 
         mReplayModeRadioGroup.setOnCheckedChangeListener(this);
 
@@ -820,8 +824,6 @@ public class MediaActivity extends Activity
         loadMediaListFromDatabase();
         updateMultiActionButtonState();
 
-        loadMediaListFromCloud();
-
         // 监听usb插拔事件
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
@@ -911,8 +913,12 @@ public class MediaActivity extends Activity
     public void onClick(View view) {
         switch (view.getId()) {
 
-            case R.id.bt_media_all_list_refresh:
+            case R.id.bt_media_local_list_refresh:
                 mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
+                break;
+
+            case R.id.bt_media_cloud_list_refresh:
+                loadMediaListFromCloud();
                 break;
 
             case R.id.cb_media_all_list_check:
@@ -927,7 +933,7 @@ public class MediaActivity extends Activity
                 for (UsbMediaListBean data : mUsbMediaListBeans) {
                     data.setSelected(mUsbMediaListCheckBox.isChecked());
                 }
-                mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
+                mMultiCopyToLocalBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
                 mUsbMediaListAdapter.refresh();
                 break;
 
@@ -981,7 +987,6 @@ public class MediaActivity extends Activity
                 }
 
                 if (!mUsbMediaCopyDeque.isEmpty()) {
-                    // 目前不存在点击单个item复制到u盘的情况,所以内部复制到U盘就不使用handler message了
                     copyInternalFileToUsb();
                 }
                 break;
@@ -996,18 +1001,18 @@ public class MediaActivity extends Activity
         if (mAllMediaListAdapter.hasItemSelected()) {
             // 额外需要检查是否存在usb设备
             if (mUsbPartitionSpinner.getSelectedItemPosition()!=AdapterView.INVALID_POSITION) {
-                mMediaMultiCopyToRightBtn.setEnabled(true);
+                mMultiCopyToUsbBtn.setEnabled(true);
             } else {
-                mMediaMultiCopyToRightBtn.setEnabled(false);
+                mMultiCopyToUsbBtn.setEnabled(false);
             }
-            mMediaMultiAddToPlayListBtn.setEnabled(true);
-            mMediaMultiDeleteBtn.setEnabled(true);
-            mMediaMultiDownloadBtn.setEnabled(true);
+            mMultiAddToPlayListBtn.setEnabled(true);
+            mMultiDeleteLocalBtn.setEnabled(true);
+            mMultiDownloadBtn.setEnabled(true);
         } else {
-            mMediaMultiCopyToRightBtn.setEnabled(false);
-            mMediaMultiAddToPlayListBtn.setEnabled(false);
-            mMediaMultiDeleteBtn.setEnabled(false);
-            mMediaMultiDownloadBtn.setEnabled(false);
+            mMultiCopyToUsbBtn.setEnabled(false);
+            mMultiAddToPlayListBtn.setEnabled(false);
+            mMultiDeleteLocalBtn.setEnabled(false);
+            mMultiDownloadBtn.setEnabled(false);
         }
     }
 
@@ -1105,7 +1110,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_LOCAL_MEDIA_LIST_CLEAN:
-                    mMediaListRefreshBtn.setEnabled(false);
+                    mLocalMediaListRefreshBtn.setEnabled(false);
                     mAllMediaListAdapter.clear();
                     mAllMediaListAdapter.refresh();
                     new MediaBeanDao(MediaActivity.this).deleteAll();
@@ -1119,9 +1124,9 @@ public class MediaActivity extends Activity
 
                 case MSG_USB_LIST_SELECTED_CHANGE:
                     if (msg.arg1==1) {
-                        mMediaMultiCopyToLeftBtn.setEnabled(true);
+                        mMultiCopyToLocalBtn.setEnabled(true);
                     } else {
-                        mMediaMultiCopyToLeftBtn.setEnabled(false);
+                        mMultiCopyToLocalBtn.setEnabled(false);
                     }
                     break;
 
@@ -1147,7 +1152,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_LOCAL_MEDIA_DATABASE_UI_SYNC:
-                    mMediaListRefreshBtn.setEnabled(true);
+                    mLocalMediaListRefreshBtn.setEnabled(true);
                     mAllMediaListAdapter.clear();
                     for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
                     {
@@ -1159,7 +1164,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
-                    mMediaMultiCopyToLeftBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
+                    mMultiCopyToLocalBtn.setEnabled(mUsbMediaListAdapter.hasItemSelected());
                     break;
 
                 case MSG_MEDIA_PLAY_COMPLETE:
