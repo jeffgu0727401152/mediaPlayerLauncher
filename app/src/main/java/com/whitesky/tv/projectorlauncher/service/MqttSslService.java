@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Parcelable;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -28,6 +27,7 @@ import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.utils.CovertUtil;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -56,6 +56,10 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
 import static java.lang.Thread.sleep;
 
 /**
@@ -82,6 +86,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";// 当前的播放列表
 
     private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";// 当前的播放列表
+    private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";// 当前的播放模式
 
 
     private final static int MSG_NONE = 0;
@@ -97,6 +102,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_REQUEST_SHARELIST = 303;
 
     private final static int MSG_PUSH_PLAYLIST = 400;
+    private final static int MSG_PUSH_PLAYMODE = 401;
 
     private final String TAG = this.getClass().getSimpleName();
     private final String keyStorePassword = "wxgh#2561";
@@ -387,6 +393,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYLIST)) {
                 message.what = MSG_PUSH_PLAYLIST;
+            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYMODE)) {
+                message.what = MSG_PUSH_PLAYMODE;
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -486,7 +494,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_REQUEST_LOCALLIST:
                     responseDataList.clear();
-                    for (MediaBean m:new MediaBeanDao(getApplicationContext()).selectAll())
+                    for (MediaBean m:new MediaBeanDao(getApplicationContext()).selectItemsLocalImport())
                     {
                         responseDataList.add(new MediaListResponseBean(m));
                     }
@@ -512,7 +520,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     } else {
 
                         pList = new ArrayList<>();
-                        MediaActivity.covertList(getApplicationContext(), pList, pushList);
+                        CovertUtil.covertPlayList(getApplicationContext(), pList, pushList);
                         MediaActivity.savePlaylistToConfig(getApplication(), pList);
                         if (!pList.isEmpty()) {
                             // 立刻开始播放
@@ -520,6 +528,33 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         }
                     }
 
+                    break;
+
+                case MSG_PUSH_PLAYMODE:
+                    // todo 是否开窗的控制
+                    PlayModePushBean playMode = gson.fromJson(rawStr.substring(100),PlayModePushBean.class);
+
+                    if (((MainApplication)getApplication()).isMediaActivityForeground) {
+
+                        Intent intent=new Intent(Contants.ACTION_PUSH_PLAYMODE);
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelable(Contants.EXTRA_PUSH_CONTEXT, playMode);
+                        intent.putExtras(bundle);
+                        sendBroadcast(intent);
+
+                    } else {
+
+                        if (playMode.getPlayMode()==MEDIA_REPLAY_SHUFFLE
+                                || playMode.getPlayMode()==MEDIA_REPLAY_ONE
+                                || playMode.getPlayMode()==MEDIA_REPLAY_ALL) {
+
+                            saveReplayModeToConfig(getApplicationContext(),playMode.getPlayMode());
+                            startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+                        } else {
+                            Log.e(TAG, "unknown replay mode (" + playMode.getPlayMode() + ")");
+                        }
+                    }
                     break;
 
                 default:

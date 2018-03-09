@@ -19,6 +19,7 @@ public class MediaBean {
     public static final String COLUMNNAME_DURATION = "duration";
     public static final String COLUMNNAME_SIZE = "size";
     public static final String COLUMNNAME_ISDOWNLOAD = "isDownload";
+    public static final String COLUMNNAME_URL = "url";
 
     public static final int ID_LOCAL = 0;
 
@@ -72,6 +73,10 @@ public class MediaBean {
     @DatabaseField(columnName = COLUMNNAME_ISDOWNLOAD, useGetSet = true, canBeNull = true, unique = false)
     private boolean isDownload;
 
+    //云端文件的下载位置
+    @DatabaseField(columnName = COLUMNNAME_URL, useGetSet = true, canBeNull = true, unique = false)
+    private String url;
+
     public MediaBean() {
         title = "";
         source = SOURCE_UNKNOWN;
@@ -80,6 +85,7 @@ public class MediaBean {
         duration = 0;
         size = 0L;
         isDownload = false;
+        url = "";
     }
 
     public MediaBean(String name, int id, int type, int source, String path, int duration, long size, boolean isDownload) {
@@ -91,6 +97,7 @@ public class MediaBean {
         this.duration = duration;
         this.size = size;
         this.isDownload = isDownload;
+        this.url = "";
     }
 
     public int getId() {
@@ -173,6 +180,14 @@ public class MediaBean {
         isDownload = download;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     @Override
     public String toString() {
         return "MediaBean{" +
@@ -184,6 +199,7 @@ public class MediaBean {
                 ", source=" + source +
                 ", duration=" + duration +
                 ", isDownload=" + isDownload +
+                ", url=" + url +
                 '}';
     }
 }

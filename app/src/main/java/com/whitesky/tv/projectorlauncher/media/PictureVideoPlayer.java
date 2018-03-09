@@ -53,8 +53,8 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPl
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_COMPLETE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_CENTER;
 import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_XY;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
@@ -67,6 +67,12 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 
 public class PictureVideoPlayer extends FrameLayout implements View.OnClickListener{
     private final String TAG = this.getClass().getSimpleName();
+
+    //重放模式
+    public static final int  MEDIA_REPLAY_ONE = 0;
+    public static final int  MEDIA_REPLAY_ALL = 1;
+    public static final int  MEDIA_REPLAY_SHUFFLE = 2;
+    public static final int  MEDIA_REPLAY_MODE_DEFAULT = MEDIA_REPLAY_ALL;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
@@ -147,21 +153,15 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     private boolean mIsPreview = false;
 
     //重放模式
-    public enum MediaReplayMode
-    {
-        MEDIA_REPLAY_ALL,
-        MEDIA_REPLAY_ONE,
-        MEDIA_REPLAY_SHUFFLE,
-    };
 
-    public MediaReplayMode getReplayMode() {
+    public int getReplayMode() {
         return mReplayMode;
     }
 
-    public void setReplayMode(MediaReplayMode mode) {
+    public void setReplayMode(int mode) {
         this.mReplayMode = mode;
     }
-    private MediaReplayMode mReplayMode = MEDIA_REPLAY_ALL;
+    private int mReplayMode = MEDIA_REPLAY_ALL;
 
     //播放完成回调
     public interface OnMediaEventListener
@@ -639,7 +639,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
     public void mediaReplay()
     {
-        if (!mReplayMode.equals(MEDIA_REPLAY_ONE)) {
+        if (mReplayMode!=MEDIA_REPLAY_ONE) {
             updatePlayPosition(true);
         }
         mediaStop();

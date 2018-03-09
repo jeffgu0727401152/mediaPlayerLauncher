@@ -292,8 +292,7 @@
                     android:layout_height="@dimen/x28"
                     android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="center_vertical"
-                    android:background="@drawable/selector_media_refresh_btn"
-                    android:visibility="invisible"/>
+                    android:background="@drawable/selector_media_refresh_btn" />
 
                 <TextView
                     android:id="@+id/tv_media_all_list_capacity"

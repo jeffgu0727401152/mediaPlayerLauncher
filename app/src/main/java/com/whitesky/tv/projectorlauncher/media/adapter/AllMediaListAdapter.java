@@ -104,8 +104,11 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         // 决定功能按钮使能与否
         if (item.getMediaData().getSource()!=SOURCE_LOCAL && !item.getMediaData().isDownload()) {
             holder.getButton(R.id.bt_media_download).setEnabled(true);
+            holder.getButton(R.id.bt_media_preview).setEnabled(false);
         } else {
             holder.getButton(R.id.bt_media_download).setEnabled(false);
+            holder.getButton(R.id.bt_media_preview).setEnabled(true);
+            // todo 这个按钮没有disable态,记得要图
         }
 
         holder.getButton(R.id.bt_media_delete).setOnClickListener(new View.OnClickListener() {

@@ -79,11 +79,15 @@
     <string name="str_media_play_path_error">媒体文件路径错误</string>
     <string name="str_media_play_list_empty">请先添加文件到播放列表</string>
 
+    <string name="str_media_mqtt_push_Playmode_toast">播放模式被远程更新</string>
     <string name="str_media_mqtt_push_playlist_toast">播放列表被远程更新</string>
     <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>
     <string name="str_media_usb_device_plug_out_toast">usb设备拔出:</string>
     <string name="str_media_wait_capacity">--G/--G</string>
 
+
+    <string name="str_media_cloud_file_need_download_toast">云端文件需下载后才能加入播放列表</string>
+    <string name="str_media_cloud_file_could_not_export_toast">云端文件无法导出到U盘</string>
     <string name="str_media_file_copy_toast">拷贝文件:</string>
     <string name="str_media_file_delete_toast">删除文件:</string>
     <string name="str_media_file_copy_process_dialog_title">拷贝文件</string>

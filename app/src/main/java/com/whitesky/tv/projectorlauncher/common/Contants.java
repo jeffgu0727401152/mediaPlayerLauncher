@@ -9,12 +9,13 @@ public class Contants
 {
     public static final String PROJECT_NAME = "PS500";
 
-    public static final String ACTION_PUSH_PLAYLIST = "com.whitesky.tv.push.playlist";
-    public static final String EXTRA_PUSH_CONTEXT = "playlist";
+    public static final String ACTION_PUSH_PLAYLIST = "com.whitesky.tv.push.playList";
+    public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
+    public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
     public static final String PERF_CONFIG = "PERF_CONFIG";// 存放用户信息
     public static final String CONFIG_PLAYLIST = "playList";
-    public static final String CONFIG_PLAYMODE = "playMode";
+    public static final String CONFIG_REPLAY_MODE = "replayMode";
 
     public static final String IS_ACTIVATE = "false"; // 设备是否被激活
     public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过

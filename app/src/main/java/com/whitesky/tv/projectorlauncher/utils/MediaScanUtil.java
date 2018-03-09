@@ -54,17 +54,17 @@ public class MediaScanUtil {
         }
     }
 
-    public void safeScanning(String path) {
+    public int safeScanning(String path) {
         final File folder = new File(path);
 
         if (!folder.exists() || !folder.isDirectory()) {
             Log.e(TAG,"path not exist!");
-            return;
+            return -2;
         }
 
         if (isRunning) {
             Log.d(TAG,"already running a scan task!");
-            return;
+            return -1;
         }
 
         mBackgroundService.execute(new Thread(new Runnable() {
@@ -78,6 +78,8 @@ public class MediaScanUtil {
                 isRunning = false;
             }
         }));
+
+        return 0;
     }
 
     /**

@@ -45,6 +45,8 @@ import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.service.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.utils.CovertUtil;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -78,7 +80,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
-import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYMODE;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
@@ -86,7 +88,6 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAU
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -106,11 +107,11 @@ public class MediaActivity extends Activity
     private final int MSG_USB_PARTITION_SWITCH = 2;
 
     private final int MSG_LOCAL_MEDIA_DATABASE_UPDATE = 10;
-    private final int MSG_LOCAL_MEDIA_LIST_CLEAN = 11;
+    private final int MSG_MEDIA_LIST_CLEAN_LOCAL = 11;
     private final int MSG_USB_MEDIA_LIST_UPDATE = 12;
     private final int MSG_USB_MEDIA_LIST_CLEAN = 13;
 
-    private final int MSG_LOCAL_MEDIA_DATABASE_UI_SYNC = 20;
+    private final int MSG_MEDIA_DATABASE_UI_SYNC = 20;
     private final int MSG_USB_MEDIA_SCAN_DONE = 21;
 
     private final int MSG_USB_COPY_TO_INTERNAL = 40;
@@ -208,7 +209,7 @@ public class MediaActivity extends Activity
 
                 mPlayer.mediaStop();
 
-                covertList(getApplicationContext(),mPlayListBeans,pushList);
+                CovertUtil.covertPlayList(getApplicationContext(),mPlayListBeans,pushList);
 
                 mPlayListAdapter.refresh();
                 savePlaylistToConfig();
@@ -219,6 +220,18 @@ public class MediaActivity extends Activity
                 }
 
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_playlist_toast));
+            } else if (action.equals(Contants.ACTION_PUSH_PLAYMODE)) {
+                PlayModePushBean pushReq = intent.getParcelableExtra(Contants.EXTRA_PUSH_CONTEXT);
+
+                if (pushReq==null) {
+                    Log.e(TAG,"mqtt receive a error format push play mode!");
+                    return;
+                }
+
+                saveReplayModeToConfig(getApplicationContext(),pushReq.getPlayMode());
+                loadReplayModeFromConfig();
+
+                ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_Playmode_toast));
             }
         }
     };
@@ -314,56 +327,66 @@ public class MediaActivity extends Activity
     }
     // 媒体播放的回调函数=============结束
 
+
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
-        if (checkedId == mReplayAllRadioButton.getId()) {
-            if (mPlayer != null)
-                mPlayer.setReplayMode(PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ALL);
-        } else if (checkedId == mReplayOneRadioButton.getId()) {
-            if (mPlayer != null)
-                mPlayer.setReplayMode(PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_ONE);
+        int replayMode = PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT;
+
+        if (checkedId == mReplayOneRadioButton.getId()) {
+            replayMode = PictureVideoPlayer.MEDIA_REPLAY_ONE;
+        } else if (checkedId == mReplayAllRadioButton.getId()) {
+            replayMode = PictureVideoPlayer.MEDIA_REPLAY_ALL;
         } else if (checkedId == mReplayShuffleRadioButton.getId()) {
-            if (mPlayer != null)
-                mPlayer.setReplayMode(PictureVideoPlayer.MediaReplayMode.MEDIA_REPLAY_SHUFFLE);
+            replayMode = PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
         }
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
-        shared.putInt(CONFIG_PLAYMODE, checkedId);
+
+        if (mPlayer != null) {
+            mPlayer.setReplayMode(replayMode);
+        }
+
+        saveReplayModeToConfig(getApplicationContext(),replayMode);
     }
 
-    public static void covertList(Context context, List<PlayListBean> pList, List<MediaListPushBean> pushList) {
-        if (pList==null || pushList==null) {
-            return;
-        }
-
-        pList.clear();
-        for (int i = 0; i < pushList.size(); i++) {
-            MediaBean media =  new MediaBeanDao(context).queryById(pushList.get(i).getName());
-            if (media != null) {
-                if (media.getType() == MediaBean.MEDIA_PICTURE) {
-                    // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
-                    media.setDuration(pushList.get(i).getDuration()>=5000 ? pushList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
-                }
-
-                PlayListBean pListItem = new PlayListBean(media);
-                pListItem.setPlayScale(pushList.get(i).getScale());
-                pList.add(pListItem);
-            }
-        }
+    public static void saveReplayModeToConfig(Context context, int replayMode) {
+        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
+        shared.putInt(CONFIG_REPLAY_MODE, replayMode);
     }
 
-    private void LoadPlayModeFromConfig() {
-        // 加载播放模式,如果没有配置,则默认为全部循环
-        SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
-        int playMode = config.getInt(CONFIG_PLAYMODE, mReplayAllRadioButton.getId());
-        mReplayModeRadioGroup.check(playMode);
-        onCheckedChanged(null,playMode);
+    public static int loadReplayModeToConfig(Context context) {
+        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
+        return shared.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
+    }
+
+    private void loadReplayModeFromConfig() {
+        int playMode = loadReplayModeToConfig(getApplicationContext());
+        int checkId = mReplayAllRadioButton.getId();
+        switch (playMode) {
+            case PictureVideoPlayer.MEDIA_REPLAY_ONE:
+                checkId = mReplayOneRadioButton.getId();
+                break;
+            case PictureVideoPlayer.MEDIA_REPLAY_ALL:
+                checkId = mReplayAllRadioButton.getId();
+                break;
+            case PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE:
+                checkId = mReplayShuffleRadioButton.getId();
+                break;
+            default:
+                break;
+        }
+        mReplayModeRadioGroup.check(checkId);
+        onCheckedChanged(null,checkId);
     }
 
     private void loadMediaListFromDatabase() {
         // 初始化本地媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
-            mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
+            int ret = mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER);
+            if (ret==-2) {
+                Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
+                ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found");
+            }
+            loadMediaListFromCloud();
         } else {
             // 如果有数据库,则从数据库获取
             for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
@@ -387,7 +410,7 @@ public class MediaActivity extends Activity
                         .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                         .build();
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG,"Exception in load media list from cloud " + e.toString());
             }
         } else {
             mClient = new OkHttpClient();
@@ -416,7 +439,7 @@ public class MediaActivity extends Activity
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                     String htmlBody = response.body().string();
 
-                    Log.d(TAG, "~~~~" + htmlBody);
+                    Log.d(TAG, "~~debug~~" + htmlBody);
 
                     CloudListBean cloudList;
                     try {
@@ -426,10 +449,29 @@ public class MediaActivity extends Activity
                         Log.e(TAG, "Gson parse error!");
                     }
 
+                    // 只要收到返回,就让用户看到界面有一个刷新的效果
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAllMediaListAdapter.clear();
+                            mAllMediaListAdapter.refresh();
+                        }
+                    });
+
                     if (cloudList != null && cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-                        Log.e(TAG,"result size:"+cloudList.getResult().size());
-                        // todo insert to table
+                        Log.d(TAG,"get "+cloudList.getResult().size() + " media info(s) from cloud");
+                        new MediaBeanDao(MediaActivity.this).deleteItemsFromCloud();
+
+                        if (!cloudList.getResult().isEmpty()) {
+                            List<MediaBean> listCloud = new ArrayList<>();
+                            CovertUtil.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
+                            new MediaBeanDao(MediaActivity.this).insert(listCloud);
+                        }
                     }
+
+                    Message msg = mHandler.obtainMessage();
+                    msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                    mHandler.sendMessage(msg);
 
                 } else {
                     Log.e(TAG, "response http code undefine!");
@@ -516,7 +558,7 @@ public class MediaActivity extends Activity
         mUsbMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_usb_list_check);
     }
 
-    private void initListView() {
+    private void prepareListView() {
         // usb设备选择列表
         mUsbPartitionSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
@@ -582,7 +624,12 @@ public class MediaActivity extends Activity
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // 如果是双击
                 if (ViewUtil.isFastDoubleClick()) {
-                    mPlayListAdapter.addItem(new PlayListBean(mAllMediaListBeans.get(position).getMediaData()));
+                    MediaBean mediaItem = mAllMediaListBeans.get(position).getMediaData();
+                    if (mediaItem.isDownload()) {
+                        mPlayListAdapter.addItem(new PlayListBean(mediaItem));
+                    } else {
+                        ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+                    }
                 }
             }
         });
@@ -730,7 +777,7 @@ public class MediaActivity extends Activity
 
         mReplayModeRadioGroup.setOnCheckedChangeListener(this);
 
-        initListView();
+        prepareListView();
 
         mPlayer.setPlayList(mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
@@ -743,7 +790,7 @@ public class MediaActivity extends Activity
             public void onMediaScanBegin() {
                 Log.i(TAG, "local media scan begin!");
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_LOCAL_MEDIA_LIST_CLEAN;
+                msg.what = MSG_MEDIA_LIST_CLEAN_LOCAL;
                 mHandler.sendMessage(msg);
             }
 
@@ -767,7 +814,7 @@ public class MediaActivity extends Activity
             public void onMediaScanDone() {
                 Log.i(TAG, "local media scan done!");
                 Message msg = mHandler.obtainMessage();
-                msg.what = MSG_LOCAL_MEDIA_DATABASE_UI_SYNC;
+                msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
                 mHandler.sendMessage(msg);
             }
         });
@@ -817,7 +864,7 @@ public class MediaActivity extends Activity
 
         // mqtt更改了配置,并将mediaActivity叫起来
         loadPlaylistFromConfig();
-        LoadPlayModeFromConfig();
+        loadReplayModeFromConfig();
 
         Log.i(TAG, "~~debug~~,onResume create");
 
@@ -835,6 +882,7 @@ public class MediaActivity extends Activity
         // 监听mqtt控制命令
         IntentFilter mqttFilter = new IntentFilter();
         mqttFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
+        mqttFilter.addAction(Contants.ACTION_PUSH_PLAYMODE);
         registerReceiver(mqttEventReceiver, mqttFilter);
 
 
@@ -914,7 +962,11 @@ public class MediaActivity extends Activity
         switch (view.getId()) {
 
             case R.id.bt_media_local_list_refresh:
-                mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH);
+                int ret = mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER);
+                if (ret==-2) {
+                    Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
+                    ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found!");
+                }
                 break;
 
             case R.id.bt_media_cloud_list_refresh:
@@ -970,7 +1022,11 @@ public class MediaActivity extends Activity
             case R.id.bt_media_multi_add:
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     if (data.isSelected()) {
-                        mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
+                        if (data.getMediaData().isDownload()) {
+                            mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
+                        } else {
+                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+                        }
                     }
                 }
                 break;
@@ -982,7 +1038,11 @@ public class MediaActivity extends Activity
                 mUsbMediaCopyDeque.clear();
                 for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
                     if (data.isSelected()) {
-                        mUsbMediaCopyDeque.add(data.getMediaData().getPath());
+                        if (data.getMediaData().getSource()==MediaBean.SOURCE_LOCAL) {
+                            mUsbMediaCopyDeque.add(data.getMediaData().getPath());
+                        } else {
+                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_could_not_export_toast));
+                        }
                     }
                 }
 
@@ -1075,7 +1135,12 @@ public class MediaActivity extends Activity
                         updateCapacity(false,currentPath);
 
                         // 由扫描来更新usb media列表
-                        mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
+                        int ret = mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
+                        if (ret==-2) {
+                            // 根本没有这个目录
+                            mUsbMediaListAdapter.clear();
+                            mUsbMediaListAdapter.refresh();
+                        }
                     }
                     updateMultiActionButtonState();
                     break;
@@ -1109,11 +1174,11 @@ public class MediaActivity extends Activity
                     mUsbMediaListAdapter.refresh();
                     break;
 
-                case MSG_LOCAL_MEDIA_LIST_CLEAN:
+                case MSG_MEDIA_LIST_CLEAN_LOCAL:
                     mLocalMediaListRefreshBtn.setEnabled(false);
                     mAllMediaListAdapter.clear();
                     mAllMediaListAdapter.refresh();
-                    new MediaBeanDao(MediaActivity.this).deleteAll();
+                    new MediaBeanDao(MediaActivity.this).deleteItemsLocalImport();
                     break;
 
                 case MSG_USB_COPY_TO_INTERNAL:
@@ -1151,7 +1216,7 @@ public class MediaActivity extends Activity
                     mPlayer.mediaPreview(previewItem);
                     break;
 
-                case MSG_LOCAL_MEDIA_DATABASE_UI_SYNC:
+                case MSG_MEDIA_DATABASE_UI_SYNC:
                     mLocalMediaListRefreshBtn.setEnabled(true);
                     mAllMediaListAdapter.clear();
                     for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
@@ -1259,7 +1324,7 @@ public class MediaActivity extends Activity
 
                             // 让UI与数据库 sync一次
                             Message msg = mHandler.obtainMessage();
-                            msg.what = MSG_LOCAL_MEDIA_DATABASE_UI_SYNC;
+                            msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
                             mHandler.sendMessage(msg);
 
                         } catch (Exception e) {
