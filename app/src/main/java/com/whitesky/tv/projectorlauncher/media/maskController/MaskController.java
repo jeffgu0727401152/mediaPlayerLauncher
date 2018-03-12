@@ -14,7 +14,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
+import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
+
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
 
 /**
  * Created by jeff on 18-2-5.
@@ -137,7 +141,13 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
 
     @Override
     public void onCancel() {
-        showMask(lastMaskStateBeforePaint);
+        if (lastMaskStateBeforePaint == SCREEN_MASK_MODE_NONE) {
+            // 远程将polygon mask关闭以后,设计成只要点击出paint window就保存设置为true
+            // 所以在paint window cancel后,使用showDefaultMask()检查设置并show出polygon mask
+            showDefaultMask();
+        } else {
+            showMask(lastMaskStateBeforePaint);
+        }
     }
     // OnPolygonWindowEventListener ---
 
@@ -223,6 +233,10 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
 
     public void showPaintWindow()
     {
+        // 进入多边形编辑功能一次,则打开显示默认mask功能
+        SharedPreferencesUtil config = new SharedPreferencesUtil(attachedContext, Contants.PREF_CONFIG);
+        config.putBoolean(CONFIG_SHOW_MASK,true);
+
         paintWindow.setVisibility(View.VISIBLE);
         lastMaskStateBeforePaint = maskState;
         maskState = SCREEN_MASK_MODE_PAINT;
@@ -242,7 +256,13 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
     }
 
     public void showDefaultMask() {
-        if (!showPolygonMask()) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(attachedContext, Contants.PREF_CONFIG);
+        if (config.getBoolean(CONFIG_SHOW_MASK, true)) {
+            Log.i(TAG,"default will show polygon mask");
+            if (!showPolygonMask()) {
+                showNoneMask();
+            }
+        } else {
             showNoneMask();
         }
     }

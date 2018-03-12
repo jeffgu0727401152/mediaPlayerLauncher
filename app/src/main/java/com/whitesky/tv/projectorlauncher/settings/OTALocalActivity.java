@@ -42,8 +42,11 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     private final String TAG = this.getClass().getSimpleName();
 
     private static final String DEFAULT_UPDATE_APK_NAME = "update.apk";
+    private static final String DEFAULT_INSTALL_APK_NAME = "install.apk";
+
     private static final int MSG_NO_UPDATE = 0;
     private static final int MSG_HAS_UPDATE = 1;
+    private static final int MSG_HAS_INSTALL = 2;
     private static final int MSG_CHECK_UPDATE = 3;
 
     private final MyHandler mHandler = new MyHandler(this);
@@ -60,6 +63,9 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
 
     private String updateApkPath = "";
     private ApkInfo updateApkInfo;
+
+    private String installApkPath = "";
+    private ApkInfo installApkInfo;
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
@@ -156,6 +162,20 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         mBtUpdate.requestFocus();
         //ToastUtil.showToast(this,"name:"+updateApkInfo.appName + ", Ver:" + updateApkInfo.version);
     }
+
+    private void showHasInstall()
+    {
+        isUpdatePadding = false;
+        mIvLogo.setVisibility(View.VISIBLE);
+        mTvUpdateInfo.setText(R.string.str_install_found);
+        mLvLoadingView.stopMoving();
+        mLvLoadingView.setVisibility(View.INVISIBLE);
+        mBtUpdate.setVisibility(View.VISIBLE);
+        mBtUpdate.setEnabled(true);
+        mBtUpdate.requestFocus();
+        //ToastUtil.showToast(this,"name:"+updateApkInfo.appName + ", Ver:" + updateApkInfo.version);
+    }
+
     
     private void showNoUpdate()
     {
@@ -173,7 +193,9 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         switch (view.getId())
         {
             case R.id.bt_local_update:
-                File file = new File(updateApkPath);
+                String apkPath = installApkPath.isEmpty()?updateApkPath:installApkPath;
+
+                File file = new File(apkPath);
                 if (file.exists() && !file.isDirectory()) {
                     installApk(file);
                 }
@@ -181,28 +203,44 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         }
     }
     
-    private void checkUpdate()
+    private void checkUpdateOrInstall()
     {
         updateApkPath = "";
         updateApkInfo = null;
+        installApkPath = "";
+        installApkInfo = null;
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
             if (!Arrays.asList(mMountExceptList).contains(s)) {
-                File file = new File(s + File.separator + DEFAULT_UPDATE_APK_NAME);
-                if (file.exists() && !file.isDirectory()) {
+                File fileUpdate = new File(s + File.separator + DEFAULT_UPDATE_APK_NAME);
+                if (fileUpdate.exists() && !fileUpdate.isDirectory()) {
                     updateApkInfo = getApkInfo(s + File.separator + DEFAULT_UPDATE_APK_NAME);
 
                     if (updateApkInfo!=null && updateApkInfo.packageName.equals(this.getPackageName())) {
                         updateApkPath = s + File.separator + DEFAULT_UPDATE_APK_NAME;
                         mHandler.sendEmptyMessage(MSG_HAS_UPDATE);
-                        Log.d(TAG,"found update apk ver:" + updateApkInfo.version);
+                        Log.i(TAG,"found update apk ver:" + updateApkInfo.version);
                         return;
                     }
+                    Log.e(TAG,"update.apk wrong format!!!");
+                }
 
-                    Log.e(TAG,"packageName of the update.apk is not as same as this one!!!");
+                File fileInstall = new File(s + File.separator + DEFAULT_INSTALL_APK_NAME);
+                if (fileInstall.exists() && !fileInstall.isDirectory()) {
+                    installApkInfo = getApkInfo(s + File.separator + DEFAULT_INSTALL_APK_NAME);
+
+                    if (installApkInfo!=null) {
+                        installApkPath = s + File.separator + DEFAULT_INSTALL_APK_NAME;
+                        mHandler.sendEmptyMessage(MSG_HAS_INSTALL);
+                        Log.i(TAG,"found install apk:" + installApkInfo.packageName + " ver:" + installApkInfo.version);
+                        return;
+                    }
+                    Log.e(TAG,"apk  file wrong format!!!");
                 }
             }
         }
+
+        Log.i(TAG,"found no apk we required in usb device!");
 
         mHandler.sendEmptyMessage(MSG_NO_UPDATE);
     }
@@ -277,8 +315,11 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
                     case MSG_HAS_UPDATE:
                         activity.showHasUpdate();
                         break;
+                    case MSG_HAS_INSTALL:
+                        activity.showHasInstall();
+                        break;
                     case MSG_CHECK_UPDATE:
-                        activity.checkUpdate();
+                        activity.checkUpdateOrInstall();
                         break;
                     default:
                         break;

@@ -31,6 +31,7 @@ import com.whitesky.tv.projectorlauncher.utils.CovertUtil;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
+import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.wsd.android.NativeCertification;
 
 import java.io.ByteArrayInputStream;
@@ -57,6 +58,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
@@ -425,10 +427,15 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             List<MediaListResponseBean> responseDataList = new ArrayList<MediaListResponseBean>();
             List<PlayListBean> pList;
 
+            if (msg.what!=MSG_NONE) {
+                ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_media_receive_mqtt_toast));
+                Log.i(TAG,"receive mqtt cmd:"+msg.what);
+            }
+
             switch (msg.what) {
 
                 case MSG_CMD_LOGIN_DONE:
-                    SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
+                    SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PREF_CONFIG);
                     shared.putBoolean(Contants.IS_ACTIVATE, true);
                     shared.putBoolean(Contants.IS_SETUP_PASS, true);
 
@@ -473,7 +480,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
-                    SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PERF_CONFIG);
+                    SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PREF_CONFIG);
                     jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
                     Type type = new TypeToken<List<PlayListBean>>() {
                     }.getType();
@@ -531,7 +538,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_PUSH_PLAYMODE:
-                    // todo 是否开窗的控制
                     PlayModePushBean playMode = gson.fromJson(rawStr.substring(100),PlayModePushBean.class);
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
@@ -549,6 +555,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                 || playMode.getPlayMode()==MEDIA_REPLAY_ALL) {
 
                             saveReplayModeToConfig(getApplicationContext(),playMode.getPlayMode());
+                            saveShowMaskToConfig(getApplicationContext(),playMode.getMask()==0?false:true);
                             startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 
                         } else {

@@ -12,14 +12,17 @@ import android.app.Application;
  */
 public class MainApplication extends Application
 {
-    public boolean mInitDone = false;
+    // 启动后自动播放功能用
+    // app被启动后,HomeActivity会检查这个标志与是否有播放列表决定是否跳转去MediaActivity
+    // MediaActivity的onResume会将这个标志设置为true,下次HomeActivity就不再自动跳转过去了
+    public boolean mFirstInitDone = false;
     public boolean isMediaActivityFullScreenPlaying = false;
     public boolean isMediaActivityForeground = false;
 
     @Override
     public void onCreate()
     {
-        mInitDone = false;
+        mFirstInitDone = false;
         isMediaActivityFullScreenPlaying = false;
         isMediaActivityForeground = false;
 

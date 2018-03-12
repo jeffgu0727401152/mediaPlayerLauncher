@@ -79,6 +79,11 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
     private SurfaceView mSurfaceView;
     private ImageView mPictureView;
+
+    public MaskController getMaskController() {
+        return mMaskController;
+    }
+
     private MaskController mMaskController;
 
     private Button mPreviousBtn;

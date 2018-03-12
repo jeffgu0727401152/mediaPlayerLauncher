@@ -81,6 +81,7 @@ import okhttp3.Response;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
@@ -219,8 +220,8 @@ public class MediaActivity extends Activity
                     mPlayer.mediaPlay(0);
                 }
 
-                ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_playlist_toast));
             } else if (action.equals(Contants.ACTION_PUSH_PLAYMODE)) {
+
                 PlayModePushBean pushReq = intent.getParcelableExtra(Contants.EXTRA_PUSH_CONTEXT);
 
                 if (pushReq==null) {
@@ -231,7 +232,8 @@ public class MediaActivity extends Activity
                 saveReplayModeToConfig(getApplicationContext(),pushReq.getPlayMode());
                 loadReplayModeFromConfig();
 
-                ToastUtil.showToast(context, getResources().getString(R.string.str_media_mqtt_push_Playmode_toast));
+                saveShowMaskToConfig(getApplicationContext(),pushReq.getMask()==0?false:true);
+                mPlayer.getMaskController().showDefaultMask();
             }
         }
     };
@@ -348,13 +350,18 @@ public class MediaActivity extends Activity
     }
 
     public static void saveReplayModeToConfig(Context context, int replayMode) {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
-        shared.putInt(CONFIG_REPLAY_MODE, replayMode);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putInt(CONFIG_REPLAY_MODE, replayMode);
+    }
+
+    public static void saveShowMaskToConfig(Context context, boolean showMask) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putBoolean(CONFIG_SHOW_MASK,showMask);
     }
 
     public static int loadReplayModeToConfig(Context context) {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
-        return shared.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        return config.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
     }
 
     private void loadReplayModeFromConfig() {
@@ -485,14 +492,14 @@ public class MediaActivity extends Activity
     }
 
     public static void savePlaylistToConfig(Context context, List<PlayListBean> pList) {
-        SharedPreferencesUtil shared = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         Gson gson = new Gson();
         String jsonStr = gson.toJson(pList);
-        shared.putString(CONFIG_PLAYLIST, jsonStr);
+        config.putString(CONFIG_PLAYLIST, jsonStr);
     }
 
     public static boolean hasPlaylistConfig(Context context) {
-        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PERF_CONFIG);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
         if (jsonStr.equals("[]")) {
             return false;
@@ -503,7 +510,7 @@ public class MediaActivity extends Activity
 
     private void loadPlaylistFromConfig() {
         Gson gson = new Gson();
-        SharedPreferencesUtil config = new SharedPreferencesUtil(this, Contants.PERF_CONFIG);
+        SharedPreferencesUtil config = new SharedPreferencesUtil(this, Contants.PREF_CONFIG);
         String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
         Type type = new TypeToken<List<PlayListBean>>() {
         }.getType();
@@ -895,6 +902,7 @@ public class MediaActivity extends Activity
         updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
 
         ((MainApplication)getApplication()).isMediaActivityForeground = true;
+        ((MainApplication)getApplication()).mFirstInitDone = true;
     }
 
     @Override

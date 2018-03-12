@@ -25,6 +25,7 @@ import com.whitesky.sdk.widget.TvScrollTextView;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
+import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.service.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.settings.SysSettingActivity;
@@ -43,6 +44,11 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
 
     private ImageView mEthConnectImg;
     private ImageView mWifiConnectImg;
+    private ImageView mLogoView;
+
+    private int mLogoClickCount = 0;
+    private int mBackClickCount = 0;
+
 
     private boolean mLastWifiConnected = false;
     private boolean mLastEthConnected = false;
@@ -79,6 +85,8 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
 
         mEthConnectImg = (ImageView)findViewById(R.id.iv_home2_net);
         mWifiConnectImg = (ImageView)findViewById(R.id.iv_home2_wifi);
+        mLogoView = (ImageView)findViewById(R.id.iv_home2_1);
+        mLogoView.setOnClickListener(this);
 
         TvScrollTextView scrollingView = (TvScrollTextView)findViewById(R.id.sv_home2_message);
         scrollingView.setText(getString(R.string.str_home_welcome));
@@ -108,14 +116,6 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
 
         // SSL 与 MQTT服务
         startService(new Intent(getApplicationContext(), MqttSslService.class));
-
-        // 如果有播放列表,直接跳转去mediaActivity
-        if (MediaActivity.hasPlaylistConfig(this)) {
-            Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
-            if (intentMedia.resolveActivity(getPackageManager())!=null) {
-                startActivity(intentMedia);
-            }
-        }
     }
 
     @Override
@@ -129,6 +129,17 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(mNetworkStatusReceiver, filter);
+
+        mLogoClickCount = 0;
+        mBackClickCount = 0;
+
+        // 如果有播放列表,直接跳转去mediaActivity
+        if (MediaActivity.hasPlaylistConfig(this) && !((MainApplication)getApplication()).mFirstInitDone) {
+            Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
+            if (intentMedia.resolveActivity(getPackageManager())!=null) {
+                startActivity(intentMedia);
+            }
+        }
     }
 
     public void setFocusableInTouchMode(boolean focusableInTouchMode) {
@@ -204,18 +215,24 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
                     startActivity(intentAdmin);
                 }
                 break;
+
             case R.id.rf_home2_media:
                 Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
                 if (intentMedia.resolveActivity(getPackageManager())!=null) {
                     startActivity(intentMedia);
                 }
                 break;
+
             case R.id.rf_home2_sys:
                 Intent intentSys = new Intent(getApplicationContext(), SysSettingActivity.class);
                 if (intentSys.resolveActivity(getPackageManager())!=null)
                 {
                     startActivity(intentSys);
                 }
+                break;
+
+            case R.id.iv_home2_1:
+                mLogoClickCount++;
                 break;
             default:
                 break;
@@ -239,13 +256,21 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         // 主页面屏蔽返回键，就是不让你返回，怎么地吧 ^ * ^
         if (keyCode == KeyEvent.KEYCODE_BACK)
         {
+            if (mLogoClickCount>=5) {
+                mBackClickCount++;
+            }
+
+            if (mBackClickCount>=5) {
+                mLogoClickCount = 0;
+                mBackClickCount = 0;
+                Log.i(TAG,"go to app list!");
+                ToastUtil.showToast(getApplicationContext(), "go to app list!");
+            }
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_MENU)
         {
-            //Intent intent = new Intent("com.mstar.android.intent.action.TV_INPUT_BUTTON");
-            //startActivity(intent);
-            Log.v(TAG,"onKeyDown egvent.getRepeatCount() " + event.getRepeatCount());
+            Log.v(TAG,"onKeyDown event.getRepeatCount() " + event.getRepeatCount());
             if (event.getRepeatCount() > 0)
             {
                 ToastUtil.showToast(getApplicationContext(), "ssss");

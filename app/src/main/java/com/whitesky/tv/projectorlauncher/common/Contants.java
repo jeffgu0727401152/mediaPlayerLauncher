@@ -13,19 +13,13 @@ public class Contants
     public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
     public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
-    public static final String PERF_CONFIG = "PERF_CONFIG";// 存放用户信息
+    public static final String PREF_CONFIG = "PREF_CONFIG";// 存放用户信息
     public static final String CONFIG_PLAYLIST = "playList";
     public static final String CONFIG_REPLAY_MODE = "replayMode";
+    public static final String CONFIG_SHOW_MASK = "showMask";
 
     public static final String IS_ACTIVATE = "false"; // 设备是否被激活
     public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过
-    public static final String ACTIVE_TOKEN = "active_token";// app是否首次安装
-    public static final String SELF_CHECK = "SELF_CHECK";
-    public static final String APP_INSTALL = "APP_INSTALL";
-    public static final String APP_UNINSTALL = "APP_UNINSTALL";
-    public static final String TRAP_EDITOR = "TRAP_EDITOR";
-    public static boolean isEditor = false;
-    public static final String IS_WIFI = "isWifi";
 
     // MediaActivity +++
     public static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sata/disk";
@@ -34,7 +28,7 @@ public class Contants
 
     public static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";
     public static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";
-    // 排除在外的挂载目录,非移动硬盘
+    // 排除在外的挂载目录,设备上的所有的非usb的会被系统挂载的移动盘
     public static final String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", LOCAL_MASS_STORAGE_PATH};
     // MediaActivity ---
 }
