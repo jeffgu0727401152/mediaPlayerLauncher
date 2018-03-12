@@ -85,6 +85,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
+import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
@@ -1085,6 +1086,12 @@ public class MediaActivity extends Activity
             mMultiDeleteLocalBtn.setEnabled(false);
             mMultiDownloadBtn.setEnabled(false);
         }
+
+        if (mUsbMediaListAdapter.hasItemSelected()) {
+            mMultiCopyToLocalBtn.setEnabled(true);
+        } else {
+            mMultiCopyToLocalBtn.setEnabled(false);
+        }
     }
 
     private Handler mHandler = new Handler() {
@@ -1279,6 +1286,15 @@ public class MediaActivity extends Activity
         });
     }
 
+    private static boolean localMassStorageMounted(Context context) {
+        String[] mountList = FileUtil.getMountVolumePaths(context);
+        if (Arrays.asList(mountList).contains(LOCAL_MASS_STORAGE_PATH)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private void updateLocalCapacityUI(final String text) {
         runOnUiThread(new Runnable() {
             @Override
@@ -1349,7 +1365,7 @@ public class MediaActivity extends Activity
         mUsbPartitionAdapter.clear();
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
-            if (!Arrays.asList(mMountExceptList).contains(s)) {
+            if (!Arrays.asList(mMountExceptList).contains(s) && !s.contains(LOCAL_SATA_MOUNT_PATH)) {
                 mUsbPartitionAdapter.add(s);
             }
         }

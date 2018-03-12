@@ -32,6 +32,7 @@ import com.whitesky.tv.projectorlauncher.utils.AppUtils;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
+import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 
 /**
@@ -212,7 +213,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         installApkInfo = null;
         String[] mountList = FileUtil.getMountVolumePaths(this);
         for (String s : mountList) {
-            if (!Arrays.asList(mMountExceptList).contains(s)) {
+            if (!Arrays.asList(mMountExceptList).contains(s) && !s.contains(LOCAL_SATA_MOUNT_PATH)) {
                 File fileUpdate = new File(s + File.separator + DEFAULT_UPDATE_APK_NAME);
                 if (fileUpdate.exists() && !fileUpdate.isDirectory()) {
                     updateApkInfo = getApkInfo(s + File.separator + DEFAULT_UPDATE_APK_NAME);

@@ -41,6 +41,10 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORA
 public class DiskFormatActivity extends Activity implements View.OnClickListener
 {
     private final String TAG = this.getClass().getSimpleName();
+    private final String INTENT_FORMAT_FAILED = "android.intent.action.OEM_WSD_MOUNT_FAILED";
+    private final String INTENT_FORMAT_UMOUNT = "android.intent.action.OEM_WSD_UMOUNT_SATA";
+    private final String INTENT_FORMAT_MOUNT = "android.intent.action.OEM_WSD_MOUNT_SATA";
+
 
     private static final int MSG_FORMAT_START = 0;
     private static final int MSG_FORMAT_DONE = 1;
@@ -58,20 +62,24 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     
     private ImageView mIvLogo;
 
-    private final BroadcastReceiver formatEventReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver formatMountEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            String file = intent.getData().getPath();
-            if (file!=null && file.equals(LOCAL_MASS_STORAGE_PATH)) {
-                if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) {
-                    mHandler.sendEmptyMessage(MSG_FORMAT_DONE);
-                    Log.i(TAG,"sata disk format done!");
+            if (action.equals(INTENT_FORMAT_FAILED)) {
 
-                } else if (action.equals(Intent.ACTION_MEDIA_UNMOUNTED)) {
-                    mHandler.sendEmptyMessage(MSG_FORMAT_START);
-                    Log.i(TAG,"sata disk format begin!");
-                }
+                mHandler.sendEmptyMessage(MSG_FORMAT_NONE);
+                Log.e(TAG,"no sata disk found!");
+
+            } else if (action.equals(INTENT_FORMAT_MOUNT)) {
+
+                mHandler.sendEmptyMessage(MSG_FORMAT_DONE);
+                Log.i(TAG,"sata disk format done!");
+
+            } else if (action.equals(INTENT_FORMAT_UMOUNT)) {
+
+                mHandler.sendEmptyMessage(MSG_FORMAT_START);
+                Log.i(TAG,"sata disk format begin!");
             }
         }
     };
@@ -91,7 +99,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
 
     @Override
     protected void onPause() {
-        unregisterReceiver(formatEventReceiver);
+        unregisterReceiver(formatMountEventReceiver);
         super.onPause();
     }
 
@@ -102,12 +110,12 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
         LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
-        // 监听usb插拔事件
-        IntentFilter usbFilter = new IntentFilter();
-        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
-        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
-        usbFilter.addDataScheme("file");
-        registerReceiver(formatEventReceiver, usbFilter);
+        // 监听format事件
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(INTENT_FORMAT_FAILED);
+        filter.addAction(INTENT_FORMAT_UMOUNT);
+        filter.addAction(INTENT_FORMAT_MOUNT);
+        registerReceiver(formatMountEventReceiver, filter);
 
         showDefaultView();
     }
@@ -185,18 +193,8 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mTvFormatInfo.setText(R.string.str_format_search_sata_disk);
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String ret = do_exec("sh /etc/autoformat.sh");
-                                Log.d(TAG, ret);
-                                if (!ret.contains("format is finished!")) {
-                                    mHandler.sendEmptyMessage(MSG_FORMAT_NONE);
-                                    Log.e(TAG,"no sata disk found!");
-                                }
-                            }
-                        }).start();
-                        Log.i(TAG,"call sata disk format!");
+                        String ret = do_exec("setprop dev.wsd.formatsata.start 1");
+                        Log.i(TAG,"call sata disk format!" + ret);
                     }
                 })
                 .setNegativeButton(R.string.str_media_dialog_button_cancel, new DialogInterface.OnClickListener() {
