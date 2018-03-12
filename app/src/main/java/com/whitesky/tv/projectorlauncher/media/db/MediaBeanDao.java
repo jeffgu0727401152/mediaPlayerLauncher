@@ -82,11 +82,7 @@ public class MediaBeanDao {
 
     // 删除media表中的所有数据
     public void deleteAll() {
-        try {
-            TableUtils.clearTable(MediaDatabaseHelper.getInstance(context).getConnectionSource(), MediaBean.class);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        delete(selectAll());
     }
 
     // 查询出表中的所有通过U盘导入到本地的媒体记录

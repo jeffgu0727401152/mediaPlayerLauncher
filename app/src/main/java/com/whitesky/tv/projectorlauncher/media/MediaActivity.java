@@ -388,6 +388,7 @@ public class MediaActivity extends Activity
         // 初始化本地媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
+            Log.i(TAG, "empty media database, so scan and download media list");
             int ret = mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER);
             if (ret==-2) {
                 Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
@@ -398,8 +399,8 @@ public class MediaActivity extends Activity
             // 如果有数据库,则从数据库获取
             for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
             {
+                Log.i(TAG, "has media database, so get media list from media database");
                 mAllMediaListBeans.add(new AllMediaListBean(m));
-                Log.d(TAG,m.toString());
             }
 
             if (mAllMediaListAdapter!=null) {
@@ -872,8 +873,6 @@ public class MediaActivity extends Activity
         // mqtt更改了配置,并将mediaActivity叫起来
         loadPlaylistFromConfig();
         loadReplayModeFromConfig();
-
-        Log.i(TAG, "~~debug~~,onResume create");
 
         loadMediaListFromDatabase();
         updateMultiActionButtonState();
