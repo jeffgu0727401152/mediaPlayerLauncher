@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.utils.AppUtils;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
@@ -197,7 +198,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
 
                 File file = new File(apkPath);
                 if (file.exists() && !file.isDirectory()) {
-                    installApk(file);
+                    AppUtils.installApk(this,file);
                 }
                 break;
         }
@@ -274,14 +275,6 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
         }
     }
 
-    public void installApk(File file) {
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.fromFile(file),
-                "application/vnd.android.package-archive");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(intent);
-    }
 
     @Override
     public void onBackPressed()

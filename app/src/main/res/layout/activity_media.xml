@@ -243,7 +243,7 @@
 
         <!--全部媒体列表-->
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="@dimen/x840"
+            android:layout_width="@dimen/x880"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/x20"
             android:layout_marginLeft="@dimen/x40"
@@ -310,7 +310,7 @@
             <!--全部媒体列表数据-->
             <ListView
                 android:id="@+id/lv_media_all_list"
-                android:layout_width="@dimen/x840"
+                android:layout_width="@dimen/x880"
                 android:layout_height="@dimen/x420" >
             </ListView>
         </LinearLayout>
@@ -365,7 +365,7 @@
 
         <!--USB媒体列表-->
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="@dimen/x840"
+            android:layout_width="@dimen/x800"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/x20"
             android:layout_marginLeft="@dimen/x20"
@@ -424,7 +424,7 @@
             <!--USB媒体列表数据-->
             <ListView
                 android:id="@+id/lv_media_usb_list"
-                android:layout_width="@dimen/x840"
+                android:layout_width="@dimen/x800"
                 android:layout_height="@dimen/x420" >
             </ListView>
         </LinearLayout>

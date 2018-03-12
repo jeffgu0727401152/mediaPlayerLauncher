@@ -28,7 +28,9 @@
         android:screenOrientation="sensor"
         android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
         <activity android:name="com.whitesky.tv.projectorlauncher.home.HomeActivity"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:clearTaskOnLaunch="true"
+            android:stateNotNeeded="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
@@ -36,20 +38,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTAActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTALocalActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.SpeedTestActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.DiskFormatActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.SysSettingActivity" />
         <activity
             android:name="com.whitesky.tv.projectorlauncher.settings.QuickenActivity"
             android:theme="@style/transcutestyle" />
-        <activity android:name="com.whitesky.tv.projectorlauncher.settings.SysSettingActivity" />
-
         <activity android:name="com.whitesky.tv.projectorlauncher.media.MediaActivity" />
-
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.AdminActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.AccountActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.app.AppActivity" />
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
         <service android:name="com.whitesky.tv.projectorlauncher.service.MqttSslService" />

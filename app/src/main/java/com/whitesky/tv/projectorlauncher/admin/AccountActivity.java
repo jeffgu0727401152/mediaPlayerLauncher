@@ -106,7 +106,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
                 if (mLoginHistoryDatas != null) {
                     mLoginHistoryDatas.clear();
                     mLoginHistoryDatas.add(new ListViewBean(mLoginBean.getResult().getDeviceNickname(), mLoginBean.getResult().getLoginDate(), 0, 0));
-                    mLoginHistoryListAdapter = new AccountAdapter(getApplicationContext(), mLoginHistoryDatas, R.layout.item_list_project);
+                    mLoginHistoryListAdapter = new AccountAdapter(getApplicationContext(), mLoginHistoryDatas, R.layout.item_login_history_list);
                     mLvAccount.setAdapter(mLoginHistoryListAdapter);
                 }
 

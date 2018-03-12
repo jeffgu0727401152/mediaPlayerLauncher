@@ -35,7 +35,7 @@
 
     <TextView
         android:id="@+id/tv_media_title"
-        android:layout_width="@dimen/x250"
+        android:layout_width="@dimen/x290"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
@@ -47,7 +47,7 @@
 
     <TextView
         android:id="@+id/tv_media_duration"
-        android:layout_width="@dimen/x100"
+        android:layout_width="@dimen/x80"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
@@ -83,7 +83,7 @@
         android:id="@+id/bt_media_download"
         android:layout_width="@dimen/x26"
         android:layout_height="@dimen/x28"
-        android:layout_marginLeft="@dimen/x10"
+        android:layout_marginLeft="@dimen/x30"
         android:layout_gravity="center"
         android:background="@drawable/selector_media_download_btn" />
 

@@ -25,6 +25,7 @@ import com.whitesky.sdk.widget.TvScrollTextView;
 import com.whitesky.sdk.widget.focus.FocusBorder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
+import com.whitesky.tv.projectorlauncher.app.AppActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.service.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
@@ -232,7 +233,20 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
                 break;
 
             case R.id.iv_home2_1:
-                mLogoClickCount++;
+                if (mBackClickCount>=5) {
+                    mLogoClickCount++;
+                }
+
+                if (mLogoClickCount>=5) {
+                    mLogoClickCount = 0;
+                    mBackClickCount = 0;
+                    Log.i(TAG,"go to app list!");
+                    Intent intentApp = new Intent(getApplicationContext(), AppActivity.class);
+                    if (intentApp.resolveActivity(getPackageManager())!=null)
+                    {
+                        startActivity(intentApp);
+                    }
+                }
                 break;
             default:
                 break;
@@ -256,16 +270,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         // 主页面屏蔽返回键，就是不让你返回，怎么地吧 ^ * ^
         if (keyCode == KeyEvent.KEYCODE_BACK)
         {
-            if (mLogoClickCount>=5) {
-                mBackClickCount++;
-            }
-
-            if (mBackClickCount>=5) {
-                mLogoClickCount = 0;
-                mBackClickCount = 0;
-                Log.i(TAG,"go to app list!");
-                ToastUtil.showToast(getApplicationContext(), "go to app list!");
-            }
+            mBackClickCount++;
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_MENU)

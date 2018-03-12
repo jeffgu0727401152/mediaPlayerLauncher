@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_app"
+    android:layout_width="@dimen/x280"
+    android:layout_height="@dimen/x280"
+    android:background="@color/itemBg"
+    android:focusable="true"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingBottom="10dp"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="10dp">
+
+    <ImageView
+        android:id="@+id/appIcon"
+        android:layout_width="@dimen/x80"
+        android:layout_height="@dimen/x80"
+        android:layout_gravity="center_horizontal"
+        android:focusable="false"
+        android:scaleType="fitXY" />
+
+    <com.whitesky.sdk.widget.MarqueeText
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:focusable="false"
+        android:gravity="center"
+        android:lines="1"
+        android:textColor="#F8FBFE"
+        android:textSize="10sp" />
+</LinearLayout>

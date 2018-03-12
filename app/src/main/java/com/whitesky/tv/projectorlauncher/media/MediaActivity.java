@@ -389,7 +389,9 @@ public class MediaActivity extends Activity
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
             Log.i(TAG, "empty media database, so scan and download media list");
-            int ret = mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER);
+            String localMediaStorePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+            FileUtil.createDir(localMediaStorePath);
+            int ret = mLocalMediaScanner.safeScanning(localMediaStorePath);
             if (ret==-2) {
                 Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
                 ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found");
@@ -969,7 +971,9 @@ public class MediaActivity extends Activity
         switch (view.getId()) {
 
             case R.id.bt_media_local_list_refresh:
-                int ret = mLocalMediaScanner.safeScanning(LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER);
+                String localMediaStorePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+                FileUtil.createDir(localMediaStorePath);
+                int ret = mLocalMediaScanner.safeScanning(localMediaStorePath);
                 if (ret==-2) {
                     Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
                     ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found!");
