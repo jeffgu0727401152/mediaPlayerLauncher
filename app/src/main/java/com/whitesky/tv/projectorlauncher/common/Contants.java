@@ -13,10 +13,19 @@ public class Contants
     public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
     public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
-    public static final String PREF_CONFIG = "PREF_CONFIG";        // 存放app的所有配置信息
-    public static final String CONFIG_PLAYLIST = "playList";       // 播放列表
-    public static final String CONFIG_REPLAY_MODE = "replayMode";  // 播放下一首的选择顺序
-    public static final String CONFIG_SHOW_MASK = "showMask";      // 是否显示polygon mask
+    public static final String PREF_CONFIG = "PREF_CONFIG";             // 存放app的所有配置信息
+
+    public static final String CONFIG_PLAYLIST = "playList";            // 播放列表
+
+    public static final String CONFIG_REPLAY_MODE = "replayMode";       // 播放下一首的选择顺序
+
+    public static final String CONFIG_SHOW_MASK = "showMask";           // 是否显示polygon mask
+
+    public static final String CONFIG_MEDIA_LIST_ORDER = "mediaOrder";  // 列表的显示排序
+    public static final int MEDIA_LIST_ORDER_NAME = 0;  // 列表的显示排序
+    public static final int MEDIA_LIST_ORDER_DURATION = 1;  // 列表的显示排序
+    public static final int MEDIA_LIST_ORDER_SOURCE = 2;  // 列表的显示排序
+    public static final int MEDIA_LIST_ORDER_DEFAULT = MEDIA_LIST_ORDER_SOURCE;  // 列表的显示排序
 
     public static final String IS_ACTIVATE = "false"; // 设备是否被激活
     public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过

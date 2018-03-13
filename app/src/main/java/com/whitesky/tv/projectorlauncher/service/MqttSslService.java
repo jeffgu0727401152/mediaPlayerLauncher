@@ -27,7 +27,7 @@ import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whitesky.tv.projectorlauncher.utils.CovertUtil;
+import com.whitesky.tv.projectorlauncher.media.DataCovert;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -527,7 +527,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     } else {
 
                         pList = new ArrayList<>();
-                        CovertUtil.covertPlayList(getApplicationContext(), pList, pushList);
+                        DataCovert.covertPlayList(getApplicationContext(), pList, pushList);
                         MediaActivity.savePlaylistToConfig(getApplication(), pList);
                         if (!pList.isEmpty()) {
                             // 立刻开始播放

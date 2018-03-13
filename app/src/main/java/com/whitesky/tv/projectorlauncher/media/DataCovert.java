@@ -1,4 +1,4 @@
-package com.whitesky.tv.projectorlauncher.utils;
+package com.whitesky.tv.projectorlauncher.media;
 
 import android.content.Context;
 import android.util.Log;
@@ -8,6 +8,8 @@ import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.utils.FileUtil;
+import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 
 import java.io.File;
 import java.util.List;
@@ -21,8 +23,8 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE
  * Created by jeff on 18-3-9.
  */
 
-public class CovertUtil {
-    private static final String TAG = CovertUtil.class.getSimpleName();
+public class DataCovert {
+    private static final String TAG = DataCovert.class.getSimpleName();
 
     public static final int PATH_FILE_EXPORT_TO_USB = 0;
     public static final int PATH_FILE_IMPORT_TO_LOCAL = 1;
@@ -85,18 +87,13 @@ public class CovertUtil {
 
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
-            MediaBean desItem = new MediaBean();
             Result srcItem = srcList.get(i);
-            desItem.setId(srcItem.getId());
-            desItem.setTitle(srcItem.getName());
-            desItem.setSource(srcItem.getSource());
+            MediaBean desItem = new MediaBean(srcItem.getName(),
+                    srcItem.getId(),
+                    MediaScanUtil.getMediaTypeFromPath(srcItem.getName()),
+                    srcItem.getSource(),pathCovert(PATH_FILE_FROM_CLOUD,srcItem.getName()),
+                    0,0,false);
             desItem.setUrl(srcItem.getUrl());
-            desItem.setDownload(false);
-            desItem.setType(MediaScanUtil.getMediaTypeFromPath(srcItem.getName()));
-            desItem.setPath(pathCovert(PATH_FILE_FROM_CLOUD,srcItem.getName()));
-            desItem.setDuration(0);
-            desItem.setSize(0);
-
             desList.add(desItem);
         }
     }

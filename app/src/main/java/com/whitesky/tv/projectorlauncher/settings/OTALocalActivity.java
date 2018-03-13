@@ -14,7 +14,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,7 +27,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
-import com.whitesky.tv.projectorlauncher.utils.AppUtils;
+import com.whitesky.tv.projectorlauncher.utils.AppUtil;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
@@ -199,7 +198,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
 
                 File file = new File(apkPath);
                 if (file.exists() && !file.isDirectory()) {
-                    AppUtils.installApk(this,file);
+                    AppUtil.installApk(this,file);
                 }
                 break;
         }

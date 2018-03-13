@@ -46,7 +46,6 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.service.PlayModePushBean;
-import com.whitesky.tv.projectorlauncher.utils.CovertUtil;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -79,6 +78,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_MEDIA_LIST_ORDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
@@ -86,6 +86,10 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDI
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DEFAULT;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DURATION;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_NAME;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_SOURCE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
@@ -164,6 +168,11 @@ public class MediaActivity extends Activity
     private RadioButton mReplayOneRadioButton;
     private RadioButton mReplayShuffleRadioButton;
 
+    private RadioGroup mMediaListOrderRadioGroup;
+    private RadioButton mMediaListOrderNameRadioButton;
+    private RadioButton mMediaListOrderDurationRadioButton;
+    private RadioButton mMediaListOrderSourceRadioButton;
+
     private int mOriginPlayerMarginTop = 0;
     private int mOriginPlayerMarginLeft = 0;
 
@@ -211,7 +220,7 @@ public class MediaActivity extends Activity
 
                 mPlayer.mediaStop();
 
-                CovertUtil.covertPlayList(getApplicationContext(),mPlayListBeans,pushList);
+                DataCovert.covertPlayList(getApplicationContext(),mPlayListBeans,pushList);
 
                 mPlayListAdapter.refresh();
                 savePlaylistToConfig();
@@ -231,7 +240,7 @@ public class MediaActivity extends Activity
                 }
 
                 saveReplayModeToConfig(getApplicationContext(),pushReq.getPlayMode());
-                loadReplayModeFromConfig();
+                loadReplayMode();
 
                 saveShowMaskToConfig(getApplicationContext(),pushReq.getMask()==0?false:true);
                 mPlayer.getMaskController().showDefaultMask();
@@ -333,26 +342,93 @@ public class MediaActivity extends Activity
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
-        int replayMode = PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT;
+        switch(group.getId()) {
+            case R.id.rg_media_replay_mode:
 
-        if (checkedId == mReplayOneRadioButton.getId()) {
-            replayMode = PictureVideoPlayer.MEDIA_REPLAY_ONE;
-        } else if (checkedId == mReplayAllRadioButton.getId()) {
-            replayMode = PictureVideoPlayer.MEDIA_REPLAY_ALL;
-        } else if (checkedId == mReplayShuffleRadioButton.getId()) {
-            replayMode = PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
+                int replayMode = PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT;
+
+                if (checkedId == mReplayOneRadioButton.getId()) {
+                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_ONE;
+                } else if (checkedId == mReplayAllRadioButton.getId()) {
+                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_ALL;
+                } else if (checkedId == mReplayShuffleRadioButton.getId()) {
+                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
+                }
+
+                if (mPlayer != null) {
+                    mPlayer.setReplayMode(replayMode);
+                }
+
+                saveReplayModeToConfig(getApplicationContext(),replayMode);
+
+                break;
+
+            case R.id.rg_media_list_order_mode:
+                int orderMode = MEDIA_LIST_ORDER_SOURCE;
+                if (checkedId == mMediaListOrderNameRadioButton.getId()) {
+                    orderMode = MEDIA_LIST_ORDER_NAME;
+                } else if (checkedId == mMediaListOrderDurationRadioButton.getId()) {
+                    orderMode = MEDIA_LIST_ORDER_DURATION;
+                } else if (checkedId == mMediaListOrderSourceRadioButton.getId()) {
+                    orderMode = MEDIA_LIST_ORDER_SOURCE;
+                }
+
+                saveMediaOrderModeToConfig(getApplicationContext(),orderMode);
+
+                Message msg = mHandler.obtainMessage();
+                msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                mHandler.sendMessage(msg);
+
+                break;
+
+            default:
+                Log.e(TAG,"unknown RadioGroup onCheckedChanged!");
+                break;
         }
 
-        if (mPlayer != null) {
-            mPlayer.setReplayMode(replayMode);
-        }
 
-        saveReplayModeToConfig(getApplicationContext(),replayMode);
     }
+
+    public static void saveMediaOrderModeToConfig(Context context, int orderMode) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putInt(CONFIG_MEDIA_LIST_ORDER, orderMode);
+    }
+
+    public static int loadMediaOrderModeFromConfig(Context context) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        return config.getInt(CONFIG_MEDIA_LIST_ORDER, MEDIA_LIST_ORDER_DEFAULT);
+    }
+
+    private void loadMediaOrder() {
+        int orderMode = loadMediaOrderModeFromConfig(getApplicationContext());
+        int checkId = mMediaListOrderNameRadioButton.getId();
+
+        switch (orderMode) {
+            case MEDIA_LIST_ORDER_NAME:
+                checkId = mMediaListOrderNameRadioButton.getId();
+                break;
+            case MEDIA_LIST_ORDER_DURATION:
+                checkId = mMediaListOrderDurationRadioButton.getId();
+                break;
+            case MEDIA_LIST_ORDER_SOURCE:
+                checkId = mMediaListOrderSourceRadioButton.getId();
+                break;
+            default:
+                break;
+        }
+
+        mMediaListOrderRadioGroup.check(checkId);
+    }
+
 
     public static void saveReplayModeToConfig(Context context, int replayMode) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         config.putInt(CONFIG_REPLAY_MODE, replayMode);
+    }
+
+    public static int loadReplayModeFromConfig(Context context) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        return config.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
     }
 
     public static void saveShowMaskToConfig(Context context, boolean showMask) {
@@ -360,13 +436,8 @@ public class MediaActivity extends Activity
         config.putBoolean(CONFIG_SHOW_MASK,showMask);
     }
 
-    public static int loadReplayModeToConfig(Context context) {
-        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        return config.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
-    }
-
-    private void loadReplayModeFromConfig() {
-        int playMode = loadReplayModeToConfig(getApplicationContext());
+    private void loadReplayMode() {
+        int playMode = loadReplayModeFromConfig(getApplicationContext());
         int checkId = mReplayAllRadioButton.getId();
         switch (playMode) {
             case PictureVideoPlayer.MEDIA_REPLAY_ONE:
@@ -382,7 +453,10 @@ public class MediaActivity extends Activity
                 break;
         }
         mReplayModeRadioGroup.check(checkId);
-        onCheckedChanged(null,checkId);
+
+        if (mPlayer != null) {
+            mPlayer.setReplayMode(playMode);
+        }
     }
 
     private void loadMediaListFromDatabase() {
@@ -433,49 +507,64 @@ public class MediaActivity extends Activity
 
         Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
         Call call = mClient.newCall(request);
+
+        // 只要收到返回,就让用户看到界面有一个刷新的效果
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mCloudMediaListRefreshBtn.setEnabled(false);
+            }
+        });
+
         call.enqueue(new okhttp3.Callback() {
             // 失败
             @Override
             public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mCloudMediaListRefreshBtn.setEnabled(true);
+                    }
+                });
+
+                Log.e(TAG,"onFailure" + e.toString());
             }
 
             // 成功
             @Override
             public void onResponse(Call call, Response response)
                     throws IOException {
+                // 只要收到返回,就让用户看到界面有一个刷新的效果
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mCloudMediaListRefreshBtn.setEnabled(true);
+                        mAllMediaListAdapter.clear();
+                        mAllMediaListAdapter.refresh();
+                    }
+                });
+
                 if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+                    throw new IOException("onResponse unexpected return code " + response);
 
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                     String htmlBody = response.body().string();
-
-                    Log.d(TAG, "~~debug~~" + htmlBody);
 
                     CloudListBean cloudList;
                     try {
                         cloudList = new Gson().fromJson(htmlBody, CloudListBean.class);
                     } catch (IllegalStateException e) {
                         cloudList = null;
-                        Log.e(TAG, "Gson parse error!");
+                        Log.e(TAG, "onResponse json parse error!" + e.toString());
                     }
 
-                    // 只要收到返回,就让用户看到界面有一个刷新的效果
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mAllMediaListAdapter.clear();
-                            mAllMediaListAdapter.refresh();
-                        }
-                    });
-
                     if (cloudList != null && cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-                        Log.d(TAG,"get "+cloudList.getResult().size() + " media info(s) from cloud");
+                        Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
                         new MediaBeanDao(MediaActivity.this).deleteItemsFromCloud();
 
                         if (!cloudList.getResult().isEmpty()) {
                             List<MediaBean> listCloud = new ArrayList<>();
-                            CovertUtil.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
+                            DataCovert.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
                             new MediaBeanDao(MediaActivity.this).insert(listCloud);
                         }
                     }
@@ -485,7 +574,7 @@ public class MediaActivity extends Activity
                     mHandler.sendMessage(msg);
 
                 } else {
-                    Log.e(TAG, "response http code undefine!");
+                    Log.e(TAG, "onResponse response http code undefine!");
                 }
             }
         });
@@ -554,6 +643,11 @@ public class MediaActivity extends Activity
         mReplayAllRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_all);
         mReplayOneRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_one);
         mReplayShuffleRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_shuffle);
+
+        mMediaListOrderRadioGroup = (RadioGroup) findViewById(R.id.rg_media_list_order_mode);
+        mMediaListOrderNameRadioButton = (RadioButton) findViewById(R.id.rb_media_order_name);
+        mMediaListOrderDurationRadioButton = (RadioButton) findViewById(R.id.rb_media_order_duration);
+        mMediaListOrderSourceRadioButton = (RadioButton) findViewById(R.id.rb_media_order_source);
 
         mAllMediaListView = (ListView) findViewById(R.id.lv_media_all_list);
         mUsbMediaListView = (ListView) findViewById(R.id.lv_media_usb_list);
@@ -787,6 +881,7 @@ public class MediaActivity extends Activity
         mCloudMediaListRefreshBtn.setOnClickListener(this);
 
         mReplayModeRadioGroup.setOnCheckedChangeListener(this);
+        mMediaListOrderRadioGroup.setOnCheckedChangeListener(this);
 
         prepareListView();
 
@@ -800,6 +895,14 @@ public class MediaActivity extends Activity
             @Override
             public void onMediaScanBegin() {
                 Log.i(TAG, "local media scan begin!");
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLocalMediaListRefreshBtn.setEnabled(false);
+                    }
+                });
+
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_LIST_CLEAN_LOCAL;
                 mHandler.sendMessage(msg);
@@ -824,6 +927,14 @@ public class MediaActivity extends Activity
             @Override
             public void onMediaScanDone() {
                 Log.i(TAG, "local media scan done!");
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLocalMediaListRefreshBtn.setEnabled(true);
+                    }
+                });
+
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
                 mHandler.sendMessage(msg);
@@ -875,7 +986,8 @@ public class MediaActivity extends Activity
 
         // mqtt更改了配置,并将mediaActivity叫起来
         loadPlaylistFromConfig();
-        loadReplayModeFromConfig();
+        loadReplayMode();
+        loadMediaOrder();
 
         loadMediaListFromDatabase();
         updateMultiActionButtonState();
@@ -1193,7 +1305,6 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_CLEAN_LOCAL:
-                    mLocalMediaListRefreshBtn.setEnabled(false);
                     mAllMediaListAdapter.clear();
                     mAllMediaListAdapter.refresh();
                     new MediaBeanDao(MediaActivity.this).deleteItemsLocalImport();
@@ -1235,9 +1346,20 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_DATABASE_UI_SYNC:
-                    mLocalMediaListRefreshBtn.setEnabled(true);
                     mAllMediaListAdapter.clear();
-                    for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
+
+                    int orderMode = loadMediaOrderModeFromConfig(getApplicationContext());
+
+                    List<MediaBean> allDataItems = new ArrayList<>();
+                    if (orderMode==MEDIA_LIST_ORDER_NAME) {
+                        allDataItems = new MediaBeanDao(MediaActivity.this).selectAllByNameOrder(true);
+                    } else if (orderMode==MEDIA_LIST_ORDER_DURATION) {
+                        allDataItems = new MediaBeanDao(MediaActivity.this).selectAllByDurationOrder(true);
+                    } else if (orderMode== MEDIA_LIST_ORDER_SOURCE) {
+                        allDataItems = new MediaBeanDao(MediaActivity.this).selectAllBySourceOrder(true);
+                    }
+
+                    for (MediaBean m:allDataItems)
                     {
                         mAllMediaListAdapter.addItem(new AllMediaListBean(m));
                         Log.d(TAG,m.toString());

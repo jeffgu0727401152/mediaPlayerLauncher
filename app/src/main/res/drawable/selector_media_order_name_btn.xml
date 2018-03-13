@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/img_media_order_name_p" android:state_checked="false" />
+    <item android:drawable="@drawable/img_media_order_name" android:state_checked="true"/>
+</selector>

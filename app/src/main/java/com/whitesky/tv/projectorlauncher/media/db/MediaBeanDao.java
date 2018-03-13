@@ -80,6 +80,39 @@ public class MediaBeanDao {
         return users;
     }
 
+    // 按照显示名查询出表中的所有数据
+    public List<MediaBean> selectAllByNameOrder(boolean ascending) {
+        List<MediaBean> items = null;
+        try {
+            items = dao.queryBuilder().orderBy(MediaBean.COLUMNNAME_ORDER_DESCRIPTION,ascending).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
+    // 按照播放时长查询出表中的所有数据
+    public List<MediaBean> selectAllByDurationOrder(boolean ascending) {
+        List<MediaBean> items = null;
+        try {
+            items = dao.queryBuilder().orderBy(MediaBean.COLUMNNAME_DURATION,ascending).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
+    // 按照文件类型查询出表中的所有数据
+    public List<MediaBean> selectAllBySourceOrder(boolean ascending) {
+        List<MediaBean> items = null;
+        try {
+            items = dao.queryBuilder().orderBy(MediaBean.COLUMNNAME_SOURCE,ascending).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
     // 删除media表中的所有数据
     public void deleteAll() {
         delete(selectAll());

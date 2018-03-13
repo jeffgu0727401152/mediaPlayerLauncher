@@ -22,12 +22,12 @@ import java.util.List;
  * 
  * @author xiaoxuan
  */
-public class AppUtils
+public class AppUtil
 {
     private Context mContext;
     public static final String[] mApkExceptList = new String[]{""};
     
-    public AppUtils(Context context)
+    public AppUtil(Context context)
     {
         mContext = context;
     }

@@ -2,6 +2,7 @@ package com.whitesky.tv.projectorlauncher.media.db;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.whitesky.tv.projectorlauncher.utils.ChineseCharToEnUtil;
 
 /**
  * Created by jeff on 18-2-4.
@@ -12,7 +13,7 @@ public class MediaBean {
     // 定义字段在数据库中的字段名
     public static final String COLUMNNAME_TITLE = "title";
     public static final String COLUMNNAME_ID = "id";
-    public static final String COLUMNNAME_DESCRIPTION = "description";
+    public static final String COLUMNNAME_ORDER_DESCRIPTION = "description";
     public static final String COLUMNNAME_SOURCE = "source";
     public static final String COLUMNNAME_TYPE = "type";
     public static final String COLUMNNAME_PATH = "path";
@@ -49,8 +50,8 @@ public class MediaBean {
     @DatabaseField(columnName = COLUMNNAME_TITLE, useGetSet = true, canBeNull = false, unique = false)
     private String title;
 
-    // 文件描述,暂时不用
-    @DatabaseField(columnName = COLUMNNAME_DESCRIPTION, useGetSet = true, canBeNull = true, unique = false)
+    // 中文拼音首字母描述,用于排序
+    @DatabaseField(columnName = COLUMNNAME_ORDER_DESCRIPTION, useGetSet = true, canBeNull = true, unique = false)
     private String description;
 
     // 文件的来源
@@ -90,6 +91,7 @@ public class MediaBean {
 
     public MediaBean(String name, int id, int type, int source, String path, int duration, long size, boolean isDownload) {
         this.title = name;
+        this.description = ChineseCharToEnUtil.getFirstSpell(name);
         this.type = type;
         this.id = id;
         this.source = source;

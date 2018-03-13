@@ -266,13 +266,6 @@
                     android:layout_marginLeft="@dimen/x8"
                     android:layout_centerVertical="true"
                     android:layout_gravity="center"/>
-                <Button
-                    android:id="@+id/bt_media_local_list_refresh"
-                    android:layout_width="@dimen/x30"
-                    android:layout_height="@dimen/x28"
-                    android:layout_marginLeft="@dimen/x20"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/selector_media_refresh_btn"/>
 
                 <TextView
                     android:id="@+id/tv_media_all_list_name"
@@ -286,19 +279,61 @@
                     android:textStyle="bold"
                     android:text="@string/str_media_list_all"/>
 
+                <!--播放模式按钮-->
+                <RadioGroup
+                    android:id="@+id/rg_media_list_order_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/x50"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <RadioButton
+                        android:id="@+id/rb_media_order_name"
+                        android:layout_width="@dimen/x30"
+                        android:layout_height="@dimen/x30"
+                        android:layout_marginLeft="@dimen/x10"
+                        android:layout_gravity="center"
+                        android:button="@null"
+                        android:background="@drawable/selector_media_order_name_btn" />
+                    <RadioButton
+                        android:id="@+id/rb_media_order_duration"
+                        android:layout_width="@dimen/x30"
+                        android:layout_height="@dimen/x30"
+                        android:layout_marginLeft="@dimen/x10"
+                        android:layout_gravity="center"
+                        android:button="@null"
+                        android:background="@drawable/selector_media_order_duration_btn" />
+                    <RadioButton
+                        android:id="@+id/rb_media_order_source"
+                        android:layout_width="@dimen/x30"
+                        android:layout_height="@dimen/x30"
+                        android:layout_marginLeft="@dimen/x10"
+                        android:layout_gravity="center"
+                        android:button="@null"
+                        android:background="@drawable/selector_media_order_source_btn" />
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/bt_media_local_list_refresh"
+                    android:layout_width="@dimen/x30"
+                    android:layout_height="@dimen/x28"
+                    android:layout_marginLeft="@dimen/x280"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/selector_media_refresh_local_btn"/>
+
                 <Button
                     android:id="@+id/bt_media_cloud_list_refresh"
                     android:layout_width="@dimen/x30"
-                    android:layout_height="@dimen/x28"
-                    android:layout_marginLeft="@dimen/x20"
+                    android:layout_height="@dimen/x25"
+                    android:layout_marginLeft="@dimen/x10"
                     android:layout_gravity="center_vertical"
-                    android:background="@drawable/selector_media_refresh_btn" />
+                    android:background="@drawable/selector_media_refresh_cloud_btn" />
+
 
                 <TextView
                     android:id="@+id/tv_media_all_list_capacity"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/x370"
+                    android:layout_marginLeft="@dimen/x20"
                     android:layout_gravity="right|center_vertical"
                     android:textAlignment="inherit"
                     android:textColor="@color/white"

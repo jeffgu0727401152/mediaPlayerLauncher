@@ -27,7 +27,7 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.app.adapter.AppGridAdapter;
 import com.whitesky.tv.projectorlauncher.app.bean.AppBean;
 import com.whitesky.tv.projectorlauncher.common.adapter.BaseRecyclerViewAdapter;
-import com.whitesky.tv.projectorlauncher.utils.AppUtils;
+import com.whitesky.tv.projectorlauncher.utils.AppUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class AppActivity extends Activity implements View.OnFocusChangeListener,
 
     private AppGridAdapter mApater;
 
-    private AppUtils mAppRead;
+    private AppUtil mAppRead;
 
     private FocusListenerLinearLayout mFocusLayout;
 
@@ -75,7 +75,7 @@ public class AppActivity extends Activity implements View.OnFocusChangeListener,
         intentFilter.addAction("android.intent.action.PACKAGE_REMOVED");
         intentFilter.addDataScheme("package");
         registerReceiver(mAppReceiver, intentFilter);
-        mAppRead = new AppUtils(this);
+        mAppRead = new AppUtil(this);
         // 读取所有的应用
         mAppData = mAppRead.getLaunchAppList();
         mAppGridView = (TvRecyclerView)findViewById(R.id.rv_app_list);
@@ -203,7 +203,7 @@ public class AppActivity extends Activity implements View.OnFocusChangeListener,
     public void onItemLongClick(int position, Object data)
     {
         String packageName = ((AppBean)data).getPackageName();
-        AppUtils.uninstallApp(this,packageName);
+        AppUtil.uninstallApp(this,packageName);
     }
     
     @Override
