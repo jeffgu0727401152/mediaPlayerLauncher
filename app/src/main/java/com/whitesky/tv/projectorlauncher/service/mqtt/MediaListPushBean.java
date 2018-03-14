@@ -1,4 +1,4 @@
-package com.whitesky.tv.projectorlauncher.service;
+package com.whitesky.tv.projectorlauncher.service.mqtt;
 
 import android.os.Parcel;
 import android.os.Parcelable;

@@ -60,7 +60,7 @@
             android:layout_marginTop="@dimen/x60"
             android:background="@drawable/button_selector_admin"
             android:focusable="true"
-            android:text="登陆"
+            android:text="@string/title_admin_account_login_btn"
             android:textColor="@color/white"
             android:visibility="invisible" />
 
@@ -87,7 +87,7 @@
 
         <TextView
             android:id="@+id/tv_admin_account_1"
-            android:layout_width="@dimen/x160"
+            android:layout_width="@dimen/x200"
             android:layout_height="@dimen/x56"
             android:layout_alignBottom="@+id/iv_admin_account_2"
             android:layout_alignStart="@+id/ll_admin_account_1"

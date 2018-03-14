@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -68,11 +69,16 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 public class PictureVideoPlayer extends FrameLayout implements View.OnClickListener{
     private final String TAG = this.getClass().getSimpleName();
 
-    //重放模式
+    // 重放模式
     public static final int  MEDIA_REPLAY_ONE = 0;
     public static final int  MEDIA_REPLAY_ALL = 1;
     public static final int  MEDIA_REPLAY_SHUFFLE = 2;
     public static final int  MEDIA_REPLAY_MODE_DEFAULT = MEDIA_REPLAY_ALL;
+
+    // 播放错误种类定义
+    public static final int ERROR_FILE_PATH_NOT_FOUND = -1;
+    public static final int ERROR_PLAYLIST_INVALIDED_POSITION = -2;
+    public static final int ERROR_VIDEO_PLAY_ERROR = -3;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
@@ -174,7 +180,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         void onMediaPlayFullScreenSwitch(boolean fullScreen);
         void onMediaPlayStop();
         void onMediaPlayCompletion();
-        void onMediaPlayError();
+        void onMediaPlayError(int error, int position);
         void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps);
     }
 
@@ -418,14 +424,17 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder surfaceCreated");
-            if (mPlayList != null && mPlayList.size() > 0
-                    && mStartRightNow==true) {
+            if (mPlayList != null
+                    && mPlayList.size() > 0
+                    && mStartRightNow==true
+                    && MediaActivity.localMassStorageMounted(mContext)) {
                 // 每次surface从隐藏到出现都是一次surfaceCreated,所以这里必须mStartRightNow来标志这次的surfaceCreated是由于MediaActivity onResume引起的
                 mediaPlay(0);
                 fullScreenSwitch(true);
-                mStartRightNow = false;
                 Log.i(TAG, "SurfaceHolder auto play media");
             }
+            // 强制清空mStartRightNow标志,防止下次图片视频切换再自动播放
+            mStartRightNow = false;
         }
 
         @Override
@@ -521,7 +530,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError();
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND, ListView.INVALID_POSITION);
             }
             return;
         }
@@ -583,7 +592,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError();
+                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION,position);
             }
             return;
         }
@@ -595,7 +604,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError();
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,position);
             }
             return;
         }
@@ -750,7 +759,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError();
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,mPlayPosition);
             }
             return;
         }
@@ -866,7 +875,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                     mPlayState = MEDIA_IDLE;
                     if (mOnMediaEventListener!=null)
                     {
-                        mOnMediaEventListener.onMediaPlayError();
+                        // todo 改变了播放列表顺序后,这个mPlayPosition的更新
+                        mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_ERROR,mPlayPosition);
                     }
                     return false;
                 }
@@ -921,7 +931,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError();
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,mPlayPosition);
             }
             return;
         }

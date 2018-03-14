@@ -7,7 +7,7 @@ import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 

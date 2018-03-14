@@ -44,8 +44,9 @@ import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whitesky.tv.projectorlauncher.service.MediaListPushBean;
-import com.whitesky.tv.projectorlauncher.service.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
+import com.whitesky.tv.projectorlauncher.service.mqtt.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.PlayModePushBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -92,6 +93,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_SOURCE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
@@ -332,10 +334,9 @@ public class MediaActivity extends Activity
     }
 
     @Override
-    public void onMediaPlayError() {
+    public void onMediaPlayError(int error, int position) {
         //todo error handler,在播放列表里标记出来
         Log.e(TAG,"~~debug~~ onMediaPlayError");
-        //mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
     }
     // 媒体播放的回调函数=============结束
 
@@ -555,19 +556,28 @@ public class MediaActivity extends Activity
                         cloudList = new Gson().fromJson(htmlBody, CloudListBean.class);
                     } catch (IllegalStateException e) {
                         cloudList = null;
-                        Log.e(TAG, "onResponse json parse error!" + e.toString());
+                        Log.e(TAG, "except in json parse!" + e.toString());
                     }
 
-                    if (cloudList != null && cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-                        Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
-                        new MediaBeanDao(MediaActivity.this).deleteItemsFromCloud();
+                    if  (cloudList != null) {
+                        if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                            Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
+                            new MediaBeanDao(MediaActivity.this).deleteItemsFromCloud();
 
-                        if (!cloudList.getResult().isEmpty()) {
-                            List<MediaBean> listCloud = new ArrayList<>();
-                            DataCovert.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
-                            new MediaBeanDao(MediaActivity.this).insert(listCloud);
+                            if (!cloudList.getResult().isEmpty()) {
+                                List<MediaBean> listCloud = new ArrayList<>();
+                                DataCovert.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
+                                new MediaBeanDao(MediaActivity.this).insert(listCloud);
+                            }
+                        } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
+                            Log.d(TAG,"onResponse device not login yet,need user login this device!");
+                        } else {
+                            Log.d(TAG,"onResponse unknown status!");
                         }
+                    } else {
+                        Log.e(TAG, "cloud media list json parse error! " + htmlBody);
                     }
+
 
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
@@ -1214,9 +1224,9 @@ public class MediaActivity extends Activity
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
 
-                    if (Arrays.asList(mMountExceptList).contains(storagePath)) {
-                        //可能是开机,等待这里的设备挂载以后再去播放
-                        Log.i(TAG, "mount device in ExceptList, power on complete, start play media");
+                    if (LOCAL_MASS_STORAGE_PATH.equals(storagePath)) {
+                        //挂载了硬盘设备,很可能是开机,直接触发播放
+                        Log.i(TAG, "mount sata device, power on complete, start play media");
                         if (mPlayer.getPlayState()==MEDIA_IDLE) {
                             mPlayer.fullScreenSwitch(true);
                             mPlayer.mediaPlay(0);
@@ -1336,6 +1346,9 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD:
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_START);
+                    Log.i("TAG",intent.getAction().toString());
+                    startService(intent);
 //todo download
                     break;
 
@@ -1408,7 +1421,7 @@ public class MediaActivity extends Activity
         });
     }
 
-    private static boolean localMassStorageMounted(Context context) {
+    public static boolean localMassStorageMounted(Context context) {
         String[] mountList = FileUtil.getMountVolumePaths(context);
         if (Arrays.asList(mountList).contains(LOCAL_MASS_STORAGE_PATH)) {
             return true;

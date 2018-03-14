@@ -17,6 +17,7 @@ public class HttpConstants
     public static final String URL_GET_SHARE_LIST = "https://screen.whiteskycn.com/api/getShareList";
 
     public static final String LOGIN_STATUS_SUCCESS = "000000";
+    public static final String LOGIN_STATUS_NOT_YET = "200101";
     public static final String VERSION_CHECK_STATUS_SUCCESS = "000000";
 
     public static int HTTP_STATUS_SUCCESS = 200;

@@ -1,6 +1,7 @@
 package com.whitesky.tv.projectorlauncher.settings;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -181,7 +182,9 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
         switch (view.getId())
         {
             case R.id.bt_format_disk:
-                formatSataDisk();
+                if (!ActivityManager.isUserAMonkey()) {
+                    formatSataDisk();
+                }
                 break;
         }
     }

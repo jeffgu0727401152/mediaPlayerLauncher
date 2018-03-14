@@ -52,9 +52,19 @@
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.AccountActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.app.AppActivity" />
-        <!-- Mqtt Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name="com.whitesky.tv.projectorlauncher.service.MqttSslService" />
+
+        <service android:name="org.eclipse.paho.android.service.MqttService"
+            android:persistent="true"/>
+        <service android:name="com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService"
+            android:persistent="true"/>
+        <service android:name="com.whitesky.tv.projectorlauncher.service.download.DownloadService"
+            android:persistent="true">
+            <intent-filter >
+                <action android:name="com.whitesky.tv.DOWNLOAD_START"/>
+                <action android:name="com.whitesky.tv.DOWNLOAD_STOP"/>
+            </intent-filter>
+        </service>
+
 
     </application>
 

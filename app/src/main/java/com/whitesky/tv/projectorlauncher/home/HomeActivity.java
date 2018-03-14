@@ -8,8 +8,6 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -27,21 +25,16 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
 import com.whitesky.tv.projectorlauncher.app.AppActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
-import com.whitesky.tv.projectorlauncher.service.MqttSslService;
+import com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.settings.SysSettingActivity;
+import com.whitesky.tv.projectorlauncher.utils.ServiceStatusUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
-
-import javax.net.ssl.SSLContext;
-
-import okhttp3.OkHttpClient;
 
 
 public class HomeActivity extends Activity implements View.OnClickListener, View.OnHoverListener, FocusBorder.OnFocusCallback
 {
     private final String TAG = this.getClass().getSimpleName();
-
-    private final static int MSG_HOME_REPORT_INFO = 1;
 
     private ImageView mEthConnectImg;
     private ImageView mWifiConnectImg;
@@ -59,7 +52,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     //遥控光标框
     private FocusBorder mFocusBorder;
 
-    public final int SCROLLING_MARQUEE_SPEED = 2;
+    public final int SCROLLING_MARQUEE_SPEED = 1;
     public final int SCROLLING_MARQUEE_TIMES = 1314;
     private boolean focusableInTouchMode;
 
@@ -135,7 +128,8 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         mBackClickCount = 0;
 
         // 如果有播放列表,直接跳转去mediaActivity
-        if (MediaActivity.hasPlaylistConfig(this) && !((MainApplication)getApplication()).mFirstInitDone) {
+        if (MediaActivity.hasPlaylistConfig(this)
+                && !((MainApplication)getApplication()).mFirstInitDone) {
             Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
             if (intentMedia.resolveActivity(getPackageManager())!=null) {
                 startActivity(intentMedia);
@@ -233,6 +227,10 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
                 break;
 
             case R.id.iv_home2_1:
+                if (!ServiceStatusUtil.isServiceRunning(this,MqttSslService.class)) {
+                    ToastUtil.showToast(this,"service died");
+                }
+
                 if (mBackClickCount>=5) {
                     mLogoClickCount++;
                 }

@@ -1,4 +1,4 @@
-package com.whitesky.tv.projectorlauncher.service;
+package com.whitesky.tv.projectorlauncher.service.mqtt;
 
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -81,6 +81,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_CMD_ACTION_LOGINDONE  = "logindone";
     private final String STR_MQTT_CMD_ACTION_REBOOT     = "reboot";
     private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
+    private final String STR_MQTT_CMD_ACTION_RAW        = "rawcommand";
 
     private final String STR_MQTT_REQ_ACTION_INFO       = "info";// 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息，地理位置）
     private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist";//请求回应设备当前硬盘中 共享中已下载的文件列表
@@ -97,6 +98,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_CMD_LOGIN_DONE = 200;
     private final static int MSG_CMD_REBOOT = 201;
     private final static int MSG_CMD_OTA = 202;
+    private final static int MSG_CMD_RAW = 203;
     // request
     private final static int MSG_REQUEST_INFO = 300;
     private final static int MSG_REQUEST_PLAYLIST = 301;
@@ -272,7 +274,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                             } else {
 
-                                Log.e(TAG, "heartBeat response http code undefine!");
+                                Log.e(TAG, "heartBeat response http code undefine! " + response.toString());
 
                             }
                         }
@@ -372,6 +374,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_OTA)) {
                 message.what = MSG_CMD_OTA;
+
+            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_RAW)) {
+                message.what = MSG_CMD_RAW;
+
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -451,6 +457,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_CMD_OTA:
                     // todo ota
+                    break;
+
+                case MSG_CMD_RAW:
+                    // todo exec raw cmd
                     break;
 
                 case MSG_REQUEST_INFO:

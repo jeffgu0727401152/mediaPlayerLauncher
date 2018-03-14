@@ -27,7 +27,7 @@ public class ReadFileUtil
             mUrlConnection = mUrl.openConnection();
             mUrlConnection.setConnectTimeout(15000);
             mUrlConnection.setReadTimeout(15000);
-            FileLenth = mUrlConnection.getContentLength();
+            FileLenth = mUrlConnection.getContentLength();// todo 经检返回值
             inputStream = mUrlConnection.getInputStream();
             SpeedModel.totalBytes = FileLenth;
             b = new byte[FileLenth];

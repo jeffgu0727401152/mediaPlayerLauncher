@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.whiteskycn.tv.projectorlauncher", appContext.getPackageName());
+        assertEquals("com.whitesky.tv.projectorlauncher", appContext.getPackageName());
     }
 }
