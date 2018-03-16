@@ -1,4 +1,4 @@
-package com.whitesky.tv.projectorlauncher.service.mqtt;
+package com.whitesky.tv.projectorlauncher.service.mqtt.bean;
 
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;

@@ -13,8 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
@@ -312,7 +310,6 @@ public class MediaScanUtil {
         isNeedSize = needSize;
     }
 
-    //内置存储设备用
     public interface MediaFileScanListener {
         /**
          * 查找到一个媒体文件的时候所需要进行的操作

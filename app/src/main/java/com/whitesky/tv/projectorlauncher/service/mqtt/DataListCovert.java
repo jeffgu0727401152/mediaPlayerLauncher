@@ -1,64 +1,32 @@
-package com.whitesky.tv.projectorlauncher.media;
+package com.whitesky.tv.projectorlauncher.service.mqtt;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whitesky.tv.projectorlauncher.service.mqtt.MediaListPushBean;
-import com.whitesky.tv.projectorlauncher.utils.FileUtil;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
+import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 
 import java.io.File;
 import java.util.List;
 
-import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FOLDER;
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_NONE;
+import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_FREE;
 
 /**
  * Created by jeff on 18-3-9.
  */
 
-public class DataCovert {
-    private static final String TAG = DataCovert.class.getSimpleName();
-
-    public static final int PATH_FILE_EXPORT_TO_USB = 0;
-    public static final int PATH_FILE_IMPORT_TO_LOCAL = 1;
-    public static final int PATH_FILE_FROM_CLOUD = 2;
-
-    public static String pathCovert(int pathType, String path) {
-        String result = "";
-        String basePath = "";
-
-        switch (pathType) {
-            case PATH_FILE_EXPORT_TO_USB:
-                // todo
-                break;
-            case PATH_FILE_IMPORT_TO_LOCAL:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
-                break;
-            case PATH_FILE_FROM_CLOUD:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER;
-                break;
-            default:
-                break;
-        }
-
-        if (basePath.isEmpty()) {
-            return "";
-        }
-
-        result = basePath + File.separator + FileUtil.getFilePrefix(path) + "." + FileUtil.getFileExtension(path);
-        Log.d(TAG, "pathCovert:" + result);
-        return result;
-    }
+public class DataListCovert {
+    private static final String TAG = DataListCovert.class.getSimpleName();
 
     // 将云端推送过来的播放列表,转换为本地播放列表格式
-    public static void covertPlayList(Context context, List<PlayListBean> desList, List<MediaListPushBean> srcList) {
+    public static void covertCloudPushToPlayList(Context context, List<PlayListBean> desList, List<MediaListPushBean> srcList) {
         if (desList==null || srcList==null) {
             return;
         }
@@ -80,7 +48,7 @@ public class DataCovert {
     }
 
     // 将云端获取的文件列表,转换为本地数据库列表格式
-    public static void covertMediaList(Context context, List<MediaBean> desList, List<Result> srcList) {
+    public static void covertCloudResultToMediaList(Context context, List<MediaBean> desList, List<Result> srcList) {
         if (desList==null || srcList==null) {
             return;
         }
@@ -88,12 +56,24 @@ public class DataCovert {
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
             Result srcItem = srcList.get(i);
+            String localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_FREE, srcItem.getName());
+
             MediaBean desItem = new MediaBean(srcItem.getName(),
                     srcItem.getId(),
                     MediaScanUtil.getMediaTypeFromPath(srcItem.getName()),
-                    srcItem.getSource(),pathCovert(PATH_FILE_FROM_CLOUD,srcItem.getName()),
-                    0,0,false);
+                    srcItem.getSource(), localStoreLocation,0,0);
             desItem.setUrl(srcItem.getUrl());
+
+            // 判断本地是否存在
+            File localStoreFile = new File(localStoreLocation);
+            if (localStoreFile.exists() && !localStoreFile.isDirectory()) {
+                desItem.setDownloadState(STATE_DOWNLOADED);
+                desItem.setSize(localStoreFile.length());
+                // 媒体时间的获取在后续的云文件夹遍历中做
+            } else {
+                desItem.setDownloadState(STATE_NONE);
+            }
+
             desList.add(desItem);
         }
     }

@@ -1,5 +1,8 @@
 package com.whitesky.tv.projectorlauncher.media.db;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.whitesky.tv.projectorlauncher.utils.ChineseCharToEnUtil;
@@ -9,7 +12,61 @@ import com.whitesky.tv.projectorlauncher.utils.ChineseCharToEnUtil;
  */
 
 @DatabaseTable(tableName = "media")
-public class MediaBean {
+public class MediaBean  implements Parcelable {
+
+    public static final Creator<MediaBean> CREATOR = new Creator<MediaBean>()
+    {
+        @Override
+        public MediaBean createFromParcel(Parcel in)
+        {
+            return new MediaBean(in);
+        }
+
+        @Override
+        public MediaBean[] newArray(int size)
+        {
+            return new MediaBean[size];
+        }
+    };
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags)
+    {
+        dest.writeString(path);
+        dest.writeInt(id);
+        dest.writeString(title);
+        dest.writeString(description);
+        dest.writeInt(source);
+        dest.writeInt(type);
+        dest.writeInt(duration);
+        dest.writeLong(size);
+        dest.writeInt(downloadState);
+        dest.writeLong(downloadProgress);
+        dest.writeString(url);
+    }
+
+    @Override
+    public int describeContents()
+    {
+        return 0;
+    }
+
+    protected MediaBean(Parcel in)
+    {
+        path = in.readString();
+        id = in.readInt();
+        title = in.readString();
+        description = in.readString();
+        source = in.readInt();
+        type = in.readInt();
+        duration = in.readInt();
+        size = in.readLong();
+        downloadState = in.readInt();
+        downloadProgress = in.readLong();
+        url = in.readString();
+    }
+
+
     // 定义字段在数据库中的字段名
     public static final String COLUMNNAME_TITLE = "title";
     public static final String COLUMNNAME_ID = "id";
@@ -19,7 +76,8 @@ public class MediaBean {
     public static final String COLUMNNAME_PATH = "path";
     public static final String COLUMNNAME_DURATION = "duration";
     public static final String COLUMNNAME_SIZE = "size";
-    public static final String COLUMNNAME_ISDOWNLOAD = "isDownload";
+    public static final String COLUMNNAME_DOWNLOAD_STATE = "downloadState";
+    public static final String COLUMNNAME_DOWNLOAD_PROGRESS = "downloadProgress";
     public static final String COLUMNNAME_URL = "url";
 
     public static final int ID_LOCAL = 0;
@@ -38,68 +96,78 @@ public class MediaBean {
     public static final int SOURCE_CLOUD_PUBLIC = 4;        //客户上传到云端的视频,并定义为共享
     public static final int SOURCE_CLOUD_PAY = 5;           //云端付费下载视频
 
+    /**新增下载*/
+    public static final int STATE_NONE = -1;
+    /** 开始下载 */
+    public static final int STATE_START = 0;
+    /** 下载中 */
+    public static final int STATE_DOWNLOADING = 1;
+    /** 等待中 */
+    public static final int STATE_WAITING = 2;
+    /** 暂停 */
+    public static final int STATE_PAUSED = 3;
+    /** 完毕  */
+    public static final int STATE_DOWNLOADED = 4;
+    /** 下载失败 */
+    public static final int STATE_ERROR = 5;
+    /** 删除下载成功 */
+    public static final int STATE_DELETE = 6;
+
     //文件的存储路径,全局唯一作为主键
     @DatabaseField(id = true, columnName = COLUMNNAME_PATH, useGetSet = true, canBeNull = false,unique = true)
-    private String path;
+    private String path = "";
 
     // 文件id,本地用U盘拷入的文件ID都为0,从云端下载的媒体文件才有有效ID
     @DatabaseField(columnName = COLUMNNAME_ID, useGetSet = true, canBeNull = false, unique = false)
-    private int id;
+    private int id = ID_LOCAL;
 
     // 文件的UI显示名,一般就是去掉了扩展名的文件名
     @DatabaseField(columnName = COLUMNNAME_TITLE, useGetSet = true, canBeNull = false, unique = false)
-    private String title;
+    private String title = "";
 
     // 中文拼音首字母描述,用于排序
     @DatabaseField(columnName = COLUMNNAME_ORDER_DESCRIPTION, useGetSet = true, canBeNull = true, unique = false)
-    private String description;
+    private String description = "";
 
     // 文件的来源
     @DatabaseField(columnName = COLUMNNAME_SOURCE, useGetSet = true, canBeNull = false, unique = false)
-    private int source;
+    private int source = SOURCE_UNKNOWN;
 
     // 文件的媒体类型
     @DatabaseField(columnName = COLUMNNAME_TYPE, useGetSet = true, canBeNull = false, unique = false)
-    private int type;
+    private int type = MEDIA_UNKNOWN;
 
     //文件的时长
     @DatabaseField(columnName = COLUMNNAME_DURATION, useGetSet = true, canBeNull = true, unique = false)
-    private int duration;
+    private int duration = 0;
 
     //文件的大小
     @DatabaseField(columnName = COLUMNNAME_SIZE, useGetSet = true, canBeNull = true, unique = false)
-    private long size;
+    private long size = 0L;
 
-    //是否已经从云端下载到本地
-    @DatabaseField(columnName = COLUMNNAME_ISDOWNLOAD, useGetSet = true, canBeNull = true, unique = false)
-    private boolean isDownload;
+    //云端文件的下载状态
+    @DatabaseField(columnName = COLUMNNAME_DOWNLOAD_STATE, useGetSet = true, canBeNull = true, unique = false)
+    private int downloadState = STATE_NONE;
+
+    //云端文件的下载进度
+    @DatabaseField(columnName = COLUMNNAME_DOWNLOAD_PROGRESS, useGetSet = true, canBeNull = true, unique = false)
+    private long downloadProgress = 0L;
 
     //云端文件的下载位置
     @DatabaseField(columnName = COLUMNNAME_URL, useGetSet = true, canBeNull = true, unique = false)
-    private String url;
+    private String url = "";
 
-    public MediaBean() {
-        title = "";
-        source = SOURCE_UNKNOWN;
-        type = MEDIA_UNKNOWN;
-        path = "";
-        duration = 0;
-        size = 0L;
-        isDownload = false;
-        url = "";
-    }
+    public MediaBean() {}
 
-    public MediaBean(String name, int id, int type, int source, String path, int duration, long size, boolean isDownload) {
+    public MediaBean(String name, int id, int type, int source, String path, int duration, long size) {
         this.title = name;
-        this.description = ChineseCharToEnUtil.getFirstSpell(name);
         this.type = type;
         this.id = id;
         this.source = source;
         this.path = path;
         this.duration = duration;
         this.size = size;
-        this.isDownload = isDownload;
-        this.url = "";
+        this.description = ChineseCharToEnUtil.getFirstSpell(name);
     }
 
     public int getId() {
@@ -166,20 +234,20 @@ public class MediaBean {
         this.size = size;
     }
 
-    public boolean getIsDownload() {
-        return isDownload;
+    public int getDownloadState() {
+        return downloadState;
     }
 
-    public void setIsDownload(boolean download) {
-        isDownload = download;
+    public void setDownloadState(int state) {
+        downloadState = state;
     }
 
-    public boolean isDownload() {
-        return isDownload;
+    public long getDownloadProgress() {
+        return downloadProgress;
     }
 
-    public void setDownload(boolean download) {
-        isDownload = download;
+    public void setDownloadProgress(long downloadProgress) {
+        this.downloadProgress = downloadProgress;
     }
 
     public String getUrl() {
@@ -200,8 +268,10 @@ public class MediaBean {
                 ", type=" + type +
                 ", source=" + source +
                 ", duration=" + duration +
-                ", isDownload=" + isDownload +
+                ", size=" + size +
                 ", url=" + url +
+                ", downloadState=" + downloadState +
+                ", downloadProgress=" + downloadProgress +
                 '}';
     }
 }

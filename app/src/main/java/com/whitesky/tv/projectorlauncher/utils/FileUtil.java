@@ -230,33 +230,7 @@ public class FileUtil
         }
 
         File file = new File(path);
-        long size = getFileSize(file);
-        return size;
-    }
-
-    /**
-     * 获取指定文件大小(单位：字节)
-     *
-     * @param file
-     * @return
-     */
-    public static long getFileSize(File file) {
-
-        if (file == null || file.isDirectory()) {
-            Log.e(TAG,"getFileSize file error!");
-            return 0;
-        }
-
-        long size = 0;
-        if (file.exists()) {
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                size = fis.available();
-                fis.close();
-            } catch (Exception e) {
-                Log.e(TAG,"getFileSize error!" + e);
-            }
-        }
+        long size = file.length();
         return size;
     }
 

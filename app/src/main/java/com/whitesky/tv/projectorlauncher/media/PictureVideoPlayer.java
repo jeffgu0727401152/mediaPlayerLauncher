@@ -32,7 +32,6 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.maskController.MaskController;
-import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
@@ -54,8 +53,6 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPl
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_COMPLETE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_VIDEO;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_CENTER;
 import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_XY;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
@@ -427,7 +424,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             if (mPlayList != null
                     && mPlayList.size() > 0
                     && mStartRightNow==true
-                    && MediaActivity.localMassStorageMounted(mContext)) {
+                    && MediaActivity.isLocalMassStorageMounted(mContext)) {
                 // 每次surface从隐藏到出现都是一次surfaceCreated,所以这里必须mStartRightNow来标志这次的surfaceCreated是由于MediaActivity onResume引起的
                 mediaPlay(0);
                 fullScreenSwitch(true);
@@ -803,7 +800,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 }
             }
 
-            long size = FileUtil.getFileSize(file);
+            long size = file.length();
 
             if(mOnMediaEventListener !=null)
             {
@@ -946,7 +943,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         if (TextUtils.isEmpty(mimeType)) {
             mimeType = "image/unknown";
         }
-        long size = FileUtil.getFileSize(file);
+        long size = file.length();
 
         if(mOnMediaEventListener !=null)
         {

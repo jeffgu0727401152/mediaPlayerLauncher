@@ -8,6 +8,8 @@ import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
 import java.util.List;
 
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
+
 /**
  * Created by jeff on 18-2-4.
  */
@@ -123,6 +125,17 @@ public class MediaBeanDao {
         List<MediaBean> retList = null;
         try {
             retList = dao.queryBuilder().where().eq(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return retList;
+    }
+
+    // 查询出所有云端下载到本地的文件
+    public List<MediaBean> selectDownloadedItemsFromCloud() {
+        List<MediaBean> retList = null;
+        try {
+            retList = dao.queryBuilder().where().gt(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).and().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,STATE_DOWNLOADED).query();
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -1,4 +1,4 @@
-package com.whitesky.tv.projectorlauncher.service.mqtt;
+package com.whitesky.tv.projectorlauncher.service.mqtt.bean;
 
 /**
  * Created by jeff on 18-3-5.

@@ -33,8 +33,6 @@ import java.util.List;
 
 import scut.carson_ho.kawaii_loadingview.Kawaii_LoadingView;
 
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
-
 /**
  * Created by xiaoxuan on 2017/10/13.
  */

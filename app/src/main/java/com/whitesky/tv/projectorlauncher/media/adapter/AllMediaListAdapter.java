@@ -8,6 +8,7 @@ import com.whitesky.sdk.widget.ViewHolder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
 import com.whitesky.tv.projectorlauncher.media.bean.AllMediaListBean;
+import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -23,6 +25,10 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PRIVATE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PUBLIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADING;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_ERROR;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_PAUSED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_WAITING;
 
 /**
  * Created by jeff on 18-1-16.
@@ -75,9 +81,12 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 
         holder.setText(R.id.tv_media_title, item.getMediaData().getTitle());
 
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-        formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-        String hms = formatter.format(item.getMediaData().getDuration());
+        String hms = " -- : -- : -- ";
+        if (item.getMediaData().getDuration()!=0) {
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
+            hms = formatter.format(item.getMediaData().getDuration());
+        }
         holder.setText(R.id.tv_media_duration, hms);
 
         // 设置来源图标
@@ -90,7 +99,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             case SOURCE_CLOUD_PAY:
             case SOURCE_CLOUD_PRIVATE:
             case SOURCE_CLOUD_PUBLIC:
-                if (item.getMediaData().isDownload()) {
+                if (item.getMediaData().getDownloadState()== STATE_DOWNLOADED) {
                     holder.setImageResource(R.id.iv_media_source, R.drawable.img_media_source_cloud_download);
                 } else {
                     holder.setImageResource(R.id.iv_media_source, R.drawable.img_media_source_cloud);
@@ -101,14 +110,35 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
                 break;
         }
 
+        // 设置下载状态
+        if (item.getMediaData().getSource()!=SOURCE_LOCAL) {
+            if (item.getMediaData().getDownloadState() == STATE_WAITING) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, "waiting...");
+            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOADING) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, "downloading..." + String.valueOf(item.getMediaData().getDownloadProgress()));
+            } else if(item.getMediaData().getDownloadState() == STATE_PAUSED) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, "pause");
+            } else if (item.getMediaData().getDownloadState() == STATE_ERROR) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, "error");
+            } else {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
+            }
+        }
+
         // 决定功能按钮使能与否
-        if (item.getMediaData().getSource()!=SOURCE_LOCAL && !item.getMediaData().isDownload()) {
+        if (item.getMediaData().getSource()!=SOURCE_LOCAL
+                && item.getMediaData().getDownloadState()!= STATE_DOWNLOADED) {
             holder.getButton(R.id.bt_media_download).setEnabled(true);
             holder.getButton(R.id.bt_media_preview).setEnabled(false);
+            holder.getButton(R.id.bt_media_delete).setEnabled(false);
         } else {
             holder.getButton(R.id.bt_media_download).setEnabled(false);
             holder.getButton(R.id.bt_media_preview).setEnabled(true);
-            // todo 这个按钮没有disable态,记得要图
+            holder.getButton(R.id.bt_media_delete).setEnabled(true);
         }
 
         holder.getButton(R.id.bt_media_delete).setOnClickListener(new View.OnClickListener() {
@@ -174,5 +204,14 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
             return true;
         }
         return false;
+    }
+
+    public void update(MediaBean data) {
+        for (AllMediaListBean it:listDatas) {
+            if (it.getMediaData().getPath().equals(data.getPath())) {
+                it.setMediaData(data);
+                return;
+            }
+        }
     }
 }

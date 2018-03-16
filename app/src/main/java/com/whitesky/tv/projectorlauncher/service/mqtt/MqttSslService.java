@@ -27,7 +27,11 @@ import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
-import com.whitesky.tv.projectorlauncher.media.DataCovert;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.DeviceInfoResponseBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListResponseBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
@@ -70,7 +74,7 @@ import static java.lang.Thread.sleep;
 
 public class MqttSslService extends Service implements MqttUtil.MqttMessageCallback
 {
-    private final static int SERVICE_ID = 1001;
+    private final static int MQTT_SERVICE_ID = 1001;
 
     private final String STR_MQTT_MSG_TYPE_CMD  = "command~~~~~";
     private final String STR_MQTT_MSG_TYPE_REQ  = "request~~~~~";
@@ -145,7 +149,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         builer.setContentIntent(pendingIntent);         //设置点击通知后的操作
 
         Notification notification = builer.build(); //将Builder对象转变成普通的notification
-        startForeground(SERVICE_ID, notification);  //让Service变成前台Service,并在系统的状态栏显示出来
+        startForeground(MQTT_SERVICE_ID, notification);  //让Service变成前台Service,并在系统的状态栏显示出来
 
         super.onCreate();
     }
@@ -460,6 +464,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_CMD_RAW:
+                    ToastUtil.showToast(getApplicationContext(),rawStr.substring(100));
                     // todo exec raw cmd
                     break;
 
@@ -487,6 +492,16 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_REQUEST_SHARELIST:
+                    responseDataList.clear();
+                    for (MediaBean m:new MediaBeanDao(getApplicationContext()).selectDownloadedItemsFromCloud())
+                    {
+                        responseDataList.add(new MediaListResponseBean(m));
+                    }
+                    jsonStr = gson.toJson(responseDataList);
+                    rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+
+                    Log.d(TAG,"SHARELIST~~~~"+rawStr + jsonStr);
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
@@ -537,7 +552,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     } else {
 
                         pList = new ArrayList<>();
-                        DataCovert.covertPlayList(getApplicationContext(), pList, pushList);
+                        DataListCovert.covertCloudPushToPlayList(getApplicationContext(), pList, pushList);
                         MediaActivity.savePlaylistToConfig(getApplication(), pList);
                         if (!pList.isEmpty()) {
                             // 立刻开始播放

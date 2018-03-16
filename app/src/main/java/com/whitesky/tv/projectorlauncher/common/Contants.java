@@ -13,6 +13,9 @@ public class Contants
     public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
     public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
+    public static final String ACTION_DOWNLOAD_STATE_UPDATE = "com.whitesky.tv.download.update";
+    public static final String EXTRA_DOWNLOAD_STATE_CONTEXT = "mqtt_push_context";
+
     public static final String PREF_CONFIG = "PREF_CONFIG";             // 存放app的所有配置信息
 
     public static final String CONFIG_PLAYLIST = "playList";            // 播放列表
@@ -31,10 +34,13 @@ public class Contants
     public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过
 
     // MediaActivity +++
-    public static final String LOCAL_SATA_MOUNT_PATH = "/mnt/sata";  // 硬盘的固定挂载目录
+    public static final String LOCAL_SATA_MOUNT_PATH = "/mnt/sata";         // 硬盘的固定挂载目录
     public static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sata/disk";  // 硬盘的固定挂载目录
-    public static final String CLOUD_MEDIA_FOLDER = "cloud";                // 云端下载文件的储存目录
     public static final String LOCAL_MEDIA_FOLDER = "local";                // usb导入本地的文件位置
+    public static final String CLOUD_MEDIA_FOLDER = "cloud";                // 云端下载文件的储存总目录
+    public static final String CLOUD_MEDIA_TEMP_FOLDER = "temp";                // 云端下载文件的储存总目录
+    public static final String CLOUD_MEDIA_PRIVATE_FOLDER = "private";      // 用户私人上传文件的储存目录
+    public static final String CLOUD_MEDIA_FREE_FOLDER = "free";            // 公司或用户上传的共享文件的储存目录
 
     public static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";  //扫描usb媒体文件的路径
     public static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";        //导出到usb设备的路径

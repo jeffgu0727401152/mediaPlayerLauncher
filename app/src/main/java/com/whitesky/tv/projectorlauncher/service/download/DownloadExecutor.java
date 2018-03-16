@@ -1,20 +1,18 @@
 package com.whitesky.tv.projectorlauncher.service.download;
 
+/**
+ * Created by jeff on 18-3-14.
+ */
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
-
-/**
- * Created by jeff on 18-3-13.
- */
-
 
 /**
  *  线程池工具
  */
-public class DownLoadExecutor {
+public class DownloadExecutor {
 
     /** 请求线程池队列，同时允许1个线程操作 */
     private static ThreadPoolExecutor mPool ;
@@ -24,7 +22,7 @@ public class DownLoadExecutor {
     //最大线程数
     private static final int mMaximumPoolSize = 1;
     //线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
-    private static final long mKeepAliveTime = 5L;
+    private static final long mKeepAliveTime = 10L;
 
     /** 执行任务，当线程池处于关闭，将会重新创建新的线程池 */
     public synchronized static void execute(Runnable run) {
@@ -32,14 +30,16 @@ public class DownLoadExecutor {
             return;
         }
         if (mPool == null || mPool.isShutdown()) {
-            //参数说明
-            //当线程池中的线程小于mCorePoolSize，直接创建新的线程加入线程池执行任务
-            //当线程池中的线程数目等于mCorePoolSize，将会把任务放入任务队列BlockingQueue中
-            //当BlockingQueue中的任务放满了，将会创建新的线程去执行，
-            //但是当总线程数大于mMaximumPoolSize时，将会抛出异常，交给RejectedExecutionHandler处理
-            //mKeepAliveTime是线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
-            //ThreadFactory是每次创建新的线程工厂
-            mPool = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory(), new AbortPolicy());
+            // 参数说明
+            // 当线程池中的线程小于mCorePoolSize，直接创建新的线程加入线程池执行任务
+            // 当线程池中的线程数目等于mCorePoolSize，将会把任务放入任务队列BlockingQueue中
+            // 当BlockingQueue中的任务放满了，将会创建新的线程去执行，
+            // 但是当总线程数大于mMaximumPoolSize时，将会抛出异常，交给RejectedExecutionHandler处理
+            // mKeepAliveTime是线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
+            // ThreadFactory是每次创建新的线程工厂
+            mPool = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime,
+                    TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory(),
+                    new ThreadPoolExecutor.AbortPolicy());
         }
         mPool.execute(run);
     }
@@ -72,7 +72,7 @@ public class DownLoadExecutor {
     /** 平缓关闭单任务线程池，但是会确保所有已经加入的任务都将会被执行完毕才关闭 */
     public synchronized static void shutdown() {
         if (mPool != null && (!mPool.isShutdown() || mPool.isTerminating())) {
-            mPool.shutdownNow();
+            mPool.shutdown();
         }
     }
 }

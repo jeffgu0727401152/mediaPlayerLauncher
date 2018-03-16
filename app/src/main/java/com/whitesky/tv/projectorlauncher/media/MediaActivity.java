@@ -2,7 +2,6 @@ package com.whitesky.tv.projectorlauncher.media;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,7 +9,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -45,22 +43,18 @@ import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
-import com.whitesky.tv.projectorlauncher.service.mqtt.MediaListPushBean;
-import com.whitesky.tv.projectorlauncher.service.mqtt.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.DataListCovert;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
+import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -85,7 +79,6 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MO
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DEFAULT;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DURATION;
@@ -96,9 +89,14 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_NONE;
 
 /**
  * Created by jeff on 18-1-16.
@@ -141,7 +139,6 @@ public class MediaActivity extends Activity
     private static final String BUNDLE_KEY_MEDIA_DURATION = "duration";
     private static final String BUNDLE_KEY_MEDIA_PATH = "path";
     private static final String BUNDLE_KEY_MEDIA_NAME = "name";
-
 
     private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
 
@@ -194,10 +191,8 @@ public class MediaActivity extends Activity
     private CheckBox mUsbMediaListCheckBox;
 
     private TextView mUsbListTitle;
-    private Deque<String> mUsbMediaCopyDeque = new ArrayDeque<String>();                        //需要复制的文件
+    private Deque<String> mCopyDeque = new ArrayDeque<String>();                        //需要复制的文件
     private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();               //需要删除的文件
-    private Deque<String> mMediaSameDeque = new ArrayDeque<String>();                           //复制中重复冲突的文件
-    private Deque<String> mCopyDoneDeque = new ArrayDeque<String>();                           //复制完成的文件
 
     private TextView mUsbCapacityTextView;
     private TextView mLocalCapacityTextView;
@@ -207,7 +202,7 @@ public class MediaActivity extends Activity
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;
 
-    private final BroadcastReceiver mqttEventReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver serviceEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -222,7 +217,7 @@ public class MediaActivity extends Activity
 
                 mPlayer.mediaStop();
 
-                DataCovert.covertPlayList(getApplicationContext(),mPlayListBeans,pushList);
+                DataListCovert.covertCloudPushToPlayList(getApplicationContext(),mPlayListBeans,pushList);
 
                 mPlayListAdapter.refresh();
                 savePlaylistToConfig();
@@ -246,6 +241,12 @@ public class MediaActivity extends Activity
 
                 saveShowMaskToConfig(getApplicationContext(),pushReq.getMask()==0?false:true);
                 mPlayer.getMaskController().showDefaultMask();
+            } else if (action.equals(Contants.ACTION_DOWNLOAD_STATE_UPDATE)) {
+                MediaBean bean = intent.getParcelableExtra(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT);
+                Log.d("~~dbg~~ download",bean.toString());
+                mAllMediaListAdapter.update(bean);
+                mAllMediaListAdapter.refresh();
+
             }
         }
     };
@@ -320,7 +321,7 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps) {
         // 在UI显示播放信息
-        setMediaInfoUI(name, mimeType, width, height, size, bps);
+        setMediaInfoUi(name, mimeType, width, height, size, bps);
 
         for (PlayListBean bean : mPlayListAdapter.getListDatas()) {
             bean.setPlaying(false);
@@ -400,7 +401,7 @@ public class MediaActivity extends Activity
         return config.getInt(CONFIG_MEDIA_LIST_ORDER, MEDIA_LIST_ORDER_DEFAULT);
     }
 
-    private void loadMediaOrder() {
+    private void loadMediaListOrderMode() {
         int orderMode = loadMediaOrderModeFromConfig(getApplicationContext());
         int checkId = mMediaListOrderNameRadioButton.getId();
 
@@ -420,7 +421,6 @@ public class MediaActivity extends Activity
 
         mMediaListOrderRadioGroup.check(checkId);
     }
-
 
     public static void saveReplayModeToConfig(Context context, int replayMode) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
@@ -460,17 +460,17 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void loadMediaListFromDatabase() {
+    private void loadMediaListFromDb() {
         // 初始化本地媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
             Log.i(TAG, "empty media database, so scan and download media list");
-            String localMediaStorePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+            String localMediaStorePath = PathUtil.localFileStoragePath();
             FileUtil.createDir(localMediaStorePath);
             int ret = mLocalMediaScanner.safeScanning(localMediaStorePath);
             if (ret==-2) {
-                Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
-                ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found");
+                Log.e(TAG,PathUtil.localFileStoragePath() + " not found!");
+                ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
             }
             loadMediaListFromCloud();
         } else {
@@ -566,11 +566,12 @@ public class MediaActivity extends Activity
 
                             if (!cloudList.getResult().isEmpty()) {
                                 List<MediaBean> listCloud = new ArrayList<>();
-                                DataCovert.covertMediaList(MediaActivity.this, listCloud, cloudList.getResult());
+                                DataListCovert.covertCloudResultToMediaList(MediaActivity.this, listCloud, cloudList.getResult());
                                 new MediaBeanDao(MediaActivity.this).insert(listCloud);
                             }
                         } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
                             Log.d(TAG,"onResponse device not login yet,need user login this device!");
+                            ToastUtil.showToast(getApplicationContext(),getResources().getString(R.string.str_media_cloud_file_need_login_toast));
                         } else {
                             Log.d(TAG,"onResponse unknown status!");
                         }
@@ -578,6 +579,8 @@ public class MediaActivity extends Activity
                         Log.e(TAG, "cloud media list json parse error! " + htmlBody);
                     }
 
+                    // 云端列表更新后必须做一次与本地已经下载文件的匹配
+                    updateDbCloudItem();
 
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
@@ -588,6 +591,49 @@ public class MediaActivity extends Activity
                 }
             }
         });
+    }
+
+    // 对于每一个云文件夹中存在的文件,在bd中插入或更新一条
+    // 以后删除文件的时候,对于没有url的文件需要提示云端可能已经删除,需要确认
+    private void updateDbCloudItem() {
+        File cloudFreeFolder = new File(PathUtil.cloudFreeFileStoragePath());
+        updateCloudDbItemByTraversal(cloudFreeFolder);
+
+        File cloudPrivateFolder = new File(PathUtil.cloudPrivateFileStoragePath());
+        updateCloudDbItemByTraversal(cloudPrivateFolder);
+    }
+
+    private void updateCloudDbItemByTraversal(File cloudStorageFolder) {
+        String[] filenames = cloudStorageFolder.list();
+        int type = MEDIA_UNKNOWN;
+        int duration = 0;
+        long size = 0;
+
+        if (filenames != null) {
+            for (String name : filenames) {
+                String path = cloudStorageFolder + File.separator + name;
+                File file = new File(path);
+                type = MediaScanUtil.getMediaTypeFromPath(name);
+                if (type==MEDIA_PICTURE || type==MEDIA_VIDEO) {
+                    duration = mLocalMediaScanner.getMediaDuration(path);
+                }
+
+                MediaBean bean = new MediaBeanDao(getApplicationContext()).queryById(path);
+
+                if (bean!=null) {
+                    // 直接更新记录的播放时间
+                    bean.setDuration(duration);
+                } else {
+                    // 可能是云端下载的,但是云端已经删除了
+                    size = file.length();
+                    bean = new MediaBean(name,ID_LOCAL,type,SOURCE_CLOUD_FREE,path,duration,size);
+                    bean.setDownloadState(STATE_DOWNLOADED);
+                    bean.setUrl("");
+                }
+
+                new MediaBeanDao(getApplicationContext()).insert(bean);
+            }
+        }
     }
 
     public void savePlaylistToConfig() {
@@ -740,11 +786,14 @@ public class MediaActivity extends Activity
                 // 如果是双击
                 if (ViewUtil.isFastDoubleClick()) {
                     MediaBean mediaItem = mAllMediaListBeans.get(position).getMediaData();
-                    if (mediaItem.isDownload()) {
-                        mPlayListAdapter.addItem(new PlayListBean(mediaItem));
-                    } else {
-                        ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+                    if (mediaItem.getSource()!=SOURCE_LOCAL) {
+                        if (mediaItem.getDownloadState()!= STATE_DOWNLOADED) {
+                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+                            return;
+                        }
                     }
+
+                    mPlayListAdapter.addItem(new PlayListBean(mediaItem));
                 }
             }
         });
@@ -756,8 +805,8 @@ public class MediaActivity extends Activity
             public void doItemCopy(int position) {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_USB_COPY_TO_INTERNAL;
-                mUsbMediaCopyDeque.clear();
-                mUsbMediaCopyDeque.push(mUsbMediaListAdapter.getItem(position).getPath());
+                mCopyDeque.clear();
+                mCopyDeque.push(mUsbMediaListAdapter.getItem(position).getPath());
                 mHandler.sendMessage(msg);
             }
 
@@ -997,9 +1046,9 @@ public class MediaActivity extends Activity
         // mqtt更改了配置,并将mediaActivity叫起来
         loadPlaylistFromConfig();
         loadReplayMode();
-        loadMediaOrder();
+        loadMediaListOrderMode();
 
-        loadMediaListFromDatabase();
+        loadMediaListFromDb();
         updateMultiActionButtonState();
 
         // 监听usb插拔事件
@@ -1011,11 +1060,11 @@ public class MediaActivity extends Activity
         registerReceiver(usbMountEventReceiver, usbFilter);
 
         // 监听mqtt控制命令
-        IntentFilter mqttFilter = new IntentFilter();
-        mqttFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
-        mqttFilter.addAction(Contants.ACTION_PUSH_PLAYMODE);
-        registerReceiver(mqttEventReceiver, mqttFilter);
-
+        IntentFilter serviceEventFilter = new IntentFilter();
+        serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
+        serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYMODE);
+        serviceEventFilter.addAction(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
+        registerReceiver(serviceEventReceiver, serviceEventFilter);
 
         mPlayer.setStartRightNow(true);
 
@@ -1023,7 +1072,7 @@ public class MediaActivity extends Activity
         discoverMountDevice();
 
         // 开线程去查询本地容量
-        updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
+        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
 
         ((MainApplication)getApplication()).isMediaActivityForeground = true;
         ((MainApplication)getApplication()).mFirstInitDone = true;
@@ -1035,7 +1084,7 @@ public class MediaActivity extends Activity
             mPlayer.mediaStop();
         }
         unregisterReceiver(usbMountEventReceiver);
-        unregisterReceiver(mqttEventReceiver);
+        unregisterReceiver(serviceEventReceiver);
 
         super.onPause();
 
@@ -1094,12 +1143,12 @@ public class MediaActivity extends Activity
         switch (view.getId()) {
 
             case R.id.bt_media_local_list_refresh:
-                String localMediaStorePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+                String localMediaStorePath = PathUtil.localFileStoragePath();
                 FileUtil.createDir(localMediaStorePath);
                 int ret = mLocalMediaScanner.safeScanning(localMediaStorePath);
                 if (ret==-2) {
-                    Log.e(TAG,"LOCAL_MASS_STORAGE_PATH not found!");
-                    ToastUtil.showToast(getApplicationContext(),"LOCAL_MASS_STORAGE_PATH not found!");
+                    Log.e(TAG,PathUtil.localFileStoragePath() + " not found!");
+                    ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
                 }
                 break;
 
@@ -1125,14 +1174,14 @@ public class MediaActivity extends Activity
 
 
             case R.id.bt_media_multi_copy_to_left:
-                mUsbMediaCopyDeque.clear();
+                mCopyDeque.clear();
                 for (UsbMediaListBean data : mUsbMediaListAdapter.getListDatas()) {
                     if (data.isSelected()) {
-                        mUsbMediaCopyDeque.add(data.getPath());
+                        mCopyDeque.add(data.getPath());
                     }
                 }
 
-                if (!mUsbMediaCopyDeque.isEmpty()) {
+                if (!mCopyDeque.isEmpty()) {
                     Message msg = mHandler.obtainMessage();
                     msg.what = MSG_USB_COPY_TO_INTERNAL;
                     mHandler.sendMessage(msg);
@@ -1156,11 +1205,15 @@ public class MediaActivity extends Activity
             case R.id.bt_media_multi_add:
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     if (data.isSelected()) {
-                        if (data.getMediaData().isDownload()) {
-                            mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
-                        } else {
-                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+
+                        if (data.getMediaData().getSource()!=SOURCE_LOCAL) {
+                            if (data.getMediaData().getDownloadState()!= STATE_DOWNLOADED) {
+                                ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+                                continue;
+                            }
                         }
+
+                        mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
                     }
                 }
                 break;
@@ -1169,18 +1222,18 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.bt_media_multi_copy_to_right:
-                mUsbMediaCopyDeque.clear();
+                mCopyDeque.clear();
                 for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
                     if (data.isSelected()) {
                         if (data.getMediaData().getSource()==MediaBean.SOURCE_LOCAL) {
-                            mUsbMediaCopyDeque.add(data.getMediaData().getPath());
+                            mCopyDeque.add(data.getMediaData().getPath());
                         } else {
                             ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_could_not_export_toast));
                         }
                     }
                 }
 
-                if (!mUsbMediaCopyDeque.isEmpty()) {
+                if (!mCopyDeque.isEmpty()) {
                     copyInternalFileToUsb();
                 }
                 break;
@@ -1190,8 +1243,7 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void updateMultiActionButtonState()
-    {
+    private void updateMultiActionButtonState() {
         if (mAllMediaListAdapter.hasItemSelected()) {
             // 额外需要检查是否存在usb设备
             if (mUsbPartitionSpinner.getSelectedItemPosition()!=AdapterView.INVALID_POSITION) {
@@ -1272,7 +1324,7 @@ public class MediaActivity extends Activity
                         //mUsbListTitle.setText(currentPath);
 
                         // 开线程去查询currentPath容量
-                        updateCapacity(false,currentPath);
+                        updateCapacityUi(currentPath);
 
                         // 由扫描来更新usb media列表
                         int ret = mUsbMediaScanner.safeScanning(currentPath + File.separator + USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER);
@@ -1293,7 +1345,8 @@ public class MediaActivity extends Activity
                     int duration = b.getInt(BUNDLE_KEY_MEDIA_DURATION);
                     long size = b.getLong(BUNDLE_KEY_MEDIA_SIZE);
 
-                    MediaBean data = new MediaBean(name, ID_LOCAL, type, MediaBean.SOURCE_LOCAL, path, duration, size, true);
+                    MediaBean data = new MediaBean(name, ID_LOCAL, type, MediaBean.SOURCE_LOCAL, path, duration, size);
+                    data.setDownloadState(STATE_DOWNLOADED);
                     new MediaBeanDao(MediaActivity.this).insert(data);
                     break;
 
@@ -1321,7 +1374,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_USB_COPY_TO_INTERNAL:
-                    if (!mUsbMediaCopyDeque.isEmpty()) {
+                    if (!mCopyDeque.isEmpty()) {
                         copyUsbFileToInternal();
                     }
                     break;
@@ -1346,7 +1399,8 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD:
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_START);
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
+                    intent.putExtra("path", ((MediaBean)msg.obj).getPath());
                     Log.i("TAG",intent.getAction().toString());
                     startService(intent);
 //todo download
@@ -1395,7 +1449,16 @@ public class MediaActivity extends Activity
         }
     };
 
-    private void setMediaInfoUI(final String name,final String mimeType, final int width, final int height, final long size, final int bps) {
+    public static boolean isLocalMassStorageMounted(Context context) {
+        String[] mountList = FileUtil.getMountVolumePaths(context);
+        if (Arrays.asList(mountList).contains(LOCAL_MASS_STORAGE_PATH)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void setMediaInfoUi(final String name, final String mimeType, final int width, final int height, final long size, final int bps) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1412,35 +1475,16 @@ public class MediaActivity extends Activity
         });
     }
 
-    private void updateUsbDeviceCapacityUI(final String text) {
+    private void updateTextViewOnUiThread(final TextView textView, final String text) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mUsbCapacityTextView.setText(text);
+                textView.setText(text);
             }
         });
     }
 
-    public static boolean localMassStorageMounted(Context context) {
-        String[] mountList = FileUtil.getMountVolumePaths(context);
-        if (Arrays.asList(mountList).contains(LOCAL_MASS_STORAGE_PATH)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private void updateLocalCapacityUI(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mLocalCapacityTextView.setText(text);
-            }
-        });
-    }
-
-    private void updateCapacity(final boolean internal, final String path)
-    {
+    private void updateCapacityUi(final String path) {
         mCapacityUpdateService.execute(
                 new Thread() {
                     @Override
@@ -1449,28 +1493,28 @@ public class MediaActivity extends Activity
                             String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path) -
                                     FileUtil.getAvailableCapacity(path));
                             String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path));
-                            if (internal){
-                                updateLocalCapacityUI(fsUsed + "/" + fsCapacity);
+
+                            if (path.contains(LOCAL_SATA_MOUNT_PATH)) {
+                                updateTextViewOnUiThread(mLocalCapacityTextView, fsUsed + "/" + fsCapacity);
                             } else {
-                                updateUsbDeviceCapacityUI(fsUsed + "/" + fsCapacity);
+                                updateTextViewOnUiThread(mUsbCapacityTextView, fsUsed + "/" + fsCapacity);
                             }
                         } catch (Exception e) {
-                            Log.e(TAG, "mCapacityUpdateService error!" + e);
+                            Log.e(TAG, "Update Capacity error!" + e);
                         }
                     }
                 });
     }
 
-    private void updateCopyItemToMediaList()
-    {
+    private void updateMediaListUiAfterCopy(final Deque<String> items) {
         mCopyDoneUpdateService.execute(
                 new Thread() {
                     @Override
                     public void run() {
                         try {
                             String path;
-                            while(!mCopyDoneDeque.isEmpty()) {
-                                path = mCopyDoneDeque.pop();
+                            while(!items.isEmpty()) {
+                                path = items.pop();
                                 Message msg = mHandler.obtainMessage();
                                 msg.what = MSG_LOCAL_MEDIA_DATABASE_UPDATE;
                                 Bundle b = new Bundle();
@@ -1481,7 +1525,6 @@ public class MediaActivity extends Activity
                                 b.putLong(BUNDLE_KEY_MEDIA_SIZE, FileUtil.getFileSize(path));
                                 msg.setData(b);
                                 mHandler.sendMessage(msg);
-
                             }
 
                             // 让UI与数据库 sync一次
@@ -1507,216 +1550,121 @@ public class MediaActivity extends Activity
         mUsbPartitionAdapter.notifyDataSetChanged();
     }
 
-    private class CopyTaskParam {
-        static final int DIRECT_INTERNAL_TO_USB = 0;
-        static final int DIRECT_USB_TO_INTERNAL = 1;
-        Deque<String> fromList = new ArrayDeque<String>();
-        int direct;
-        int count;
-        long totalSize;
-    }
-
-    private class CopyTask extends AsyncTask<CopyTaskParam, Integer, Void> {
-
-        private ProgressDialog dialog;
-        private CopyTaskParam param;
-
-        public CopyTask() {
-            dialog = new ProgressDialog(MediaActivity.this);
-            dialog.setTitle(getResources().getString(R.string.str_media_file_copy_process_dialog_title));
-            dialog.setMessage(getResources().getString(R.string.str_media_file_copy_process_dialog_prompt));
-            dialog.setIndeterminate(false);
-            dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            dialog.setCancelable(false);
-        }
-
+    private class CopyToUsbCallback implements CopyTask.CopyDoneListener {
         @Override
-        protected void onPreExecute() {
-            dialog.show();
-        }
+        public void onAllCopyDoneCallback(Deque<String> copyDoneItem) {
+            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_copy_toast) + copyDoneItem.size());
 
-        @Override
-        protected Void doInBackground(CopyTaskParam... params) {
-            long time = System.currentTimeMillis();
-            param = params[0];
-            try {
-                long totalNow = 0;
-
-                Log.i(TAG, "Copy file(s) total length: " + param.totalSize);
-
-                mCopyDoneDeque.clear();
-                byte[] bytes = new byte[USB_COPY_BUFFER_SIZE];
-
-                while (!param.fromList.isEmpty()) {
-                    String sourcePath = param.fromList.pop();
-                    File fromFile = new File(sourcePath);
-
-                    String toPath = copyTargetPathGenerate(param.direct,sourcePath);
-                    if (toPath.isEmpty()) {
-                        throw new IOException();
-                    }
-                    File toFile = FileUtil.createFile(toPath);
-
-                    OutputStream out = new BufferedOutputStream(new FileOutputStream(toFile));
-                    InputStream input = new BufferedInputStream(new FileInputStream(fromFile));
-
-                    int count;
-                    while ((count = input.read(bytes)) != -1) {
-                        out.write(bytes, 0, count);
-                        totalNow += count;
-                        float progress = (float)totalNow/(float)param.totalSize*100;
-                        publishProgress((int)progress);
-                    }
-
-                    // 不在此处查询文件的播放时间与文件大小，因为额外的emmc访问会影响到拷贝操作的速度，这边假如队列
-                    mCopyDoneDeque.push(toPath);
-
-                    out.close();
-                    input.close();
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "error in CopyTask!", e);
-            }
-
-            Log.i(TAG, "total copy time " + (System.currentTimeMillis() - time) + "ms");
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            dialog.dismiss();
-            ToastUtil.showToast(MediaActivity.this,getResources().getString(R.string.str_media_file_copy_toast) + param.count);
-            if (param.direct == CopyTaskParam.DIRECT_INTERNAL_TO_USB) {
-                // 向外复制完成后,刷新一次usb列表
-                if (mUsbPartitionAdapter.getCount() > 0) {
-                    Message newMsg = mHandler.obtainMessage();
-                    newMsg.what = MSG_USB_PARTITION_SWITCH;
-                    newMsg.arg1 = mUsbPartitionSpinner.getSelectedItemPosition();
-
-                    if (mUsbPartitionSpinner.getSelectedItem()==null) {
-                        newMsg.obj = "none";
-                    } else {
-                        newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
-                    }
-
-                    mHandler.sendMessage(newMsg);
-                }
-            } else {
-
-                if(!mCopyDoneDeque.isEmpty())
-                {
-                    updateCopyItemToMediaList();
-                }
-                updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            dialog.setProgress(values[0]);
+            // 由于拷贝到usb的目录是export目录,不是media目录,不会被扫描出来,所以不用再刷新usb列表
+//            if (mUsbPartitionAdapter.getCount() > 0) {
+//                Message newMsg = mHandler.obtainMessage();
+//                newMsg.what = MSG_USB_PARTITION_SWITCH;
+//                newMsg.arg1 = mUsbPartitionSpinner.getSelectedItemPosition();
+//
+//                if (mUsbPartitionSpinner.getSelectedItem() == null) {
+//                    newMsg.obj = "none";
+//                } else {
+//                    newMsg.obj = mUsbPartitionSpinner.getSelectedItem().toString();
+//                }
+//
+//                mHandler.sendMessage(newMsg);
+//            }
         }
     }
 
-    private String copyTargetPathGenerate(int direct, String path) {
-        String result = "";
-        String basePath = "";
-        if (direct==CopyTaskParam.DIRECT_USB_TO_INTERNAL) {
-            basePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
-        } else {
-            if (mUsbPartitionSpinner.getSelectedItem()==null)
-            {
-                //没有找到usb设备，不用生成目录了
-                return "";
+    private class CopyToInternalCallback implements CopyTask.CopyDoneListener {
+        @Override
+        public void onAllCopyDoneCallback(Deque<String> copyDoneItem) {
+            ToastUtil.showToast(MediaActivity.this,getResources().getString(R.string.str_media_file_copy_toast) + copyDoneItem.size());
+            if(!copyDoneItem.isEmpty()) {
+                updateMediaListUiAfterCopy(copyDoneItem);
+                updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
             }
-
-            // 类似于 /mnt/sda/sda1 + / + export
-            basePath = mUsbPartitionSpinner.getSelectedItem().toString()
-                    + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
         }
-
-        result = basePath + File.separator + FileUtil.getFilePrefix(path) + "." + FileUtil.getFileExtension(path);
-        Log.d(TAG, "target path Generate:" + result);
-        return result;
     }
 
-    private void copyUsbFileToInternal() {
-        CopyTaskParam param = new CopyTaskParam();
-        param.direct = CopyTaskParam.DIRECT_USB_TO_INTERNAL;
-        param.count = 0;
-        mMediaSameDeque.clear();
-        while (!mUsbMediaCopyDeque.isEmpty()) {
-            String path = mUsbMediaCopyDeque.pop();
+    private void checkCopyDequeAndCopy(CopyTask.CopyTaskParam param) {
+        Deque<String> sameMediaDeque = new ArrayDeque<String>();
+        sameMediaDeque.clear();
+        while (!mCopyDeque.isEmpty()) {
+            String path = mCopyDeque.pop();
 
             // 重复文件检测
-            if (new MediaBeanDao(MediaActivity.this).queryById(copyTargetPathGenerate(CopyTaskParam.DIRECT_USB_TO_INTERNAL,path))!=null)
+            String toPath = PathUtil.pathGenerate(path,param.desFolder);
+            File desFolderFile = new File(param.desFolder);
+            for (File file: desFolderFile.listFiles())
             {
-                Log.i(TAG,"found same media file! " + path + ":" + copyTargetPathGenerate(CopyTaskParam.DIRECT_USB_TO_INTERNAL,path));
-                mMediaSameDeque.push(path);
+                if (file.getAbsolutePath().equals(toPath)) {
+                    Log.i(TAG,"found same media file! " + file.getAbsolutePath());
+                    sameMediaDeque.push(path);
+                    break;
+                }
             }
 
             param.totalSize += FileUtil.getFileSize(path);
             param.fromList.push(path);
-            param.count++;
         }
 
-        if (!mMediaSameDeque.isEmpty())
+        if (!sameMediaDeque.isEmpty())
         {
-            CopyUserChoose(param);
-        } else {
-            if (param.count > 0) {
-                new CopyTask().execute(param);
-            }
-        }
-    }
-
-    private void copyInternalFileToUsb() {
-        CopyTaskParam param = new CopyTaskParam();
-        param.direct = CopyTaskParam.DIRECT_INTERNAL_TO_USB;
-        param.count = 0;
-        mMediaSameDeque.clear();
-        while (!mUsbMediaCopyDeque.isEmpty()) {
-            String path = mUsbMediaCopyDeque.pop();
-
-            // 重复文件检测
-            for (UsbMediaListBean bean:mUsbMediaListAdapter.getListDatas())
-            {
-                if (bean.getPath().equals(copyTargetPathGenerate(CopyTaskParam.DIRECT_INTERNAL_TO_USB, path)))
-                {
-                    Log.i(TAG,"found same media file! " + path + ":" + copyTargetPathGenerate(CopyTaskParam.DIRECT_INTERNAL_TO_USB, path));
-                    mMediaSameDeque.push(path);
-                }
-            }
-
-            param.totalSize += FileUtil.getFileSize(path);
-            param.fromList.push(path);
-            param.count++;
-        }
-
-        // 此处检查判断是否存在usb设备
-        if (mUsbPartitionSpinner.getSelectedItemPosition()==AdapterView.INVALID_POSITION) {
-            Log.e(TAG,"no usb device to copy to!");
+            copyOrNotAsUserChoose(param,sameMediaDeque);
             return;
         }
 
-        if (!mMediaSameDeque.isEmpty())
-        {
-            CopyUserChoose(param);
-        } else {
-            if (param.count > 0) {
-                new CopyTask().execute(param);
-            }
+        if (param.fromList.size() > 0) {
+            new CopyTask(this).execute(param);
         }
     }
 
-    private void CopyUserChoose(final CopyTaskParam param ) {
+    private void copyUsbFileToInternal() {
+        if (!isLocalMassStorageMounted(this)) {
+            Log.w(TAG,"local sata device not mount! just return");
+            ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
+        }
+
+        CopyTask.CopyTaskParam param = new CopyTask.CopyTaskParam();
+        param.desFolder = PathUtil.localFileStoragePath();
+        param.callback = new CopyToInternalCallback();
+
+        checkCopyDequeAndCopy(param);
+    }
+
+    private void copyInternalFileToUsb() {
+        // 此处检查判断是否存在usb设备
+        if (mUsbPartitionSpinner.getSelectedItemPosition()==AdapterView.INVALID_POSITION) {
+            Log.w(TAG,"usb device not plug in! just return");
+            return;
+        }
+
+        String usbExportFolder = mUsbPartitionSpinner.getSelectedItem().toString();
+        if (usbExportFolder==null || usbExportFolder.isEmpty()) {
+            Log.w(TAG,"usb device not plug in! just return");
+            ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
+            return;
+        }
+
+        CopyTask.CopyTaskParam param = new CopyTask.CopyTaskParam();
+        param.desFolder = usbExportFolder + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
+        param.callback = new CopyToUsbCallback();
+
+        checkCopyDequeAndCopy(param);
+    }
+
+    private void copyOrNotAsUserChoose(final CopyTask.CopyTaskParam param, final Deque<String> sameItems) {
+        String title = String.valueOf(sameItems.size()) + getResources().getString(R.string.str_media_file_copy_same_dialog_title);
+        String msg = "";
+        for (String tmp : sameItems) {
+            msg += FileUtil.getFileName(tmp) + "\n";
+        }
+
         new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
-                .setTitle(R.string.str_media_file_copy_same_dialog_title)
-                .setMessage(mMediaSameDeque.toString())
+                .setTitle(title)
+                .setMessage(msg)
                 .setNegativeButton(R.string.str_media_dialog_copy_continue, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (param.count > 0) {
-                            new CopyTask().execute(param);
+                        if (param.fromList.size() > 0) {
+                            new CopyTask(MediaActivity.this).execute(param);
                         }
                     }
                 })
@@ -1729,17 +1677,16 @@ public class MediaActivity extends Activity
                 .setNeutralButton(R.string.str_media_dialog_copy_skip, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Iterator itr = mMediaSameDeque.iterator();
+                        Iterator itr = sameItems.iterator();
                         String tmp;
                         while (itr.hasNext()) {
                             tmp = (String)itr.next();
                             param.fromList.remove(tmp);
                             param.totalSize -= FileUtil.getFileSize(tmp);
-                            param.count--;
                         }
 
-                        if (param.count > 0) {
-                            new CopyTask().execute(param);
+                        if (param.fromList.size() > 0) {
+                            new CopyTask(MediaActivity.this).execute(param);
                         }
                     }
                 })
@@ -1789,10 +1736,20 @@ public class MediaActivity extends Activity
                                 removePlaying = false;
                             }
 
-                            // 从列表显示中删除
-                            mAllMediaListAdapter.removeItem(needDeleteDiskData);
-                            // 从数据库删除
-                            new MediaBeanDao(MediaActivity.this).delete(needDeleteDiskData.getMediaData());
+                            if (needDeleteDiskData.getMediaData().getSource()==SOURCE_LOCAL) {
+                                // 从列表显示中删除
+                                mAllMediaListAdapter.removeItem(needDeleteDiskData);
+                                // 从数据库删除
+                                new MediaBeanDao(MediaActivity.this).delete(needDeleteDiskData.getMediaData());
+                            } else {
+                                MediaBean tmp = needDeleteDiskData.getMediaData();
+                                tmp.setDownloadProgress(0);
+                                tmp.setDownloadState(STATE_NONE);
+                                tmp.setDuration(0);
+                                mAllMediaListAdapter.update(needDeleteDiskData.getMediaData());
+                                // 更新数据库
+                                new MediaBeanDao(MediaActivity.this).update(tmp);
+                            }
 
                             //从磁盘删除
                             FileUtil.deleteFile(needDeleteDiskData.getMediaData().getPath());
@@ -1800,7 +1757,7 @@ public class MediaActivity extends Activity
                             deleteCount++;
                         }
 
-                        updateCapacity(true, LOCAL_MASS_STORAGE_PATH);
+                        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
                         mAllMediaListAdapter.refresh();
                         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
                     }
