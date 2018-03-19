@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
@@ -51,8 +52,6 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
 
     private final MyHandler mHandler = new MyHandler(this);
 
-    private boolean isFormatPadding = false;
-    
     private Button mBtnFormat;
     
     private TextView mTvFormatInfo;
@@ -99,6 +98,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     @Override
     protected void onPause() {
         unregisterReceiver(formatMountEventReceiver);
+        ((MainApplication)getApplication()).isBusyInFormat = false;
         super.onPause();
     }
 
@@ -122,7 +122,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
-        if (isFormatPadding)
+        if (((MainApplication)getApplication()).isBusyInFormat)
         {
             switch (keyCode)
             {
@@ -137,7 +137,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     }
 
     private void showDefaultView() {
-        isFormatPadding = false;
+        ((MainApplication)getApplication()).isBusyInFormat = false;
         mIvLogo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setText(R.string.str_format_description_default);
@@ -146,7 +146,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     }
 
     private void showSataFormatDoneView() {
-        isFormatPadding = false;
+        ((MainApplication)getApplication()).isBusyInFormat = false;
         mIvLogo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setText(R.string.str_format_description_done);
@@ -155,7 +155,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     }
 
     private void showSataNotFoundView() {
-        isFormatPadding = false;
+        ((MainApplication)getApplication()).isBusyInFormat = false;
         mIvLogo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setText(R.string.str_format_not_found_sata);
@@ -165,7 +165,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
 
     private void showFormatPadding()
     {
-        isFormatPadding = true;
+        ((MainApplication)getApplication()).isBusyInFormat = true;
         mIvLogo.setVisibility(View.INVISIBLE);
         mTvFormatInfo.setVisibility(View.VISIBLE);
         mTvFormatInfo.setText(R.string.str_format_padding);

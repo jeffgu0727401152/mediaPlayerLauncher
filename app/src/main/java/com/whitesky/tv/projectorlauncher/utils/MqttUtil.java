@@ -184,7 +184,7 @@ public class MqttUtil {
         @Override
         public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
             String msg = new String(mqttMessage.getPayload());
-            Log.i(TAG, "messageArrived:" + msg);
+            Log.d(TAG, "messageArrived:" + msg);
             if (mMsgCallback!=null) {
                 mMsgCallback.onDistributeMessage(msg);
             }
@@ -192,7 +192,7 @@ public class MqttUtil {
 
         @Override
         public void deliveryComplete(IMqttDeliveryToken arg0) {
-            Log.i(TAG, "deliveryComplete:" + arg0);
+            Log.d(TAG, "deliveryComplete:" + arg0);
         }
 
         @Override

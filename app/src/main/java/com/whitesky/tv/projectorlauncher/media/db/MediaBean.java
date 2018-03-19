@@ -261,7 +261,7 @@ public class MediaBean  implements Parcelable {
     @Override
     public String toString() {
         return "MediaBean{" +
-                ", path=" + path +
+                "path=" + path +
                 ", id=" + id +
                 ", title=" + title +
                 ", description=" + description +

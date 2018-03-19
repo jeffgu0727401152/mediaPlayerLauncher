@@ -1049,7 +1049,7 @@ public class MediaActivity extends Activity
         loadMediaListOrderMode();
 
         loadMediaListFromDb();
-        updateMultiActionButtonState();
+        updateMultiActionButtonUiState();
 
         // 监听usb插拔事件
         IntentFilter usbFilter = new IntentFilter();
@@ -1088,6 +1088,8 @@ public class MediaActivity extends Activity
 
         super.onPause();
 
+        Log.d(TAG,"~~~debug~~~ pause media");
+        ((MainApplication)getApplication()).isBusyInCopy = false;
         ((MainApplication)getApplication()).isMediaActivityForeground = false;
     }
 
@@ -1161,7 +1163,7 @@ public class MediaActivity extends Activity
                     data.setSelected(mAllMediaListCheckBox.isChecked());
                 }
                 mAllMediaListAdapter.refresh();
-                updateMultiActionButtonState();
+                updateMultiActionButtonUiState();
                 break;
 
             case R.id.cb_media_usb_list_check:
@@ -1233,9 +1235,8 @@ public class MediaActivity extends Activity
                     }
                 }
 
-                if (!mCopyDeque.isEmpty()) {
-                    copyInternalFileToUsb();
-                }
+                copyInternalFileToUsb();
+
                 break;
 
             default:
@@ -1243,7 +1244,7 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void updateMultiActionButtonState() {
+    private void updateMultiActionButtonUiState() {
         if (mAllMediaListAdapter.hasItemSelected()) {
             // 额外需要检查是否存在usb设备
             if (mUsbPartitionSpinner.getSelectedItemPosition()!=AdapterView.INVALID_POSITION) {
@@ -1334,7 +1335,7 @@ public class MediaActivity extends Activity
                             mUsbMediaListAdapter.refresh();
                         }
                     }
-                    updateMultiActionButtonState();
+                    updateMultiActionButtonUiState();
                     break;
 
                 case MSG_LOCAL_MEDIA_DATABASE_UPDATE:
@@ -1374,9 +1375,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_USB_COPY_TO_INTERNAL:
-                    if (!mCopyDeque.isEmpty()) {
-                        copyUsbFileToInternal();
-                    }
+                    copyUsbFileToInternal();
                     break;
 
                 case MSG_USB_LIST_SELECTED_CHANGE:
@@ -1388,7 +1387,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_SELECTED_CHANGE:
-                    updateMultiActionButtonState();
+                    updateMultiActionButtonUiState();
                     break;
 
 
@@ -1429,10 +1428,9 @@ public class MediaActivity extends Activity
                     for (MediaBean m:allDataItems)
                     {
                         mAllMediaListAdapter.addItem(new AllMediaListBean(m));
-                        Log.d(TAG,m.toString());
                     }
                     mAllMediaListAdapter.refresh();
-                    updateMultiActionButtonState();
+                    updateMultiActionButtonUiState();
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
@@ -1552,8 +1550,22 @@ public class MediaActivity extends Activity
 
     private class CopyToUsbCallback implements CopyTask.CopyDoneListener {
         @Override
+        public void onCopyStartCallback() {
+            ((MainApplication)getApplication()).isBusyInCopy = true;
+        }
+
+        @Override
         public void onAllCopyDoneCallback(Deque<String> copyDoneItem) {
             ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_copy_toast) + copyDoneItem.size());
+
+            if (!copyDoneItem.isEmpty()) {
+                // 复制完成后取消多选框的状态
+                for (AllMediaListBean tmp : mAllMediaListAdapter.getListDatas()) {
+                    tmp.setSelected(false);
+                }
+
+                mAllMediaListAdapter.refresh();
+            }
 
             // 由于拷贝到usb的目录是export目录,不是media目录,不会被扫描出来,所以不用再刷新usb列表
 //            if (mUsbPartitionAdapter.getCount() > 0) {
@@ -1569,25 +1581,37 @@ public class MediaActivity extends Activity
 //
 //                mHandler.sendMessage(newMsg);
 //            }
+
+            ((MainApplication)getApplication()).isBusyInCopy = false;
         }
     }
 
     private class CopyToInternalCallback implements CopyTask.CopyDoneListener {
         @Override
+        public void onCopyStartCallback() {
+            ((MainApplication)getApplication()).isBusyInCopy = true;
+        }
+
+        @Override
         public void onAllCopyDoneCallback(Deque<String> copyDoneItem) {
             ToastUtil.showToast(MediaActivity.this,getResources().getString(R.string.str_media_file_copy_toast) + copyDoneItem.size());
             if(!copyDoneItem.isEmpty()) {
+
+                for (UsbMediaListBean tmp : mUsbMediaListAdapter.getListDatas()) {
+                    tmp.setSelected(false);
+                }
+
                 updateMediaListUiAfterCopy(copyDoneItem);
                 updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
             }
         }
     }
 
-    private void checkCopyDequeAndCopy(CopyTask.CopyTaskParam param) {
+    private void checkCopyDequeAndCopy(CopyTask.CopyTaskParam param, Deque<String> waitCopyDeque) {
         Deque<String> sameMediaDeque = new ArrayDeque<String>();
         sameMediaDeque.clear();
-        while (!mCopyDeque.isEmpty()) {
-            String path = mCopyDeque.pop();
+        while (!waitCopyDeque.isEmpty()) {
+            String path = waitCopyDeque.pop();
 
             // 重复文件检测
             String toPath = PathUtil.pathGenerate(path,param.desFolder);
@@ -1617,6 +1641,11 @@ public class MediaActivity extends Activity
     }
 
     private void copyUsbFileToInternal() {
+        if (mCopyDeque==null || mCopyDeque.isEmpty()) {
+            Log.e(TAG,"CopyDeque is empty!");
+            return;
+        }
+
         if (!isLocalMassStorageMounted(this)) {
             Log.w(TAG,"local sata device not mount! just return");
             ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
@@ -1626,10 +1655,15 @@ public class MediaActivity extends Activity
         param.desFolder = PathUtil.localFileStoragePath();
         param.callback = new CopyToInternalCallback();
 
-        checkCopyDequeAndCopy(param);
+        checkCopyDequeAndCopy(param,mCopyDeque);
     }
 
     private void copyInternalFileToUsb() {
+        if (mCopyDeque==null || mCopyDeque.isEmpty()) {
+            Log.e(TAG,"CopyDeque is empty!");
+            return;
+        }
+
         // 此处检查判断是否存在usb设备
         if (mUsbPartitionSpinner.getSelectedItemPosition()==AdapterView.INVALID_POSITION) {
             Log.w(TAG,"usb device not plug in! just return");
@@ -1647,7 +1681,7 @@ public class MediaActivity extends Activity
         param.desFolder = usbExportFolder + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
         param.callback = new CopyToUsbCallback();
 
-        checkCopyDequeAndCopy(param);
+        checkCopyDequeAndCopy(param,mCopyDeque);
     }
 
     private void copyOrNotAsUserChoose(final CopyTask.CopyTaskParam param, final Deque<String> sameItems) {

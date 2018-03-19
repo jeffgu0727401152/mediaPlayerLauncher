@@ -18,6 +18,8 @@ public class MainApplication extends Application
     public boolean mFirstInitDone = false;
     public boolean isMediaActivityFullScreenPlaying = false;
     public boolean isMediaActivityForeground = false;
+    public boolean isBusyInFormat = false;
+    public boolean isBusyInCopy = false;
 
     @Override
     public void onCreate()

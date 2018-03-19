@@ -43,8 +43,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.security.KeyStore;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -87,13 +90,13 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
     private final String STR_MQTT_CMD_ACTION_RAW        = "rawcommand";
 
-    private final String STR_MQTT_REQ_ACTION_INFO       = "info";// 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息，地理位置）
-    private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist";//请求回应设备当前硬盘中 共享中已下载的文件列表
-    private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist";//本地U盘导入的私有文件列表
-    private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";// 当前的播放列表
+    private final String STR_MQTT_REQ_ACTION_INFO       = "info";      // 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息）
+    private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist"; //请求回应设备当前硬盘中 共享中已下载的文件列表
+    private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist"; //本地 U盘导入的私有文件列表
+    private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";  // 当前的播放列表
 
-    private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";// 当前的播放列表
-    private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";// 当前的播放模式
+    private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";   // 当前的播放列表
+    private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";   // 当前的播放模式
 
 
     private final static int MSG_NONE = 0;
@@ -425,8 +428,43 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         }
 
+        if (mustIgnoreThisMessage(message.what)) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            formatter.setTimeZone(TimeZone.getTimeZone("GMT+08:00"));
+            String timeNow = formatter.format(new Date());
+            Log.i(TAG, "must ignore message(" + message.what + ")" + " because of device busy at " + timeNow);
+            return;
+        }
+
         message.obj = mqttMessage;
         mqttUtilHandler.sendMessage(message);
+    }
+
+    private boolean mustIgnoreThisMessage(int msgWhat) {
+        if (((MainApplication)getApplication()).isBusyInFormat) {
+            switch (msgWhat) {
+                // 机器格式化硬盘的时候,只允许远程查询机器信息,而机器信息中的硬盘容量不返回
+                case MSG_REQUEST_INFO:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        if (((MainApplication)getApplication()).isBusyInCopy) {
+            switch (msgWhat) {
+                // 机器正在拷贝的时候,不允许重启,登录跳转,升级等
+                case MSG_CMD_LOGIN_DONE:
+                case MSG_CMD_REBOOT:
+                case MSG_CMD_OTA:
+                case MSG_CMD_RAW:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        return false;
     }
 
     private Handler mqttUtilHandler = new Handler() {
@@ -455,7 +493,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_CMD_REBOOT:
-                    PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+                    PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     powerManager.reboot("mqtt request");
                     break;
 
@@ -464,7 +502,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_CMD_RAW:
-                    ToastUtil.showToast(getApplicationContext(),rawStr.substring(100));
+                    ToastUtil.showToast(getApplicationContext(), rawStr.substring(100));
                     // todo exec raw cmd
                     break;
 
@@ -472,7 +510,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     DeviceInfoResponseBean info = new DeviceInfoResponseBean();
 
                     ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-                    ActivityManager am = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+                    ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
                     am.getMemoryInfo(memoryInfo);
                     long availMemorySize = memoryInfo.availMem;
                     long totalMemorySize = memoryInfo.totalMem;
@@ -482,8 +520,14 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     info.setSysVer(SystemProperties.get("ro.build.description", "4.4.2"));
                     info.setFreeMemory(availMemorySize);
                     info.setTotalMemory(totalMemorySize);
-                    info.setFreeCapacity(FileUtil.getAvailableCapacity(LOCAL_MASS_STORAGE_PATH));
-                    info.setTotalCapacity(FileUtil.getTotalCapacity(LOCAL_MASS_STORAGE_PATH));
+                    if (((MainApplication)getApplication()).isBusyInFormat) {
+                        // 正在格式化的时候容量返回 0;
+                        info.setFreeCapacity(0);
+                        info.setTotalCapacity(0);
+                    } else {
+                        info.setFreeCapacity(FileUtil.getAvailableCapacity(LOCAL_MASS_STORAGE_PATH));
+                        info.setTotalCapacity(FileUtil.getTotalCapacity(LOCAL_MASS_STORAGE_PATH));
+                    }
                     info.setPlaying(((MainApplication)getApplication()).isMediaActivityFullScreenPlaying ==true?1:0);
 
                     jsonStr = gson.toJson(info);

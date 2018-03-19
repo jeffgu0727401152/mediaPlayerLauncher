@@ -36,7 +36,11 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
 
     public interface CopyDoneListener {
         /**
-         *
+         * @param
+         */
+        void onCopyStartCallback();
+
+        /**
          * @param copyDoneItem          拷贝完成后返回实际拷贝的项目列表
          */
         void onAllCopyDoneCallback(Deque<String> copyDoneItem);
@@ -68,6 +72,11 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
     protected Void doInBackground(CopyTaskParam... params) {
         long time = System.currentTimeMillis();
         param = params[0];
+
+        if (param.callback!=null) {
+            param.callback.onCopyStartCallback();
+        }
+
         try {
             long totalNow = 0;
 
