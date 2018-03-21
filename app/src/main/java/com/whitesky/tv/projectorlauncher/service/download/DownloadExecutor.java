@@ -6,8 +6,10 @@ package com.whitesky.tv.projectorlauncher.service.download;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *  线程池工具
@@ -15,20 +17,18 @@ import java.util.concurrent.TimeUnit;
 public class DownloadExecutor {
 
     /** 请求线程池队列，同时允许1个线程操作 */
-    private static ThreadPoolExecutor mPool ;
+    private ThreadPoolExecutor mPool ;
 
     //当线程池中的线程小于mCorePoolSize，直接创建新的线程加入线程池执行任务
-    private static final int mCorePoolSize = 1;
+    private static final int mCorePoolSize = 5;
     //最大线程数
-    private static final int mMaximumPoolSize = 1;
+    private static final int mMaximumPoolSize = 5;
     //线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
-    private static final long mKeepAliveTime = 10L;
+    private static final long mKeepAliveTime = 100L;
 
-    /** 执行任务，当线程池处于关闭，将会重新创建新的线程池 */
-    public synchronized static void execute(Runnable run) {
-        if (run == null) {
-            return;
-        }
+    private static DownloadExecutor instance;
+
+    public DownloadExecutor() {
         if (mPool == null || mPool.isShutdown()) {
             // 参数说明
             // 当线程池中的线程小于mCorePoolSize，直接创建新的线程加入线程池执行任务
@@ -38,14 +38,39 @@ public class DownloadExecutor {
             // mKeepAliveTime是线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
             // ThreadFactory是每次创建新的线程工厂
             mPool = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime,
-                    TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory(),
-                    new ThreadPoolExecutor.AbortPolicy());
+                    TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+                    new ThreadFactory() {
+                        private AtomicInteger mInteger = new AtomicInteger(1);
+                        @Override
+                        public Thread newThread(Runnable runnable) {
+                            Thread thread = new Thread(runnable, "download thread #" + mInteger.getAndIncrement());
+                            return thread;
+                        }}, new ThreadPoolExecutor.AbortPolicy());
+        }
+    }
+
+    public static DownloadExecutor getInstance() {
+
+        if (instance == null) {
+            synchronized (DownloadExecutor.class) {
+                if (instance == null) {
+                    instance = new DownloadExecutor();
+                }
+            }
+        }
+        return instance;
+    }
+
+    /** 执行任务，当线程池处于关闭，将会重新创建新的线程池 */
+    public synchronized void execute(Runnable run) {
+        if (run == null) {
+            return;
         }
         mPool.execute(run);
     }
 
     /** 取消线程池中某个还未执行的任务 */
-    public synchronized static boolean cancel(Runnable run) {
+    public synchronized boolean cancel(Runnable run) {
         if (mPool != null && (!mPool.isShutdown() || mPool.isTerminating())) {
             return mPool.getQueue().remove(run);
         }else{
@@ -54,7 +79,7 @@ public class DownloadExecutor {
     }
 
     /** 查看线程池中是否还有某个还未执行的任务 */
-    public synchronized static boolean contains(Runnable run) {
+    public synchronized boolean contains(Runnable run) {
         if (mPool != null && (!mPool.isShutdown() || mPool.isTerminating())) {
             return mPool.getQueue().contains(run);
         } else {
@@ -63,16 +88,20 @@ public class DownloadExecutor {
     }
 
     /** 立刻关闭线程池，并且正在执行的任务也将会被中断 */
-    public static void stop() {
+    public void stop() {
         if (mPool != null && (!mPool.isShutdown() || mPool.isTerminating())) {
             mPool.shutdownNow();
         }
     }
 
     /** 平缓关闭单任务线程池，但是会确保所有已经加入的任务都将会被执行完毕才关闭 */
-    public synchronized static void shutdown() {
+    public synchronized void shutdown() {
         if (mPool != null && (!mPool.isShutdown() || mPool.isTerminating())) {
             mPool.shutdown();
         }
+    }
+
+    public String toString() {
+        return mPool.toString();
     }
 }

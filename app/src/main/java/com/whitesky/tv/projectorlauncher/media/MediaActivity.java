@@ -12,12 +12,19 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -91,12 +98,12 @@ import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATU
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_NONE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 
 /**
  * Created by jeff on 18-1-16.
@@ -140,7 +147,6 @@ public class MediaActivity extends Activity
     private static final String BUNDLE_KEY_MEDIA_PATH = "path";
     private static final String BUNDLE_KEY_MEDIA_NAME = "name";
 
-    private final int USB_COPY_BUFFER_SIZE = 1024*1024;     // 拷贝文件缓冲区长度,可调参数
 
     private MediaScanUtil mLocalMediaScanner;
     private MediaScanUtil mUsbMediaScanner;
@@ -191,8 +197,9 @@ public class MediaActivity extends Activity
     private CheckBox mUsbMediaListCheckBox;
 
     private TextView mUsbListTitle;
+
     private Deque<String> mCopyDeque = new ArrayDeque<String>();                        //需要复制的文件
-    private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();               //需要删除的文件
+    private Deque<AllMediaListBean> mMediaDeleteDeque = new ArrayDeque<AllMediaListBean>();  //需要删除的文件
 
     private TextView mUsbCapacityTextView;
     private TextView mLocalCapacityTextView;
@@ -241,9 +248,24 @@ public class MediaActivity extends Activity
 
                 saveShowMaskToConfig(getApplicationContext(),pushReq.getMask()==0?false:true);
                 mPlayer.getMaskController().showDefaultMask();
+
             } else if (action.equals(Contants.ACTION_DOWNLOAD_STATE_UPDATE)) {
+
                 MediaBean bean = intent.getParcelableExtra(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT);
-                Log.d("~~dbg~~ download",bean.toString());
+
+                if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+
+                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()==MEDIA_IDLE) {
+                        Message msg = mHandler.obtainMessage();
+                        msg.what = MSG_MEDIA_PLAY_COMPLETE;
+                        mHandler.sendMessage(msg);
+                    }
+
+                }
+
+                mPlayListAdapter.update(bean);
+                mAllMediaListAdapter.refresh();
+
                 mAllMediaListAdapter.update(bean);
                 mAllMediaListAdapter.refresh();
 
@@ -305,6 +327,7 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayStop() {
         // 播放完毕
+        Log.d(TAG,"on Play Stop!");
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_STOP;
         mHandler.sendMessage(msg);
@@ -313,6 +336,7 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayCompletion() {
         // 播放完毕
+        Log.d(TAG,"on Play Complete!");
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
         mHandler.sendMessage(msg);
@@ -321,6 +345,7 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps) {
         // 在UI显示播放信息
+        Log.d(TAG,"on Play Info Update!");
         setMediaInfoUi(name, mimeType, width, height, size, bps);
 
         for (PlayListBean bean : mPlayListAdapter.getListDatas()) {
@@ -335,9 +360,13 @@ public class MediaActivity extends Activity
     }
 
     @Override
-    public void onMediaPlayError(int error, int position) {
-        //todo error handler,在播放列表里标记出来
-        Log.e(TAG,"~~debug~~ onMediaPlayError");
+    public void onMediaPlayError(int error, MediaBean errorBean) {
+        // 播放错误
+        Log.d(TAG,"media play error! ERR_NO" + error);
+        ToastUtil.showToast(getApplicationContext(),"media play error! ERR_NO=" + error);
+        Message msg = mHandler.obtainMessage();
+        msg.what = MSG_MEDIA_PLAY_COMPLETE;
+        mHandler.sendMessage(msg);
     }
     // 媒体播放的回调函数=============结束
 
@@ -567,7 +596,7 @@ public class MediaActivity extends Activity
                             if (!cloudList.getResult().isEmpty()) {
                                 List<MediaBean> listCloud = new ArrayList<>();
                                 DataListCovert.covertCloudResultToMediaList(MediaActivity.this, listCloud, cloudList.getResult());
-                                new MediaBeanDao(MediaActivity.this).insert(listCloud);
+                                new MediaBeanDao(MediaActivity.this).createOrUpdate(listCloud);
                             }
                         } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
                             Log.d(TAG,"onResponse device not login yet,need user login this device!");
@@ -618,7 +647,7 @@ public class MediaActivity extends Activity
                     duration = mLocalMediaScanner.getMediaDuration(path);
                 }
 
-                MediaBean bean = new MediaBeanDao(getApplicationContext()).queryById(path);
+                MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
 
                 if (bean!=null) {
                     // 直接更新记录的播放时间
@@ -627,11 +656,11 @@ public class MediaActivity extends Activity
                     // 可能是云端下载的,但是云端已经删除了
                     size = file.length();
                     bean = new MediaBean(name,ID_LOCAL,type,SOURCE_CLOUD_FREE,path,duration,size);
-                    bean.setDownloadState(STATE_DOWNLOADED);
+                    bean.setDownloadState(STATE_DOWNLOAD_DOWNLOADED);
                     bean.setUrl("");
                 }
 
-                new MediaBeanDao(getApplicationContext()).insert(bean);
+                new MediaBeanDao(getApplicationContext()).createOrUpdate(bean);
             }
         }
     }
@@ -786,12 +815,12 @@ public class MediaActivity extends Activity
                 // 如果是双击
                 if (ViewUtil.isFastDoubleClick()) {
                     MediaBean mediaItem = mAllMediaListBeans.get(position).getMediaData();
-                    if (mediaItem.getSource()!=SOURCE_LOCAL) {
-                        if (mediaItem.getDownloadState()!= STATE_DOWNLOADED) {
-                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
-                            return;
-                        }
-                    }
+//                    if (mediaItem.getSource()!=SOURCE_LOCAL) {
+//                        if (mediaItem.getDownloadState()!= STATE_DOWNLOAD_DOWNLOADED) {
+//                            ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+//                            return;
+//                        }
+//                    }
 
                     mPlayListAdapter.addItem(new PlayListBean(mediaItem));
                 }
@@ -950,6 +979,7 @@ public class MediaActivity extends Activity
         //递归扫描sd卡根目录
         mLocalMediaScanner = new MediaScanUtil();
         mLocalMediaScanner.setNeedDuration(true);
+        mLocalMediaScanner.setNeedSize(true);
         mLocalMediaScanner.setMediaFileScanListener(new MediaScanUtil.MediaFileScanListener() {
             @Override
             public void onMediaScanBegin() {
@@ -1064,7 +1094,7 @@ public class MediaActivity extends Activity
         serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
         serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYMODE);
         serviceEventFilter.addAction(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
-        registerReceiver(serviceEventReceiver, serviceEventFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(serviceEventReceiver, serviceEventFilter);
 
         mPlayer.setStartRightNow(true);
 
@@ -1084,11 +1114,10 @@ public class MediaActivity extends Activity
             mPlayer.mediaStop();
         }
         unregisterReceiver(usbMountEventReceiver);
-        unregisterReceiver(serviceEventReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceEventReceiver);
 
         super.onPause();
 
-        Log.d(TAG,"~~~debug~~~ pause media");
         ((MainApplication)getApplication()).isBusyInCopy = false;
         ((MainApplication)getApplication()).isMediaActivityForeground = false;
     }
@@ -1208,12 +1237,12 @@ public class MediaActivity extends Activity
                 for (AllMediaListBean data : mAllMediaListBeans) {
                     if (data.isSelected()) {
 
-                        if (data.getMediaData().getSource()!=SOURCE_LOCAL) {
-                            if (data.getMediaData().getDownloadState()!= STATE_DOWNLOADED) {
-                                ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
-                                continue;
-                            }
-                        }
+//                        if (data.getMediaData().getSource()!=SOURCE_LOCAL) {
+//                            if (data.getMediaData().getDownloadState()!= STATE_DOWNLOAD_DOWNLOADED) {
+//                                ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_cloud_file_need_download_toast));
+//                                continue;
+//                            }
+//                        }
 
                         mPlayListAdapter.addItem(new PlayListBean(data.getMediaData()));
                     }
@@ -1347,8 +1376,8 @@ public class MediaActivity extends Activity
                     long size = b.getLong(BUNDLE_KEY_MEDIA_SIZE);
 
                     MediaBean data = new MediaBean(name, ID_LOCAL, type, MediaBean.SOURCE_LOCAL, path, duration, size);
-                    data.setDownloadState(STATE_DOWNLOADED);
-                    new MediaBeanDao(MediaActivity.this).insert(data);
+                    data.setDownloadState(STATE_DOWNLOAD_DOWNLOADED);
+                    new MediaBeanDao(MediaActivity.this).createOrUpdate(data);
                     break;
 
                 case MSG_USB_MEDIA_LIST_UPDATE:
@@ -1392,17 +1421,14 @@ public class MediaActivity extends Activity
 
 
                 case MSG_MEDIA_LIST_ITEM_DELETE:
-                    if (!mMediaDeleteDeque.isEmpty()) {
-                        deleteInternalMediaFile();
-                    }
+                    deleteInternalMediaFile();
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD:
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START_PAUSE);
                     intent.putExtra("path", ((MediaBean)msg.obj).getPath());
-                    Log.i("TAG",intent.getAction().toString());
+                    Log.i(TAG,"call download:" + ((MediaBean)msg.obj).toString());
                     startService(intent);
-//todo download
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_PREVIEW:
@@ -1438,7 +1464,9 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_PLAY_COMPLETE:
-                    mPlayer.mediaReplay();
+                    if (mPlayListAdapter.hasPlayableItem()) {
+                        mPlayer.mediaReplay();
+                    }
                     break;
 
                 case MSG_MEDIA_PLAY_STOP:
@@ -1728,21 +1756,34 @@ public class MediaActivity extends Activity
     }
 
     private void deleteInternalMediaFile() {
+        while (mMediaDeleteDeque.isEmpty()) {
+            Log.w(TAG,"no item(s) selected to delete");
+            return;
+        }
+
         new AlertDialog.Builder(this).setIcon(R.drawable.img_media_warning)
                 .setTitle(R.string.str_media_file_delete_dialog_title)
                 .setPositiveButton(R.string.str_media_dialog_button_ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+
                         int deleteCount = 0;
-                        Deque<PlayListBean> needToDeleteFromPlaylistDeque = new ArrayDeque<PlayListBean>();
                         boolean removePlaying = false;
+
+                        Deque<PlayListBean> needToDeleteFromPlaylistDeque = new ArrayDeque<PlayListBean>();
+
                         while (!mMediaDeleteDeque.isEmpty()) {
                             AllMediaListBean needDeleteDiskData = mMediaDeleteDeque.pop();
 
-                            needToDeleteFromPlaylistDeque.clear();
-                            removePlaying = false;
+                            // 当前删除的项当前正在播放则先停止播放
+                            if (needDeleteDiskData.getMediaData().getPath().equals(mPlayer.getCurPlayPath())) {
+                                removePlaying = true;
+                                mPlayer.mediaStop();
+                            }
 
-                            // 从播放列表删除
+                            // 从播放列表找受影响的条目,因为播放列表的条目可能是重复的
+                            // 所以使用队列记录下与当前的删除文件一致的条目
+                            needToDeleteFromPlaylistDeque.clear();
                             for (PlayListBean playItem:mPlayListAdapter.getListDatas())
                             {
                                 // 删除的文件在播放列表中
@@ -1752,47 +1793,58 @@ public class MediaActivity extends Activity
                                 }
                             }
 
+                            // 从播放列表删除这些条目
                             while (!needToDeleteFromPlaylistDeque.isEmpty()) {
                                 PlayListBean needDeletePlayData = needToDeleteFromPlaylistDeque.pop();
                                 mPlayListAdapter.removeItem(needDeletePlayData);
-                                // 播放列表处于正在播放的状态
-                                if (needDeletePlayData.isPlaying())
-                                {
-                                    removePlaying = true;
-                                    mPlayer.mediaStop();
-                                }
                             }
 
-                            // playlist还有剩下的元素
-                            if (mPlayListAdapter.getCount()>=1 && removePlaying)
-                            {
-                                mPlayer.mediaPlayNext();
-                                removePlaying = false;
-                            }
+                            if (needDeleteDiskData.getMediaData().getSource()==SOURCE_LOCAL) { // 本地文件
 
-                            if (needDeleteDiskData.getMediaData().getSource()==SOURCE_LOCAL) {
-                                // 从列表显示中删除
+                                // 从界面中删除
                                 mAllMediaListAdapter.removeItem(needDeleteDiskData);
                                 // 从数据库删除
                                 new MediaBeanDao(MediaActivity.this).delete(needDeleteDiskData.getMediaData());
-                            } else {
-                                MediaBean tmp = needDeleteDiskData.getMediaData();
-                                tmp.setDownloadProgress(0);
-                                tmp.setDownloadState(STATE_NONE);
-                                tmp.setDuration(0);
-                                mAllMediaListAdapter.update(needDeleteDiskData.getMediaData());
-                                // 更新数据库
-                                new MediaBeanDao(MediaActivity.this).update(tmp);
-                            }
+                                //从磁盘删除
+                                FileUtil.deleteFile(needDeleteDiskData.getMediaData().getPath());
 
-                            //从磁盘删除
-                            FileUtil.deleteFile(needDeleteDiskData.getMediaData().getPath());
+                            } else {                                                            // 云端文件
+
+                                int downloadState = needDeleteDiskData.getMediaData().getDownloadState();
+                                if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
+
+                                    MediaBean tmp = needDeleteDiskData.getMediaData();
+                                    tmp.setDownloadProgress(0);
+                                    tmp.setDownloadState(STATE_DOWNLOAD_NONE);
+                                    tmp.setDuration(0);
+
+                                    // 更新界面
+                                    mAllMediaListAdapter.update(needDeleteDiskData.getMediaData());
+                                    // 更新数据库
+                                    new MediaBeanDao(MediaActivity.this).update(tmp);
+                                    //从磁盘删除
+                                    FileUtil.deleteFile(needDeleteDiskData.getMediaData().getPath());
+
+                                } else if (downloadState != STATE_DOWNLOAD_NONE) {
+
+                                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_CANCEL);
+                                    intent.putExtra("path", needDeleteDiskData.getMediaData().getPath());
+                                    Log.i("TAG",intent.getAction().toString());
+                                    startService(intent);
+                                }
+                            }
 
                             deleteCount++;
                         }
 
-                        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
+                        // playlist还有剩下的元素,并且停止过播放
+                        if (mPlayListAdapter.getCount()>=1 && removePlaying)
+                        {
+                            mPlayer.mediaPlayNext();
+                        }
+
                         mAllMediaListAdapter.refresh();
+                        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
                         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
                     }
                 })

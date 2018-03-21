@@ -3,11 +3,16 @@ package com.whitesky.tv.projectorlauncher.service.download;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
@@ -15,6 +20,7 @@ import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 
 
 /**
@@ -28,7 +34,10 @@ public class DownloadService extends Service {
 
     public static final String ACTION_DOWNLOAD_START = "com.whitesky.tv.DOWNLOAD_START";
     public static final String ACTION_DOWNLOAD_PAUSE = "com.whitesky.tv.DOWNLOAD_PAUSE";
+    public static final String ACTION_DOWNLOAD_START_PAUSE = "com.whitesky.tv.DOWNLOAD_START_PAUSE";
     public static final String ACTION_DOWNLOAD_CANCEL = "com.whitesky.tv.DOWNLOAD_CANCEL";
+
+    MediaScanUtil downloadFileDurationScanner = new MediaScanUtil();
 
     @Override
     public void onCreate() {
@@ -45,33 +54,46 @@ public class DownloadService extends Service {
         Notification notification = builer.build();
         startForeground(DOWNLOAD_SERVICE_ID, notification);
 
+        IntentFilter mFilter = new IntentFilter();
+        mFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mNetReceiver, mFilter);
+
         super.onCreate();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        //获得activity传来的参数
+        String path = intent.getStringExtra("path");
         if (ACTION_DOWNLOAD_START.equals(intent.getAction())) {
 
-            Toast.makeText(getApplicationContext(),"ACTION_DOWNLOAD_START",Toast.LENGTH_SHORT).show();
-
-            String path = intent.getStringExtra("path");
-            MediaBean needDownload = new MediaBeanDao(getApplicationContext()).queryById(path);
-            DownloadManager.getInstance(getApplicationContext()).registerObserver(needDownload.getUrl(), mCallback);
-
-            Log.d(TAG,"needDownload:"+needDownload.toString());
-
-            DownloadManager.getInstance(getApplicationContext()).download(needDownload);
+            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            DownloadManager.getInstance().download(bean,mCallback);
+            Log.d(TAG,"download:"+bean.toString());
 
         } else if (ACTION_DOWNLOAD_PAUSE.equals(intent.getAction())) {
 
-            Toast.makeText(getApplicationContext(),"ACTION_DOWNLOAD_PAUSE",Toast.LENGTH_SHORT).show();
+            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            DownloadManager.getInstance().pause(bean);
+            Log.d(TAG,"pause:"+bean.toString());
+
+        } else if (ACTION_DOWNLOAD_START_PAUSE.equals(intent.getAction())) {
+
+            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            if (bean.getDownloadState()==MediaBean.STATE_DOWNLOAD_NONE
+                    || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_PAUSED
+                    || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_ERROR) {
+                DownloadManager.getInstance().download(bean, mCallback);
+                Log.d(TAG,"download:"+bean.toString());
+            } else {
+                DownloadManager.getInstance().pause(bean);
+                Log.d(TAG,"pause:"+bean.toString());
+            }
 
         } else if (ACTION_DOWNLOAD_CANCEL.equals(intent.getAction())) {
 
-            Toast.makeText(getApplicationContext(),"ACTION_DOWNLOAD_CANCEL", Toast.LENGTH_SHORT).show();
-
+            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            DownloadManager.getInstance().cancel(bean);
+            Log.d(TAG,"cancel:"+bean.toString());
         }
 
         return super.onStartCommand(intent, flags, startId);
@@ -81,9 +103,8 @@ public class DownloadService extends Service {
     @Override
     public void onDestroy()
     {
-        DownloadManager.getInstance(getApplicationContext()).removeAllObserver();
         super.onDestroy();
-
+        unregisterReceiver(mNetReceiver);
         Log.d(TAG,"service onDestroy auto restart!");
         Intent localIntent = new Intent();
         localIntent.setClass(this, DownloadService.class);
@@ -95,65 +116,68 @@ public class DownloadService extends Service {
         return null;
     }
 
-    private void sendIntentToActivityIfForeground(MediaBean bean) {
+    private void sendResultToActivity(MediaBean bean) {
+        new MediaBeanDao(getApplicationContext()).createOrUpdate(bean);
         if (((MainApplication)getApplication()).isMediaActivityForeground) {
-            Log.w(TAG,"send a intent to MediaActivity to update UI");
             Intent intent=new Intent(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
             Bundle bundle = new Bundle();
             bundle.putParcelable(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT, bean);
             intent.putExtras(bundle);
-            sendBroadcast(intent);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         } else {
-            Log.w(TAG,"MediaActivity is not foreground, do nothing");
+            //Log.w(TAG,"MediaActivity is not foreground, do nothing");
         }
     }
 
-    private DownloadCallback mCallback = new DownloadCallback();
+    private BroadcastReceiver mNetReceiver = new BroadcastReceiver() {
 
-    private class DownloadCallback implements DownloadObserver {
         @Override
-        public void onStop(MediaBean bean) {
-            Log.d(TAG,"onStop");
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                Log.i(TAG, "network status change!");
+                ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+                if(info != null && info.isAvailable()) {
+                    String name = info.getTypeName();
+                    Log.d(TAG, "resume all download, network on " + name);
+                    for (MediaBean tmp : new MediaBeanDao(getApplicationContext()).selectItemsDownloading()) {
+                        DownloadManager.getInstance().download(tmp,mCallback);
+                    }
+                } else {
+                    Log.d(TAG, "no network!");
+                }
+            }
         }
+    };
+
+    private DownloadObserver mCallback = new DownloadObserver();
+
+    private class DownloadObserver implements DownloadCallback {
 
         @Override
-        public void onStart(MediaBean bean) {
-            Log.d(TAG,"onStart");
-            sendIntentToActivityIfForeground(bean);
+        public void onStateChange(MediaBean bean) {
+            Log.d(TAG,bean.getUrl() + " onStateChange");
+            sendResultToActivity(bean);
         }
 
         @Override
         public void onProgress(MediaBean bean) {
-            Log.d(TAG,"onProgress " + bean.getDownloadProgress());
-            sendIntentToActivityIfForeground(bean);
-        }
-
-        @Override
-        public void onPrepare(MediaBean bean) {
-            Log.d(TAG,"onPrepare");
-            sendIntentToActivityIfForeground(bean);
+            Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
+            sendResultToActivity(bean);
         }
 
         @Override
         public void onFinish(MediaBean bean) {
-            Log.d(TAG,"onFinish");
-            sendIntentToActivityIfForeground(bean);
+            Log.d(TAG,bean.getUrl() + " onFinish");
+            bean.setDuration(downloadFileDurationScanner.getMediaDuration(bean.getPath()));
+            sendResultToActivity(bean);
         }
 
         @Override
         public void onError(MediaBean bean) {
-            Log.d(TAG,"onError");
-            sendIntentToActivityIfForeground(bean);
-        }
-
-        @Override
-        public void onDelete(MediaBean bean) {
-            Log.d(TAG,"onDelete");
-        }
-
-        @Override
-        public void onEnqueue(MediaBean bean) {
-            Log.d(TAG,"onEnqueue");
+            Log.d(TAG,bean.getUrl() + " onError");
+            sendResultToActivity(bean);
         }
     }
 }

@@ -66,10 +66,11 @@
 
     <TextView
         android:id="@+id/tv_media_state"
-        android:layout_width="@dimen/x100"
+        android:layout_width="@dimen/x120"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/x40"
+        android:layout_marginLeft="@dimen/x20"
         android:layout_gravity="left|center_vertical"
+        android:gravity="center"
         android:textAlignment="inherit"
         android:textColor="@color/gold"
         android:textSize="13sp"

@@ -4,13 +4,12 @@ package com.whitesky.tv.projectorlauncher.utils;
  * Created by jeff on 18-1-18.
  */
 
-import android.media.MediaPlayer;
+import android.media.MediaMetadataRetriever;
 import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,7 +22,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 public class MediaScanUtil {
     private final String TAG = this.getClass().getSimpleName();
 
-    private MediaPlayer mp = new MediaPlayer();;                                  //用于获取媒体文件的播放时长度
+    private MediaMetadataRetriever mmr = new MediaMetadataRetriever();                                  //用于获取媒体文件的播放时长度
     private MediaFileScanListener mMediaFileScanListener = null;
     ExecutorService mBackgroundService = Executors.newSingleThreadExecutor();;    // 保证单线程
     private boolean isNeedDuration = false;
@@ -45,10 +44,9 @@ public class MediaScanUtil {
             mBackgroundService = null;
         }
 
-        if (mp != null) {
-            mp.stop();
-            mp.release();
-            mp = null;
+        if (mmr != null) {
+            mmr.release();
+            mmr = null;
         }
     }
 
@@ -112,7 +110,7 @@ public class MediaScanUtil {
                                 + fileExtension + ",filePath=" + filePath);
                         if (mMediaFileScanListener != null) {
                             int duration = 0;
-                            if (mp != null && isNeedDuration) {
+                            if (mmr != null && isNeedDuration) {
                                 duration = getMediaDuration(filePath);
                             }
 
@@ -147,7 +145,7 @@ public class MediaScanUtil {
                                 + fileExtension + ",filePath=" + filePath);
                         if (mMediaFileScanListener != null) {
                             int duration = 0;
-                            if (mp != null && isNeedDuration) {
+                            if (mmr != null && isNeedDuration) {
                                 duration = getMediaDuration(filePath);
                             }
 
@@ -265,7 +263,7 @@ public class MediaScanUtil {
     public int getMediaDuration(String path)
     {
         File file = new File(path);
-        if (!file.exists()) {
+        if (!file.exists() || file.isDirectory()) {
             Log.e(TAG, "file path not exists!!!");
             return -1;
         }
@@ -277,21 +275,15 @@ public class MediaScanUtil {
 
             case MediaBean.MEDIA_VIDEO:
             case MediaBean.MEDIA_MUSIC:
-                break;
+                mmr.setDataSource(path);
+                String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                return Integer.parseInt(duration);
 
             default:
                 break;
         }
 
-        try {
-            mp.reset();
-            mp.setDataSource(file.getAbsolutePath());
-            mp.prepare();
-        } catch (IOException e) {
-            Log.e(TAG, "getMediaDuration error!" + e);
-        }
-
-        return mp.getDuration();
+        return 0;
     }
 
     public boolean isNeedDuration() {

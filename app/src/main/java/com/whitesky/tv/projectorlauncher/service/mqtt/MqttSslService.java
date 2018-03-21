@@ -13,6 +13,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -591,7 +592,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         Bundle bundle = new Bundle();
                         bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, pushList);
                         intent.putExtras(bundle);
-                        sendBroadcast(intent);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
                     } else {
 
@@ -615,7 +616,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         Bundle bundle = new Bundle();
                         bundle.putParcelable(Contants.EXTRA_PUSH_CONTEXT, playMode);
                         intent.putExtras(bundle);
-                        sendBroadcast(intent);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
                     } else {
 

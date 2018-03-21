@@ -62,6 +62,7 @@
             <intent-filter >
                 <action android:name="com.whitesky.tv.DOWNLOAD_START"/>
                 <action android:name="com.whitesky.tv.DOWNLOAD_PAUSE"/>
+                <action android:name="com.whitesky.tv.DOWNLOAD_START_PAUSE"/>
                 <action android:name="com.whitesky.tv.DOWNLOAD_CANCEL"/>
             </intent-filter>
         </service>

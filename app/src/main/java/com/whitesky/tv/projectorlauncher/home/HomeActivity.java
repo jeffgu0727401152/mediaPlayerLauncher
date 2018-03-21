@@ -25,6 +25,8 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
 import com.whitesky.tv.projectorlauncher.app.AppActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
+import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
+import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.settings.SysSettingActivity;
@@ -108,8 +110,11 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
 
-        // SSL 与 MQTT服务
+        // 启动SSL + MQTT
         startService(new Intent(getApplicationContext(), MqttSslService.class));
+
+        // 启动下载服务
+        startService(new Intent(getApplicationContext(),DownloadService.class));
     }
 
     @Override
@@ -228,7 +233,13 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
 
             case R.id.iv_home2_1:
                 if (!ServiceStatusUtil.isServiceRunning(this,MqttSslService.class)) {
-                    ToastUtil.showToast(this,"service died");
+                    ToastUtil.showToast(this,"MQTT service died");
+                    Log.e(TAG,"MQTT service died!");
+                }
+
+                if (!ServiceStatusUtil.isServiceRunning(this,DownloadService.class)) {
+                    ToastUtil.showToast(this,"download service died");
+                    Log.e(TAG,"download service died!");
                 }
 
                 if (mBackClickCount>=5) {

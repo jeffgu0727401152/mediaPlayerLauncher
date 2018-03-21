@@ -11,6 +11,7 @@ import com.whitesky.sdk.widget.ViewHolder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
+import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 
 import java.text.SimpleDateFormat;
@@ -22,6 +23,8 @@ import static android.widget.AdapterView.INVALID_POSITION;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 
 /**
  * Created by jeff on 18-1-16.
@@ -177,6 +180,37 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             mOnPlaylistItemEventListener.onPlaylistChange();
         }
         refresh();
+    }
+
+    public boolean isAllItemsFromCloud() {
+        synchronized (getListDatas()) {
+            for (PlayListBean bean:getListDatas()) {
+                if (bean.getMediaData().getSource()==SOURCE_LOCAL) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    public boolean hasPlayableItem() {
+        synchronized (getListDatas()) {
+            for (PlayListBean bean:getListDatas()) {
+                if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public synchronized void update(MediaBean data) {
+        for (PlayListBean it:listDatas) {
+            if (it.getMediaData().getPath().equals(data.getPath())) {
+                it.setMediaData(data);
+                return;
+            }
+        }
     }
 
     public interface OnPlaylistItemEventListener {

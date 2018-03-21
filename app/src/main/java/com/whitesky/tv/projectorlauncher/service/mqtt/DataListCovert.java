@@ -14,8 +14,8 @@ import java.io.File;
 import java.util.List;
 
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_NONE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_FREE;
 
 /**
@@ -33,7 +33,7 @@ public class DataListCovert {
 
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
-            MediaBean media =  new MediaBeanDao(context).queryById(srcList.get(i).getName());
+            MediaBean media =  new MediaBeanDao(context).queryByPath(srcList.get(i).getName());
             if (media != null) {
                 if (media.getType() == MediaBean.MEDIA_PICTURE) {
                     // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
@@ -67,11 +67,11 @@ public class DataListCovert {
             // 判断本地是否存在
             File localStoreFile = new File(localStoreLocation);
             if (localStoreFile.exists() && !localStoreFile.isDirectory()) {
-                desItem.setDownloadState(STATE_DOWNLOADED);
+                desItem.setDownloadState(STATE_DOWNLOAD_DOWNLOADED);
                 desItem.setSize(localStoreFile.length());
                 // 媒体时间的获取在后续的云文件夹遍历中做
             } else {
-                desItem.setDownloadState(STATE_NONE);
+                desItem.setDownloadState(STATE_DOWNLOAD_NONE);
             }
 
             desList.add(desItem);

@@ -3,12 +3,11 @@ package com.whitesky.tv.projectorlauncher.media.db;
 import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
 import java.util.List;
 
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 
 /**
  * Created by jeff on 18-2-4.
@@ -29,7 +28,7 @@ public class MediaBeanDao {
     }
 
     // 向media表中添加一条数据
-    public void insert(MediaBean data) {
+    public void createOrUpdate(MediaBean data) {
         try {
             dao.createOrUpdate(data);
         } catch (SQLException e) {
@@ -56,9 +55,9 @@ public class MediaBeanDao {
     }
 
     // 向media表中添加多条数据
-    public void insert(List<MediaBean> datas) {
+    public void createOrUpdate(List<MediaBean> datas) {
         for (MediaBean itemInsert:datas) {
-            insert(itemInsert);
+            createOrUpdate(itemInsert);
         }
     }
 
@@ -120,11 +119,30 @@ public class MediaBeanDao {
         delete(selectAll());
     }
 
+    // 查询出表中的所有需要继续下载的媒体记录
+    public List<MediaBean> selectItemsDownloading() {
+        List<MediaBean> retList = null;
+        try {
+            retList = dao.queryBuilder().where()
+                    .eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,MediaBean.STATE_DOWNLOAD_DOWNLOADING)
+                    .or().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,MediaBean.STATE_DOWNLOAD_WAITING)
+                    .or().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,MediaBean.STATE_DOWNLOAD_START)
+                    .or().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,MediaBean.STATE_DOWNLOAD_PAUSED)
+                    .or().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,MediaBean.STATE_DOWNLOAD_ERROR)
+                    .query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return retList;
+    }
+
     // 查询出表中的所有通过U盘导入到本地的媒体记录
     public List<MediaBean> selectItemsLocalImport() {
         List<MediaBean> retList = null;
         try {
-            retList = dao.queryBuilder().where().eq(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).query();
+            retList = dao.queryBuilder().where()
+                    .eq(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL)
+                    .query();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -135,7 +153,10 @@ public class MediaBeanDao {
     public List<MediaBean> selectDownloadedItemsFromCloud() {
         List<MediaBean> retList = null;
         try {
-            retList = dao.queryBuilder().where().gt(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).and().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE,STATE_DOWNLOADED).query();
+            retList = dao.queryBuilder().where()
+                    .gt(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL)
+                    .and().eq(MediaBean.COLUMNNAME_DOWNLOAD_STATE, STATE_DOWNLOAD_DOWNLOADED)
+                    .query();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -146,7 +167,9 @@ public class MediaBeanDao {
     // 删除media表中本地USB导入的数据
     public void deleteItemsLocalImport() {
         try {
-            List<MediaBean> delList = dao.queryBuilder().where().eq(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).query();
+            List<MediaBean> delList = dao.queryBuilder().where()
+                    .eq(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL)
+                    .query();
             dao.delete(delList);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -156,18 +179,24 @@ public class MediaBeanDao {
     // 删除media表中所有云端的数据
     public void deleteItemsFromCloud() {
         try {
-            List<MediaBean> delList = dao.queryBuilder().where().gt(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL).query();
+            List<MediaBean> delList = dao.queryBuilder().where()
+                    .gt(MediaBean.COLUMNNAME_SOURCE,MediaBean.SOURCE_LOCAL)
+                    .query();
             dao.delete(delList);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // 根据主键取出用户信息,这里的id是path
-    public MediaBean queryById(String id) {
+    // 根据主键取出用户信息,这里的主键是path
+    public MediaBean queryByPath(String path) {
+        if (path == null) {
+            return null;
+        }
+
         MediaBean user = null;
         try {
-            user = dao.queryForId(id);
+            user = dao.queryForId(path);
         } catch (SQLException e) {
             e.printStackTrace();
         }

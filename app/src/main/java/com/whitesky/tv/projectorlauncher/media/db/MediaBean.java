@@ -96,22 +96,20 @@ public class MediaBean  implements Parcelable {
     public static final int SOURCE_CLOUD_PUBLIC = 4;        //客户上传到云端的视频,并定义为共享
     public static final int SOURCE_CLOUD_PAY = 5;           //云端付费下载视频
 
-    /**新增下载*/
-    public static final int STATE_NONE = -1;
+    /** 没有下载 */
+    public static final int STATE_DOWNLOAD_NONE = 0;
+    /** 等待下载中 */
+    public static final int STATE_DOWNLOAD_WAITING = 1;
     /** 开始下载 */
-    public static final int STATE_START = 0;
-    /** 下载中 */
-    public static final int STATE_DOWNLOADING = 1;
-    /** 等待中 */
-    public static final int STATE_WAITING = 2;
-    /** 暂停 */
-    public static final int STATE_PAUSED = 3;
-    /** 完毕  */
-    public static final int STATE_DOWNLOADED = 4;
+    public static final int STATE_DOWNLOAD_START = 2;
+    /** 下载进行中 */
+    public static final int STATE_DOWNLOAD_DOWNLOADING = 3;
+    /** 下载暂停 */
+    public static final int STATE_DOWNLOAD_PAUSED = 4;
+    /** 下载完成 */
+    public static final int STATE_DOWNLOAD_DOWNLOADED = 5;
     /** 下载失败 */
-    public static final int STATE_ERROR = 5;
-    /** 删除下载成功 */
-    public static final int STATE_DELETE = 6;
+    public static final int STATE_DOWNLOAD_ERROR = -1;
 
     //文件的存储路径,全局唯一作为主键
     @DatabaseField(id = true, columnName = COLUMNNAME_PATH, useGetSet = true, canBeNull = false,unique = true)
@@ -147,7 +145,7 @@ public class MediaBean  implements Parcelable {
 
     //云端文件的下载状态
     @DatabaseField(columnName = COLUMNNAME_DOWNLOAD_STATE, useGetSet = true, canBeNull = true, unique = false)
-    private int downloadState = STATE_NONE;
+    private int downloadState = STATE_DOWNLOAD_NONE;
 
     //云端文件的下载进度
     @DatabaseField(columnName = COLUMNNAME_DOWNLOAD_PROGRESS, useGetSet = true, canBeNull = true, unique = false)

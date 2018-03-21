@@ -2,6 +2,7 @@ package com.whitesky.tv.projectorlauncher.media;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
@@ -32,6 +33,7 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.maskController.MaskController;
+import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
@@ -58,6 +60,7 @@ import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SC
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 
 /**
  * Created by jeff on 18-1-22.
@@ -76,9 +79,13 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int ERROR_FILE_PATH_NOT_FOUND = -1;
     public static final int ERROR_PLAYLIST_INVALIDED_POSITION = -2;
     public static final int ERROR_VIDEO_PLAY_ERROR = -3;
+    public static final int ERROR_IMAGE_PLAY_ERROR = -4;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
+    private static final int IMAGE_MAX_WIDTH = 5000;
+    private static final int IMAGE_MAX_HEIGHT = 4000;
+    private static final int IMAGE_MAX_SIZE = 32*1020*1024;
 
     private SurfaceView mSurfaceView;
     private ImageView mPictureView;
@@ -109,8 +116,12 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public PlayListBean getCurPlaylistBean() {
         return curPlaylistBean;
     }
-
     private PlayListBean curPlaylistBean;
+
+    public String getCurPlayPath() {
+        return curPlayPath;
+    }
+    private String curPlayPath;
 
     ExecutorService mSeekBarUpdateService;
 
@@ -177,7 +188,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         void onMediaPlayFullScreenSwitch(boolean fullScreen);
         void onMediaPlayStop();
         void onMediaPlayCompletion();
-        void onMediaPlayError(int error, int position);
+        void onMediaPlayError(int error, MediaBean errorBean);
         void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps);
     }
 
@@ -527,13 +538,14 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND, ListView.INVALID_POSITION);
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND, mPreviewItem);
             }
             return;
         }
 
         mIsPreview = true;
         curPlaylistBean = null;
+        curPlayPath = mPreviewItem.getPath();
 
         switch (type)
         {
@@ -553,11 +565,13 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     {
         if (mPlayState.equals(MEDIA_PLAY_PICTURE)) {
             pictureStop();
-        } else if (mPlayState.equals(MEDIA_PLAY_VIDEO))
-        {
+        } else if (mPlayState.equals(MEDIA_PLAY_VIDEO)) {
             videoStop();
         }
+
         curPlaylistBean = null;
+        curPlayPath = null;
+
         if (mOnMediaEventListener!=null)
         {
             mOnMediaEventListener.onMediaPlayStop();
@@ -568,14 +582,16 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
     public void mediaPlay(int position)
     {
-        Log.d(TAG,",mediaPlay position = " + position);
+        Log.d(TAG,"mediaPlay position = " + position);
+
         String path="";
         int type = MEDIA_UNKNOWN;
         int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
         int scale = MEDIA_SCALE_FIT_XY;
+        MediaBean fileBean = null;
         if(position!=INVALID_POSITION && position<mPlayList.size())
         {
-            MediaBean fileBean = mPlayList.get(position).getMediaData();
+            fileBean = mPlayList.get(position).getMediaData();
             if (fileBean!=null)
             {
                 path = fileBean.getPath();
@@ -583,13 +599,38 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 time = fileBean.getDuration();
                 scale =  mPlayList.get(position).getPlayScale();
             }
+
+            // 如果是没有下载的文件,则跳过直到下载完成
+            if (fileBean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
+
+                Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
+                intent.putExtra("path", fileBean.getPath());
+                Log.i(TAG,"call download:" + fileBean.toString());
+                mContext.startService(intent);
+
+                Log.w(TAG,"could not start to play file not downloaded, play next");
+                for (PlayListBean bean : mPlayList) {
+                    if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                        mPlayPosition = mPlayList.indexOf(bean);
+                        curPlaylistBean = bean;
+                        if (mOnMediaEventListener!=null)
+                        {
+                            mOnMediaEventListener.onMediaPlayCompletion();
+                        }
+                        return;
+                    }
+                }
+
+                //没有找到下载完成的项目
+                mediaStop();
+            }
         } else {
             ToastUtil.showToast(mContext, R.string.str_media_play_list_empty);
             Log.e(TAG,"mediaPlay position(" + position +") INVALID_POSITION!");
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION,position);
+                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION,fileBean);
             }
             return;
         }
@@ -601,7 +642,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,position);
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,fileBean);
             }
             return;
         }
@@ -609,6 +650,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mIsPreview = false;
         mPlayPosition = position;
         curPlaylistBean = mPlayList.get(position);
+        curPlayPath = curPlaylistBean.getMediaData().getPath();
 
         //ToastUtil.showToast(mContext, "path=" + path + ", position=" + position);
         Log.d(TAG,"mediaPlay path:" + path + ", type:" + type);
@@ -756,7 +798,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,mPlayPosition);
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,
+                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
             }
             return;
         }
@@ -872,8 +915,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                     mPlayState = MEDIA_IDLE;
                     if (mOnMediaEventListener!=null)
                     {
-                        // todo 改变了播放列表顺序后,这个mPlayPosition的更新
-                        mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_ERROR,mPlayPosition);
+                        mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_ERROR,
+                                curPlaylistBean==null?null:curPlaylistBean.getMediaData());
                     }
                     return false;
                 }
@@ -928,7 +971,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = MEDIA_IDLE;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,mPlayPosition);
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NOT_FOUND,
+                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
             }
             return;
         }
@@ -945,11 +989,20 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         }
         long size = file.length();
 
+        if (options.outWidth > IMAGE_MAX_WIDTH || options.outHeight > IMAGE_MAX_HEIGHT || size > IMAGE_MAX_SIZE) {
+            Log.e(TAG,"image too large!" + options.outWidth + "*" + options.outHeight + " " + size);
+            if(mOnMediaEventListener !=null)
+            {
+                mOnMediaEventListener.onMediaPlayError(ERROR_IMAGE_PLAY_ERROR,
+                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+            }
+            return;
+        }
+
         if(mOnMediaEventListener !=null)
         {
             mOnMediaEventListener.onMediaPlayInfoUpdate(file.getName(),
-                    mimeType, options.outWidth, options.outHeight, size,
-                    -1);
+                    mimeType, options.outWidth, options.outHeight, size, -1);
         }
 
         final int playDuration = duration;
