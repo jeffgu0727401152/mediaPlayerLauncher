@@ -25,15 +25,19 @@ import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
+import com.whitesky.tv.projectorlauncher.media.bean.CloudListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.DeviceInfoResponseBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListResponseBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
+import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
@@ -45,8 +49,11 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
@@ -61,15 +68,19 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static java.lang.Thread.sleep;
 
 /**
@@ -92,12 +103,15 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_CMD_ACTION_RAW        = "rawcommand";
 
     private final String STR_MQTT_REQ_ACTION_INFO       = "info";      // 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息）
-    private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist"; //请求回应设备当前硬盘中 共享中已下载的文件列表
-    private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist"; //本地 U盘导入的私有文件列表
+    private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist"; // 请求回应设备当前硬盘中 共享中已下载的文件列表
+    private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist"; // 本地 U盘导入的私有文件列表
     private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";  // 当前的播放列表
 
-    private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";   // 当前的播放列表
-    private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";   // 当前的播放模式
+    private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";   // 设置播放列表
+    private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";   // 设置播放模式
+    private final String STR_MQTT_PUSH_ACTION_DOWNLOAD  = "download";  // 设置下载任务
+    private final String STR_MQTT_PUSH_ACTION_DELETE    = "delete";    // 设置删除
+    private final String STR_MQTT_PUSH_ACTION_LOCALDELETE  = "localdelete";   // 设置删除
 
 
     private final static int MSG_NONE = 0;
@@ -115,6 +129,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private final static int MSG_PUSH_PLAYLIST = 400;
     private final static int MSG_PUSH_PLAYMODE = 401;
+    private final static int MSG_PUSH_DELETE = 402;
+    private final static int MSG_PUSH_DOWNLOAD = 403;
 
     private final String TAG = this.getClass().getSimpleName();
     private final String keyStorePassword = "wxgh#2561";
@@ -124,6 +140,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private boolean mHeartBeatRunnig = false;
     private final static int HEARTBEAT_INTERVAL_S = 60 * 3;
+
+    private ArrayList<FileListPushBean> mNeedToDownloadList = null;
 
     // MQTT Util callback +++
     @Override
@@ -367,6 +385,99 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
+    private void syncWithCloud() {
+        // 初始化云端媒体列表
+        OkHttpClient mClient = new OkHttpClient();
+        if (HttpConstants.URL_GET_SHARE_LIST.contains("https")) {
+            try {
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        .build();
+            } catch (Exception e) {
+                Log.e(TAG,"Exception in load media list from cloud " + e.toString());
+            }
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body = new FormBody.Builder()
+                .add("sn", DeviceInfoActivity.getSysSN())
+                .build();
+
+        Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
+        Call call = mClient.newCall(request);
+
+
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG,"onFailure" + e.toString());
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+
+                if (!response.isSuccessful()) {
+                    throw new IOException("onResponse unexpected return code " + response);
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
+                    CloudListBean cloudList;
+                    try {
+                        cloudList = new Gson().fromJson(htmlBody, CloudListBean.class);
+                    } catch (IllegalStateException e) {
+                        cloudList = null;
+                        Log.e(TAG, "except in json parse!" + e.toString());
+                    }
+
+                    if  (cloudList != null) {
+                        if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+                            Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
+                            new MediaBeanDao(getApplicationContext()).deleteItemsFromCloud();
+
+                            if (!cloudList.getResult().isEmpty()) {
+                                List<MediaBean> listCloud = new ArrayList<>();
+                                DataListCovert.covertCloudResultToMediaList(getApplicationContext(), listCloud, cloudList.getResult());
+                                new MediaBeanDao(getApplicationContext()).createOrUpdate(listCloud);
+                            }
+                        } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
+                            Log.d(TAG,"onResponse device not login yet,need user login this device!");
+                            ToastUtil.showToast(getApplicationContext(),getResources().getString(R.string.str_media_cloud_file_need_login_toast));
+                        } else {
+                            Log.d(TAG,"onResponse unknown status!");
+                        }
+                    } else {
+                        Log.e(TAG, "cloud media list json parse error! " + htmlBody);
+                    }
+
+                    // 云端列表更新后必须做一次与本地已经下载文件的匹配
+                    MediaActivity.updateDbCloudItemWithLocalDisk(getApplicationContext(),new MediaScanUtil());
+
+                    // 如果有云端要求下载的文件在本地的云数据库中没有，那么就需要向服务器请求一次云端文件列表，请求结束后再下载这些文件
+                    if (mNeedToDownloadList!=null && mNeedToDownloadList.size()>0) {
+                        Deque<MediaBean> dDeque = new ArrayDeque<>();
+                        boolean syncResult = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(), dDeque, mNeedToDownloadList);
+                        if (syncResult == true) {
+                            Log.w(TAG,"we have sync with the server, but still have some item miss!");
+                        }
+                        mNeedToDownloadList = null;
+
+                        while (!dDeque.isEmpty()) {
+                            callDownload(dDeque.pop());
+                        }
+                    }
+
+                } else {
+                    Log.e(TAG, "onResponse response http code undefine!");
+                }
+            }
+        });
+    }
+
     private void parserMqttMessage(String mqttMessage) {
         Message message = mqttUtilHandler.obtainMessage();
         message.what = MSG_NONE;
@@ -411,6 +522,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 message.what = MSG_PUSH_PLAYLIST;
             } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYMODE)) {
                 message.what = MSG_PUSH_PLAYMODE;
+            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DELETE)) {
+                message.what = MSG_PUSH_DELETE;
+            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DOWNLOAD)) {
+                message.what = MSG_PUSH_DOWNLOAD;
+            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_LOCALDELETE)) {
+                message.what = MSG_PUSH_DELETE;
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -454,11 +571,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         if (((MainApplication)getApplication()).isBusyInCopy) {
             switch (msgWhat) {
-                // 机器正在拷贝的时候,不允许重启,登录跳转,升级等
+                // 机器正在拷贝的时候,不允许重启,登录跳转,升级,删除
                 case MSG_CMD_LOGIN_DONE:
                 case MSG_CMD_REBOOT:
                 case MSG_CMD_OTA:
                 case MSG_CMD_RAW:
+                case MSG_PUSH_DELETE:
                     return true;
                 default:
                     return false;
@@ -468,6 +586,15 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         return false;
     }
 
+    private void callDownload(MediaBean bean) {
+        if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
+            Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
+            intent.putExtra("path", bean.getPath());
+            Log.i(TAG, "call download:" + bean.toString());
+            getApplicationContext().startService(intent);
+        }
+    }
+
     private Handler mqttUtilHandler = new Handler() {
         public void handleMessage(Message msg) {
             String rawStr = (String) msg.obj;
@@ -475,6 +602,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             String jsonStr;
             List<MediaListResponseBean> responseDataList = new ArrayList<MediaListResponseBean>();
             List<PlayListBean> pList;
+            Deque<MediaBean> dDeque;
 
             if (msg.what!=MSG_NONE) {
                 ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_media_receive_mqtt_toast));
@@ -545,17 +673,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     jsonStr = gson.toJson(responseDataList);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
                     MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
-
-                    Log.d(TAG,"SHARELIST~~~~"+rawStr + jsonStr);
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
-                    SharedPreferencesUtil config = new SharedPreferencesUtil(getApplicationContext(), Contants.PREF_CONFIG);
-                    jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
-                    Type type = new TypeToken<List<PlayListBean>>() {
-                    }.getType();
-
-                    pList = gson.fromJson(jsonStr, type);
+                    pList = MediaActivity.loadPlaylistFromConfig(getApplicationContext());
                     responseDataList.clear();
                     for (int i = 0; i < pList.size(); i++) {
                         responseDataList.add(new MediaListResponseBean(pList.get(i)));
@@ -566,7 +687,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
                     MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
 
-                    Log.d(TAG,"PLAYLIST~~~~"+rawStr + jsonStr);
                     break;
 
                 case MSG_REQUEST_LOCALLIST:
@@ -578,12 +698,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     jsonStr = gson.toJson(responseDataList);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
                     MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
-
-                    Log.d(TAG,"LOCALLIST~~~~"+rawStr + jsonStr);
                     break;
 
                 case MSG_PUSH_PLAYLIST:
-                    type = new TypeToken<List<MediaListPushBean>>(){ }.getType();
+                    Type type = new TypeToken<List<MediaListPushBean>>(){ }.getType();
                     ArrayList<MediaListPushBean> pushList = gson.fromJson(rawStr.substring(100), type);
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
@@ -601,6 +719,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         MediaActivity.savePlaylistToConfig(getApplication(), pList);
                         if (!pList.isEmpty()) {
                             // 立刻开始播放
+                            for (PlayListBean bean : pList) {
+                                callDownload(bean.getMediaData());
+                            }
                             startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                         }
                     }
@@ -631,6 +752,95 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         } else {
                             Log.e(TAG, "unknown replay mode (" + playMode.getPlayMode() + ")");
                         }
+                    }
+                    break;
+
+                case MSG_PUSH_DOWNLOAD:
+                    type = new TypeToken<List<FileListPushBean>>(){ }.getType();
+                    ArrayList<FileListPushBean> downloadList = gson.fromJson(rawStr.substring(100), type);
+                    dDeque = new ArrayDeque<>();
+                    // 这边需要处理，本地数据库中没有云端条目，而云端却发送过来让你下载的情况
+                    boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadList);
+
+                    if (needSync) {
+                        if (((MainApplication)getApplication()).isMediaActivityForeground) {
+                            // 交给MediaActivity同步，同步结束后下载这些文件
+                            Intent intent=new Intent(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC);
+                            Bundle bundle = new Bundle();
+                            bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, downloadList);
+                            intent.putExtras(bundle);
+                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                        } else {
+                            mNeedToDownloadList = downloadList;
+                            syncWithCloud();
+                            // todo 云端上传一个文件 不要手点同步，看这边逻辑是否ok
+                        }
+                    } else {
+                        while (!dDeque.isEmpty()) {
+                            callDownload(dDeque.pop());
+                        }
+                    }
+                    break;
+
+                case MSG_PUSH_DELETE:
+                    type = new TypeToken<List<FileListPushBean>>(){ }.getType();
+                    ArrayList<FileListPushBean> deleteList = gson.fromJson(rawStr.substring(100), type);
+
+                    if (((MainApplication)getApplication()).isMediaActivityForeground) {
+
+                        Intent intent=new Intent(Contants.ACTION_PUSH_DELETE);
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, deleteList);
+                        intent.putExtras(bundle);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+                    } else {
+                        pList = MediaActivity.loadPlaylistFromConfig(getApplicationContext());
+
+                        dDeque = new ArrayDeque<>();
+                        // 删除文件不用管本地数据库中没有服务器传过来的条目的问题
+                        DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,deleteList);
+                        while (!dDeque.isEmpty()) {
+                            MediaBean deleteBean = dDeque.pop();
+
+                            for (Iterator<PlayListBean> ite = pList.iterator(); ite.hasNext();) {
+                                PlayListBean pItem = ite.next();
+                                if (pItem.getMediaData().getPath().equals(deleteBean.getPath())) {
+                                    ite.remove();
+                                }
+                            }
+
+                            if (deleteBean.getSource()==SOURCE_LOCAL) {          // 本地文件
+                                // 从数据库删除
+                                new MediaBeanDao(getApplicationContext()).delete(deleteBean);
+                                // 从磁盘删除
+                                FileUtil.deleteFile(deleteBean.getPath());
+
+                            } else {                                             // 云端文件
+
+                                int downloadState = deleteBean.getDownloadState();
+                                if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
+
+                                    deleteBean.setDownloadProgress(0);
+                                    deleteBean.setDownloadState(STATE_DOWNLOAD_NONE);
+                                    deleteBean.setDuration(0);
+
+                                    // 更新数据库
+                                    new MediaBeanDao(getApplicationContext()).update(deleteBean);
+                                    // 从磁盘删除
+                                    FileUtil.deleteFile(deleteBean.getPath());
+
+                                } else if (downloadState != STATE_DOWNLOAD_NONE) {
+
+                                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_CANCEL);
+                                    intent.putExtra("path", deleteBean.getPath());
+                                    Log.i("TAG",intent.getAction().toString());
+                                    startService(intent);
+                                }
+                            }
+                        }
+
+                        MediaActivity.savePlaylistToConfig(getApplication(), pList);
                     }
                     break;
 

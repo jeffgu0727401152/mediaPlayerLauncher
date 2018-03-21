@@ -1,19 +1,23 @@
 package com.whitesky.tv.projectorlauncher.service.mqtt;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 
 import java.io.File;
+import java.util.Deque;
 import java.util.List;
 
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_FREE;
@@ -33,17 +37,58 @@ public class DataListCovert {
 
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
-            MediaBean media =  new MediaBeanDao(context).queryByPath(srcList.get(i).getName());
-            if (media != null) {
-                if (media.getType() == MediaBean.MEDIA_PICTURE) {
-                    // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
-                    media.setDuration(srcList.get(i).getDuration()>=5000 ? srcList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
-                }
+            if (srcList.get(i).getId()==ID_LOCAL) {
+                MediaBean media =  new MediaBeanDao(context).queryByPath(srcList.get(i).getName());
+                if (media != null) {
+                    if (media.getType() == MediaBean.MEDIA_PICTURE) {
+                        // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
+                        media.setDuration(srcList.get(i).getDuration()>=5000 ? srcList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
+                    }
 
-                PlayListBean pListItem = new PlayListBean(media);
-                pListItem.setPlayScale(srcList.get(i).getScale());
-                desList.add(pListItem);
+                    PlayListBean pListItem = new PlayListBean(media);
+                    pListItem.setPlayScale(srcList.get(i).getScale());
+                    desList.add(pListItem);
+                }
+            } else {
+                List<MediaBean> selected = new MediaBeanDao(context).queryById(srcList.get(i).getId());
+                for (MediaBean it: selected) {
+                    PlayListBean pListItem = new PlayListBean(it);
+                    pListItem.setPlayScale(srcList.get(i).getScale());
+                    desList.add(pListItem);
+                }
             }
+        }
+    }
+
+    // 将云端推送过来的文件列表,转换为本地删除下载队列
+    // 返回值表示是否有数据库中没有的项目被云端送了过来，说明你需要更新数据库了
+    public static boolean covertCloudFileListToMediaBeanList(Context context, Deque<MediaBean> desList, List<FileListPushBean> srcList) {
+        if (desList==null || srcList==null) {
+            return false;
+        }
+
+        int itemFromCloudPush = 0;
+        desList.clear();
+        for (int i = 0; i < srcList.size(); i++) {
+            if (srcList.get(i).getId()==ID_LOCAL) {
+                MediaBean media = new MediaBeanDao(context).queryByPath(srcList.get(i).getName());
+                if (media != null) {
+                    desList.push(media);
+                }
+            } else {
+                itemFromCloudPush++;
+                List<MediaBean> selected = new MediaBeanDao(context).queryById(srcList.get(i).getId());
+                for (MediaBean it: selected) {
+                    desList.push(it);
+                }
+            }
+        }
+
+        if(itemFromCloudPush!=desList.size()) {
+            Log.w(TAG,"you have something in cloud but not in local DB! you need sync with cloud");
+            return true;
+        } else {
+            return false;
         }
     }
 

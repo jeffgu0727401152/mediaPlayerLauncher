@@ -25,6 +25,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 
 /**
  * Created by jeff on 18-1-16.

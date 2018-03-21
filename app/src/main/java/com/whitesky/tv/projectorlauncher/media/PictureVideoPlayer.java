@@ -61,6 +61,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 
 /**
  * Created by jeff on 18-1-22.
@@ -600,29 +601,24 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 scale =  mPlayList.get(position).getPlayScale();
             }
 
-            // 如果是没有下载的文件,则跳过直到下载完成
+            // 如果是没有下载的文件,则跳过，并开服务下载他
             if (fileBean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
 
-                Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
-                intent.putExtra("path", fileBean.getPath());
-                Log.i(TAG,"call download:" + fileBean.toString());
-                mContext.startService(intent);
-
-                Log.w(TAG,"could not start to play file not downloaded, play next");
-                for (PlayListBean bean : mPlayList) {
-                    if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
-                        mPlayPosition = mPlayList.indexOf(bean);
-                        curPlaylistBean = bean;
-                        if (mOnMediaEventListener!=null)
-                        {
-                            mOnMediaEventListener.onMediaPlayCompletion();
-                        }
-                        return;
-                    }
+                if (fileBean.getDownloadState()==STATE_DOWNLOAD_NONE) {
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
+                    intent.putExtra("path", fileBean.getPath());
+                    Log.i(TAG, "call download:" + fileBean.toString());
+                    mContext.startService(intent);
                 }
 
-                //没有找到下载完成的项目
-                mediaStop();
+                Log.w(TAG,"could not start to play file not downloaded, play next");
+
+                mPlayState = MEDIA_IDLE;
+                if (mOnMediaEventListener!=null)
+                {
+                    mOnMediaEventListener.onMediaPlayCompletion();
+                }
+                return;
             }
         } else {
             ToastUtil.showToast(mContext, R.string.str_media_play_list_empty);

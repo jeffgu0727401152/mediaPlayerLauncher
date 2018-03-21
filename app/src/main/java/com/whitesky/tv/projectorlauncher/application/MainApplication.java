@@ -20,14 +20,12 @@ public class MainApplication extends Application
     public boolean isMediaActivityForeground = false;
     public boolean isBusyInFormat = false;
     public boolean isBusyInCopy = false;
+    public String SN = "";
+
 
     @Override
     public void onCreate()
     {
-        mFirstInitDone = false;
-        isMediaActivityFullScreenPlaying = false;
-        isMediaActivityForeground = false;
-
         super.onCreate();
 //        if (LeakCanary.isInAnalyzerProcess(this)) {//1
 //            // This process is dedicated to LeakCanary for heap analysis.

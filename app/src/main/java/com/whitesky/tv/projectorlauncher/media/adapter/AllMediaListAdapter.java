@@ -112,30 +112,24 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
                 break;
         }
 
-        //todo 设置播放错误状态
-//        if (item.getMediaData().getDownloadState() == STATE_PLAY_ERROR) {
-//            holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-//            holder.setText(R.id.tv_media_state, "不支持播放");
-//        }
-
         if (item.getMediaData().getSource()==SOURCE_LOCAL) {
             holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
         } else {
             if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_NONE) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, "need download");
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
             } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_WAITING) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, "waiting...");
+                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_waiting));
             } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_DOWNLOADING) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state, String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
             } else if(item.getMediaData().getDownloadState() == STATE_DOWNLOAD_PAUSED) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, "pause:" + String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
+                holder.setText(R.id.tv_media_state,
+                        mContext.getResources().getString(R.string.str_media_download_pause) + String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
             } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_ERROR) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, "download error");
+                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_error));
             } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_START) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state, "...");
@@ -241,11 +235,29 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
         return false;
     }
 
-    public synchronized void update(MediaBean data) {
-        for (AllMediaListBean it:listDatas) {
-            if (it.getMediaData().getPath().equals(data.getPath())) {
-                it.setMediaData(data);
-                return;
+    public void update(MediaBean data) {
+        synchronized (listDatas) {
+            for (AllMediaListBean it : listDatas) {
+                if (it.getMediaData().getPath().equals(data.getPath())) {
+                    it.setMediaData(data);
+                    return;
+                }
+            }
+        }
+    }
+
+    public void removeItem(MediaBean data) {
+        synchronized (listDatas) {
+            AllMediaListBean found = null;
+            for (AllMediaListBean it : listDatas) {
+                if (it.getMediaData().getPath().equals(data.getPath())) {
+                    found = it;
+                    break;
+                }
+            }
+
+            if (found!=null) {
+                removeItem(found);
             }
         }
     }

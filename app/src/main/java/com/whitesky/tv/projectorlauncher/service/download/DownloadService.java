@@ -45,13 +45,13 @@ public class DownloadService extends Service {
         Intent notificationIntent = new Intent(this,HomeActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
 
-        Notification.Builder builer = new Notification.Builder(this);
-        builer.setContentTitle("Download Service");     //设置通知的标题
-        builer.setContentText("service running...");    //设置通知的内容
-        builer.setSmallIcon(R.mipmap.ic_launcher);      //设置通知的图标
-        builer.setContentIntent(pendingIntent);         //设置点击通知后的操作
+        Notification.Builder builder = new Notification.Builder(this);
+        builder.setContentTitle("Download Service");     //设置通知的标题
+        builder.setContentText("service running...");    //设置通知的内容
+        builder.setSmallIcon(R.mipmap.ic_launcher);      //设置通知的图标
+        builder.setContentIntent(pendingIntent);         //设置点击通知后的操作
 
-        Notification notification = builer.build();
+        Notification notification = builder.build();
         startForeground(DOWNLOAD_SERVICE_ID, notification);
 
         IntentFilter mFilter = new IntentFilter();
@@ -178,6 +178,14 @@ public class DownloadService extends Service {
         public void onError(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onError");
             sendResultToActivity(bean);
+
+            ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+            if(info != null && info.isAvailable()) {
+                String name = info.getTypeName();
+                Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
+                DownloadManager.getInstance().download(bean,mCallback);
+            }
         }
     }
 }

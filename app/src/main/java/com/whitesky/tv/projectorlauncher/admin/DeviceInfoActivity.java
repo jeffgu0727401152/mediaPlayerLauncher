@@ -33,6 +33,7 @@ public class DeviceInfoActivity extends Activity
 {
     private final String TAG = this.getClass().getSimpleName();
     private static final String  EMMC_SERIAL_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
+    private static final String  EMMC_MAN_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
 
     private TextView mDeviceModel;
     private TextView mTvSysVersion;

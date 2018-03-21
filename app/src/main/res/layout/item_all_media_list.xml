@@ -47,7 +47,7 @@
 
     <TextView
         android:id="@+id/tv_media_duration"
-        android:layout_width="@dimen/x80"
+        android:layout_width="@dimen/x75"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="left|center_vertical"
@@ -57,8 +57,8 @@
 
     <ImageView
         android:id="@+id/iv_media_source"
-        android:layout_width="@dimen/x20"
-        android:layout_height="@dimen/x20"
+        android:layout_width="@dimen/x30"
+        android:layout_height="@dimen/x25"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="center"
         android:layout_centerVertical="true"

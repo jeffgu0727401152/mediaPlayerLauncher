@@ -202,4 +202,16 @@ public class MediaBeanDao {
         }
         return user;
     }
+
+    // 根据主键取出用户信息,这里的主键是path
+    public List<MediaBean> queryById(int id) {
+        List<MediaBean> retList = null;
+        try {
+            retList = dao.queryBuilder().where()
+                    .eq(MediaBean.COLUMNNAME_ID,id).query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return retList;
+    }
 }

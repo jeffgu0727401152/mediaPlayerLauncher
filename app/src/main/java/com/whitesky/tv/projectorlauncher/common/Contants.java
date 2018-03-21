@@ -11,6 +11,8 @@ public class Contants
 
     public static final String ACTION_PUSH_PLAYLIST = "com.whitesky.tv.push.playList";
     public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
+    public static final String ACTION_PUSH_DELETE = "com.whitesky.tv.push.delete";
+    public static final String ACTION_PUSH_DOWNLOAD_NEED_SYNC = "com.whitesky.tv.push.downloadSync";
     public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
     public static final String ACTION_DOWNLOAD_STATE_UPDATE = "com.whitesky.tv.download.state";
