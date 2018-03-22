@@ -175,6 +175,18 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         refresh();
     }
 
+    @Override
+    // 重写方法不改变内部数据对象的指向
+    public void setListDatas(List<PlayListBean> items){
+        listDatas.clear();
+        if (items == null) {
+            return;
+        }
+        for (int i = 0; i < items.size(); i++) {
+            listDatas.add(items.get(i));
+        }
+    }
+
     public void removeItem(int position) {
         super.removeItem(getItem(position));
         if (mOnPlaylistItemEventListener != null) {
