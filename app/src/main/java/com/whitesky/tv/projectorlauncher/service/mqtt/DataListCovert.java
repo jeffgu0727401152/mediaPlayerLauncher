@@ -30,11 +30,13 @@ public class DataListCovert {
     private static final String TAG = DataListCovert.class.getSimpleName();
 
     // 将云端推送过来的播放列表,转换为本地播放列表格式
-    public static void covertCloudPushToPlayList(Context context, List<PlayListBean> desList, List<MediaListPushBean> srcList) {
+    // 返回值表示是否有数据库中没有的项目被云端送了过来，true说明你需要更新数据库了
+    public static boolean covertCloudPushToPlayList(Context context, List<PlayListBean> desList, List<MediaListPushBean> srcList) {
         if (desList==null || srcList==null) {
-            return;
+            return false;
         }
-
+        int shareItemFromCloudPush = 0;
+        int shareItemInLocalDbFound = 0;
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
             if (srcList.get(i).getId()==ID_LOCAL) {
@@ -50,24 +52,34 @@ public class DataListCovert {
                     desList.add(pListItem);
                 }
             } else {
+                shareItemFromCloudPush ++;
                 List<MediaBean> selected = new MediaBeanDao(context).queryById(srcList.get(i).getId());
                 for (MediaBean it: selected) {
                     PlayListBean pListItem = new PlayListBean(it);
                     pListItem.setPlayScale(srcList.get(i).getScale());
                     desList.add(pListItem);
+                    shareItemInLocalDbFound ++;
                 }
             }
         }
+
+        if(shareItemFromCloudPush > shareItemInLocalDbFound) {
+            Log.w(TAG,"you have something in cloud but not in local DB! you need sync with cloud");
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    // 将云端推送过来的文件列表,转换为本地删除下载队列
-    // 返回值表示是否有数据库中没有的项目被云端送了过来，说明你需要更新数据库了
+    // 将云端推送过来的 下载/删除 文件列表,转换为本地删除下载队列
+    // 返回值表示是否有数据库中没有的项目被云端送了过来，true说明你需要更新数据库了
     public static boolean covertCloudFileListToMediaBeanList(Context context, Deque<MediaBean> desList, List<FileListPushBean> srcList) {
         if (desList==null || srcList==null) {
             return false;
         }
 
-        int itemFromCloudPush = 0;
+        int shareItemFromCloudPush = 0;
+        int shareItemInLocalDbFound = 0;
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
             if (srcList.get(i).getId()==ID_LOCAL) {
@@ -76,15 +88,16 @@ public class DataListCovert {
                     desList.push(media);
                 }
             } else {
-                itemFromCloudPush++;
+                shareItemFromCloudPush ++;
                 List<MediaBean> selected = new MediaBeanDao(context).queryById(srcList.get(i).getId());
                 for (MediaBean it: selected) {
                     desList.push(it);
+                    shareItemInLocalDbFound ++;
                 }
             }
         }
 
-        if(itemFromCloudPush!=desList.size()) {
+        if(shareItemFromCloudPush == shareItemInLocalDbFound) {
             Log.w(TAG,"you have something in cloud but not in local DB! you need sync with cloud");
             return true;
         } else {

@@ -64,7 +64,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -109,7 +108,7 @@ public class MediaActivity extends Activity
         PictureVideoPlayer.OnMediaEventListener,
         RadioGroup.OnCheckedChangeListener {
 
-    private final String TAG = this.getClass().getSimpleName();
+    private static final String TAG = MediaActivity.class.getSimpleName();
 
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
@@ -197,6 +196,7 @@ public class MediaActivity extends Activity
     private Deque<String> mCopyDeque = new ArrayDeque<>();                        //需要复制的文件
     private Deque<MediaBean> mDeleteDeque = new ArrayDeque<>();                    //需要删除的文件
     private ArrayList<FileListPushBean> mNeedToDownloadList = null;
+    private ArrayList<MediaListPushBean> mNeedToPlayList = null;
 
     private TextView mUsbCapacityTextView;
     private TextView mLocalCapacityTextView;
@@ -206,36 +206,71 @@ public class MediaActivity extends Activity
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;
 
+    private void totalChangePlayList(List<PlayListBean> target) {
+        mNeedToPlayList = null;
+        mPlayListAdapter.setListDatas(target);
+        mPlayListAdapter.refresh();
+        savePlaylistToConfig();
+
+        for (PlayListBean bean : mPlayListAdapter.getListDatas()) {
+            if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_NONE) {
+                addToDownload(bean.getMediaData());
+            }
+        }
+
+        if (mPlayListBeans.size()>0) {
+            mPlayer.fullScreenSwitch(true);
+            mPlayer.mediaPlay(0);
+        }
+    }
+
     private final BroadcastReceiver serviceEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(Contants.ACTION_PUSH_PLAYLIST)) {
 
-                ArrayList<MediaListPushBean> pushList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+                ArrayList<MediaListPushBean> cloudPushPlaylist = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
 
-                if (pushList==null) {
+                if (cloudPushPlaylist==null) {
                     Log.e(TAG,"mqtt receive a error format push play list!");
                     return;
                 }
 
                 mPlayer.mediaStop();
 
-                DataListCovert.covertCloudPushToPlayList(getApplicationContext(),mPlayListBeans,pushList);
+                List<PlayListBean> pList = new ArrayList<>();
+                boolean needSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(),pList,cloudPushPlaylist);
 
-                mPlayListAdapter.refresh();
-                savePlaylistToConfig();
-
-                for (PlayListBean bean : mPlayListBeans) {
-                    if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_NONE) {
-                        addToDownload(bean.getMediaData());
+                if (needSync) {
+                    if (mNeedToPlayList!=null) {
+                        Log.w(TAG,"mNeedToPlayList already has a cloud sync http request");
+                        return;
                     }
+
+                    mNeedToPlayList = cloudPushPlaylist;
+                    loadMediaListFromCloud(getApplicationContext(), new cloudListGetCallback() {
+                        @Override
+                        public void cloudSyncDone(boolean result) {
+                            if (result == true) {
+                                Message msg = mHandler.obtainMessage();
+                                msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                                mHandler.sendMessage(msg);
+                            }
+
+                            List<PlayListBean> pList = new ArrayList<>();
+                            boolean stillNeedSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(),pList,mNeedToPlayList);
+                            if (stillNeedSync) {
+                                Log.w(TAG,"we have sync with cloud,but still missing some item!");
+                            }
+                            mNeedToPlayList = null;
+                            totalChangePlayList(pList);
+                        }
+                    });
+                } else {
+                    totalChangePlayList(pList);
                 }
 
-                if (mPlayListBeans.size()>0) {
-                    mPlayer.fullScreenSwitch(true);
-                    mPlayer.mediaPlay(0);
-                }
 
             } else if (action.equals(Contants.ACTION_PUSH_PLAYMODE)) {
 
@@ -268,14 +303,41 @@ public class MediaActivity extends Activity
 
             } else if (action.equals(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC)) {
 
-                mNeedToDownloadList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+                ArrayList<FileListPushBean> downloadCloudList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
 
-                if (mNeedToDownloadList==null) {
+                if (downloadCloudList==null) {
                     Log.e(TAG,"mqtt receive a error format push sync list!");
                     return;
                 }
 
-                loadMediaListFromCloud();
+                if (mNeedToDownloadList!=null) {
+                    Log.w(TAG,"mNeedToDownloadList already has a cloud sync http request");
+                    return;
+                }
+
+                mNeedToDownloadList = downloadCloudList;
+                loadMediaListFromCloud(getApplicationContext(), new cloudListGetCallback() {
+                    @Override
+                    public void cloudSyncDone(boolean result) {
+                        if (result == true) {
+                            Message msg = mHandler.obtainMessage();
+                            msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                            mHandler.sendMessage(msg);
+                        }
+
+                        Deque<MediaBean> dDeque = new ArrayDeque<>();
+                        boolean stillNeedSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(), dDeque, mNeedToDownloadList);
+                        if (stillNeedSync) {
+                            Log.w(TAG, "we have sync with cloud,but still missing some item!");
+                        }
+
+                        mNeedToDownloadList = null;
+
+                        while (!dDeque.isEmpty()) {
+                            addToDownload(dDeque.pop());
+                        }
+                    }
+                });
 
             } else if (action.equals(Contants.ACTION_DOWNLOAD_STATE_UPDATE)) {
 
@@ -295,7 +357,6 @@ public class MediaActivity extends Activity
 
                 mAllMediaListAdapter.update(bean);
                 mAllMediaListAdapter.refresh();
-
             }
         }
     };
@@ -528,7 +589,17 @@ public class MediaActivity extends Activity
                 Log.e(TAG,PathUtil.localFileStoragePath() + " not found!");
                 ToastUtil.showToast(getApplicationContext(),PathUtil.localFileStoragePath() + " not found!");
             }
-            loadMediaListFromCloud();
+
+            loadMediaListFromCloud(getApplicationContext(), new cloudListGetCallback() {
+                @Override
+                public void cloudSyncDone(boolean result) {
+                    if (result == true) {
+                        Message msg = mHandler.obtainMessage();
+                        msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                        mHandler.sendMessage(msg);
+                    }
+                }
+            });
         } else {
             // 如果有数据库,则从数据库获取
             for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
@@ -543,7 +614,13 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void loadMediaListFromCloud() {
+    public interface cloudListGetCallback{
+        void cloudSyncDone(boolean result);
+    }
+
+    // 从云端同步数据库，然后与本地端磁盘的数据进行比对，比对完成后调callback函数
+    public static void loadMediaListFromCloud(final Context context, final cloudListGetCallback callback) {
+        Log.i(TAG, "load Media List From Cloud in");
         // 初始化云端媒体列表
         OkHttpClient mClient = new OkHttpClient();
         if (HttpConstants.URL_GET_SHARE_LIST.contains("https")) {
@@ -565,44 +642,26 @@ public class MediaActivity extends Activity
         Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
         Call call = mClient.newCall(request);
 
-        // 只要收到返回,就让用户看到界面有一个刷新的效果
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mCloudMediaListRefreshBtn.setEnabled(false);
-            }
-        });
-
         call.enqueue(new okhttp3.Callback() {
             // 失败
             @Override
             public void onFailure(Call call, IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mCloudMediaListRefreshBtn.setEnabled(true);
-                    }
-                });
-
                 Log.e(TAG,"onFailure" + e.toString());
+                if (callback!=null) {
+                    callback.cloudSyncDone(false);
+                }
             }
 
             // 成功
             @Override
             public void onResponse(Call call, Response response)
                     throws IOException {
-                // 只要收到返回,就让用户看到界面有一个刷新的效果
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mCloudMediaListRefreshBtn.setEnabled(true);
-                        mAllMediaListAdapter.clear();
-                        mAllMediaListAdapter.refresh();
-                    }
-                });
 
                 if (!response.isSuccessful()) {
-                    throw new IOException("onResponse unexpected return code " + response);
+                    Log.e(TAG,"response is not success!" + response.toString());
+                    if (callback!=null) {
+                        callback.cloudSyncDone(false);
+                    }
 
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                     String htmlBody = response.body().string();
@@ -618,46 +677,35 @@ public class MediaActivity extends Activity
                     if  (cloudList != null) {
                         if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
                             Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
-                            new MediaBeanDao(MediaActivity.this).deleteItemsFromCloud();
+                            new MediaBeanDao(context).deleteItemsFromCloud();
 
                             if (!cloudList.getResult().isEmpty()) {
                                 List<MediaBean> listCloud = new ArrayList<>();
-                                DataListCovert.covertCloudResultToMediaList(MediaActivity.this, listCloud, cloudList.getResult());
-                                new MediaBeanDao(MediaActivity.this).createOrUpdate(listCloud);
+                                DataListCovert.covertCloudResultToMediaList(context, listCloud, cloudList.getResult());
+                                new MediaBeanDao(context).createOrUpdate(listCloud);
                             }
                         } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
                             Log.d(TAG,"onResponse device not login yet,need user login this device!");
-                            ToastUtil.showToast(getApplicationContext(),getResources().getString(R.string.str_media_cloud_file_need_login_toast));
+                            ToastUtil.showToast(context,context.getResources().getString(R.string.str_media_cloud_file_need_login_toast));
                         } else {
-                            Log.d(TAG,"onResponse unknown status!");
+                            Log.d(TAG,"onResponse unknown status " + cloudList.getStatus());
                         }
                     } else {
-                        Log.e(TAG, "cloud media list json parse error! " + htmlBody);
+                        Log.e(TAG, "cloud list json parse error! " + htmlBody);
                     }
 
                     // 云端列表更新后必须做一次与本地已经下载文件的匹配
-                    updateDbCloudItemWithLocalDisk(getApplicationContext(),mLocalMediaScanner);
+                    updateDbCloudItemWithLocalDisk(context,new MediaScanUtil());
 
-                    Message msg = mHandler.obtainMessage();
-                    msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
-                    mHandler.sendMessage(msg);
-
-                    // 如果有云端要求下载的文件在本地的云数据库中没有，那么就需要向服务器请求一次云端文件列表，请求结束后再下载这些文件
-                    if (mNeedToDownloadList!=null && mNeedToDownloadList.size()>0) {
-                        Deque<MediaBean> dDeque = new ArrayDeque<>();
-                        boolean syncResult = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(), dDeque, mNeedToDownloadList);
-                        if (syncResult == true) {
-                            Log.w(TAG,"we have sync with the server, but still have some item miss!");
-                        }
-                        mNeedToDownloadList = null;
-
-                        while (!dDeque.isEmpty()) {
-                            addToDownload(dDeque.pop());
-                        }
+                    if (callback!=null) {
+                        callback.cloudSyncDone(true);
                     }
 
                 } else {
-                    Log.e(TAG, "onResponse response http code undefine!");
+                    Log.e(TAG, "onResponse http undefine code " + response.code());
+                    if (callback!=null) {
+                        callback.cloudSyncDone(false);
+                    }
                 }
             }
         });
@@ -686,6 +734,8 @@ public class MediaActivity extends Activity
                 type = MediaScanUtil.getMediaTypeFromPath(name);
                 if (type==MEDIA_PICTURE || type==MEDIA_VIDEO) {
                     duration = scanner.getMediaDuration(path);
+                } else {
+                    continue;
                 }
 
                 MediaBean bean = new MediaBeanDao(context).queryByPath(path);
@@ -710,7 +760,7 @@ public class MediaActivity extends Activity
         savePlaylistToConfig(this,mPlayListBeans);
     }
 
-    public static void savePlaylistToConfig(Context context, List<PlayListBean> pList) {
+    public static synchronized void savePlaylistToConfig(Context context, List<PlayListBean> pList) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         Gson gson = new Gson();
         String jsonStr = gson.toJson(pList);
@@ -1224,7 +1274,16 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.bt_media_cloud_list_refresh:
-                loadMediaListFromCloud();
+                loadMediaListFromCloud(getApplicationContext(), new cloudListGetCallback() {
+                    @Override
+                    public void cloudSyncDone(boolean result) {
+                        if (result == true) {
+                            Message msg = mHandler.obtainMessage();
+                            msg.what = MSG_MEDIA_DATABASE_UI_SYNC;
+                            mHandler.sendMessage(msg);
+                        }
+                    }
+                });
                 break;
 
             case R.id.cb_media_all_list_check:

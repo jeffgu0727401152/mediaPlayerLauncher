@@ -142,6 +142,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int HEARTBEAT_INTERVAL_S = 60 * 3;
 
     private ArrayList<FileListPushBean> mNeedToDownloadList = null;
+    private ArrayList<MediaListPushBean> mNeedToPlayList = null;
 
     // MQTT Util callback +++
     @Override
@@ -385,99 +386,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
-    private void syncWithCloud() {
-        // 初始化云端媒体列表
-        OkHttpClient mClient = new OkHttpClient();
-        if (HttpConstants.URL_GET_SHARE_LIST.contains("https")) {
-            try {
-                mClient = new OkHttpClient.Builder()
-                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                        .build();
-            } catch (Exception e) {
-                Log.e(TAG,"Exception in load media list from cloud " + e.toString());
-            }
-        } else {
-            mClient = new OkHttpClient();
-        }
-
-        FormBody body = new FormBody.Builder()
-                .add("sn", DeviceInfoActivity.getSysSN())
-                .build();
-
-        Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
-        Call call = mClient.newCall(request);
-
-
-        call.enqueue(new okhttp3.Callback() {
-            // 失败
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e(TAG,"onFailure" + e.toString());
-            }
-
-            // 成功
-            @Override
-            public void onResponse(Call call, Response response)
-                    throws IOException {
-
-                if (!response.isSuccessful()) {
-                    throw new IOException("onResponse unexpected return code " + response);
-
-                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
-                    String htmlBody = response.body().string();
-
-                    CloudListBean cloudList;
-                    try {
-                        cloudList = new Gson().fromJson(htmlBody, CloudListBean.class);
-                    } catch (IllegalStateException e) {
-                        cloudList = null;
-                        Log.e(TAG, "except in json parse!" + e.toString());
-                    }
-
-                    if  (cloudList != null) {
-                        if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
-                            Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
-                            new MediaBeanDao(getApplicationContext()).deleteItemsFromCloud();
-
-                            if (!cloudList.getResult().isEmpty()) {
-                                List<MediaBean> listCloud = new ArrayList<>();
-                                DataListCovert.covertCloudResultToMediaList(getApplicationContext(), listCloud, cloudList.getResult());
-                                new MediaBeanDao(getApplicationContext()).createOrUpdate(listCloud);
-                            }
-                        } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
-                            Log.d(TAG,"onResponse device not login yet,need user login this device!");
-                            ToastUtil.showToast(getApplicationContext(),getResources().getString(R.string.str_media_cloud_file_need_login_toast));
-                        } else {
-                            Log.d(TAG,"onResponse unknown status!");
-                        }
-                    } else {
-                        Log.e(TAG, "cloud media list json parse error! " + htmlBody);
-                    }
-
-                    // 云端列表更新后必须做一次与本地已经下载文件的匹配
-                    MediaActivity.updateDbCloudItemWithLocalDisk(getApplicationContext(),new MediaScanUtil());
-
-                    // 如果有云端要求下载的文件在本地的云数据库中没有，那么就需要向服务器请求一次云端文件列表，请求结束后再下载这些文件
-                    if (mNeedToDownloadList!=null && mNeedToDownloadList.size()>0) {
-                        Deque<MediaBean> dDeque = new ArrayDeque<>();
-                        boolean syncResult = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(), dDeque, mNeedToDownloadList);
-                        if (syncResult == true) {
-                            Log.w(TAG,"we have sync with the server, but still have some item miss!");
-                        }
-                        mNeedToDownloadList = null;
-
-                        while (!dDeque.isEmpty()) {
-                            callDownload(dDeque.pop());
-                        }
-                    }
-
-                } else {
-                    Log.e(TAG, "onResponse response http code undefine!");
-                }
-            }
-        });
-    }
-
     private void parserMqttMessage(String mqttMessage) {
         Message message = mqttUtilHandler.obtainMessage();
         message.what = MSG_NONE;
@@ -595,6 +503,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
     }
 
+    private void savePlaylistAndStartActivityToPlay(List<PlayListBean> playlist) {
+        MediaActivity.savePlaylistToConfig(getApplication(), playlist);
+        if (!playlist.isEmpty()) {
+            // 立刻开始播放
+            for (PlayListBean bean : playlist) {
+                callDownload(bean.getMediaData());
+            }
+            startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        }
+    }
+
     private Handler mqttUtilHandler = new Handler() {
         public void handleMessage(Message msg) {
             String rawStr = (String) msg.obj;
@@ -702,27 +621,41 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_PUSH_PLAYLIST:
                     Type type = new TypeToken<List<MediaListPushBean>>(){ }.getType();
-                    ArrayList<MediaListPushBean> pushList = gson.fromJson(rawStr.substring(100), type);
+                    ArrayList<MediaListPushBean> playCloudList = gson.fromJson(rawStr.substring(100), type);
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
 
                         Intent intent=new Intent(Contants.ACTION_PUSH_PLAYLIST);
                         Bundle bundle = new Bundle();
-                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, pushList);
+                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, playCloudList);
                         intent.putExtras(bundle);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
                     } else {
 
                         pList = new ArrayList<>();
-                        DataListCovert.covertCloudPushToPlayList(getApplicationContext(), pList, pushList);
-                        MediaActivity.savePlaylistToConfig(getApplication(), pList);
-                        if (!pList.isEmpty()) {
-                            // 立刻开始播放
-                            for (PlayListBean bean : pList) {
-                                callDownload(bean.getMediaData());
+                        // 这边需要处理，本地数据库中没有云端条目，而云端却发送过来让你下载的情况
+                        boolean needSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(), pList, playCloudList);
+                        if (needSync) {
+                            if (mNeedToPlayList!=null) {
+                                Log.w(TAG,"mNeedToPlayList already has a cloud sync http request");
+                            } else {
+                                mNeedToPlayList = playCloudList;
+                                MediaActivity.loadMediaListFromCloud(getApplicationContext(), new MediaActivity.cloudListGetCallback() {
+                                    @Override
+                                    public void cloudSyncDone(boolean result) {
+                                        ArrayList<PlayListBean> pList = new ArrayList<>();
+                                        boolean stillNeedSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(), pList, mNeedToPlayList);
+                                        if (stillNeedSync) {
+                                            Log.w(TAG, "we have sync with cloud,but still missing some item!");
+                                        }
+                                        mNeedToPlayList = null;
+                                        savePlaylistAndStartActivityToPlay(pList);
+                                    }
+                                });
                             }
-                            startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        } else {
+                            savePlaylistAndStartActivityToPlay(pList);
                         }
                     }
 
@@ -757,28 +690,50 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_PUSH_DOWNLOAD:
                     type = new TypeToken<List<FileListPushBean>>(){ }.getType();
-                    ArrayList<FileListPushBean> downloadList = gson.fromJson(rawStr.substring(100), type);
+                    ArrayList<FileListPushBean> downloadCloudList = gson.fromJson(rawStr.substring(100), type);
+
                     dDeque = new ArrayDeque<>();
                     // 这边需要处理，本地数据库中没有云端条目，而云端却发送过来让你下载的情况
-                    boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadList);
-
+                    boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadCloudList);
                     if (needSync) {
+
                         if (((MainApplication)getApplication()).isMediaActivityForeground) {
                             // 交给MediaActivity同步，同步结束后下载这些文件
                             Intent intent=new Intent(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC);
                             Bundle bundle = new Bundle();
-                            bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, downloadList);
+                            bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, downloadCloudList);
                             intent.putExtras(bundle);
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
                         } else {
-                            mNeedToDownloadList = downloadList;
-                            syncWithCloud();
-                            // todo 云端上传一个文件 不要手点同步，看这边逻辑是否ok
+
+                            if (mNeedToDownloadList!=null) {
+                                Log.w(TAG,"mNeedToDownloadList already has a cloud sync http request");
+                            } else {
+                                mNeedToDownloadList = downloadCloudList;
+                                MediaActivity.loadMediaListFromCloud(getApplicationContext(), new MediaActivity.cloudListGetCallback() {
+                                    @Override
+                                    public void cloudSyncDone(boolean result) {
+                                        Deque<MediaBean> dDeque = new ArrayDeque<>();
+                                        boolean stillNeedSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(), dDeque, mNeedToDownloadList);
+                                        if (stillNeedSync == true) {
+                                            Log.w(TAG,"we have sync with cloud,but still missing some item!");
+                                        }
+                                        mNeedToDownloadList = null;
+                                        while (!dDeque.isEmpty()) {
+                                            callDownload(dDeque.pop());
+                                        }
+                                    }
+                                });
+                            }
                         }
+
                     } else {
+
                         while (!dDeque.isEmpty()) {
                             callDownload(dDeque.pop());
                         }
+
                     }
                     break;
 
