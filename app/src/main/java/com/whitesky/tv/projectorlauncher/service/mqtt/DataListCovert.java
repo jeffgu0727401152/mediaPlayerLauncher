@@ -97,7 +97,7 @@ public class DataListCovert {
             }
         }
 
-        if(shareItemFromCloudPush == shareItemInLocalDbFound) {
+        if(shareItemFromCloudPush > shareItemInLocalDbFound) {
             Log.w(TAG,"you have something in cloud but not in local DB! you need sync with cloud");
             return true;
         } else {
