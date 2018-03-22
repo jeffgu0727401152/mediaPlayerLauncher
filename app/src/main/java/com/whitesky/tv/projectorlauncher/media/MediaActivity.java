@@ -207,8 +207,11 @@ public class MediaActivity extends Activity
     private ArrayAdapter<String> mUsbPartitionAdapter;
 
     private void totalChangePlayList(List<PlayListBean> target) {
-        mNeedToPlayList = null;
-        mPlayListAdapter.setListDatas(target);
+        mPlayListBeans.clear();
+        for (int i = 0; i < target.size(); i++) {
+            mPlayListBeans.add(target.get(i));
+        }
+
         mPlayListAdapter.refresh();
         savePlaylistToConfig();
 
@@ -757,7 +760,7 @@ public class MediaActivity extends Activity
     }
 
     private void savePlaylistToConfig() {
-        savePlaylistToConfig(this,mPlayListBeans);
+        savePlaylistToConfig(this,mPlayListAdapter.getListDatas());
     }
 
     public static synchronized void savePlaylistToConfig(Context context, List<PlayListBean> pList) {

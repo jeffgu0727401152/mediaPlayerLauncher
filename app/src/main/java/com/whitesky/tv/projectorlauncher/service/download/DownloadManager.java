@@ -12,6 +12,11 @@ import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
 
@@ -26,10 +31,27 @@ public class DownloadManager {
 
     private static final String TAG = DownloadManager.class.getSimpleName();
 
-    private Map<String, DownloadRunnable> mTaskMap = new ConcurrentHashMap<>();
+    //当线程池中的线程小于mCorePoolSize，直接创建新的线程加入线程池执行任务
+    private static final int mCorePoolSize = 5;
+    //最大线程数
+    private static final int mMaximumPoolSize = 5;
+    //线程执行完任务后，且队列中没有可以执行的任务，存活的时间，后面的参数是时间单位
+    private static final long mKeepAliveTime = 100L;
 
     OkHttpClient mClient = new OkHttpClient();
+    ThreadPoolExecutor downloadExecutor = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime,
+            TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+            new ThreadFactory() {
+                private AtomicInteger mInteger = new AtomicInteger(1);
+                @Override
+                public Thread newThread(Runnable runnable) {
+                    Thread thread = new Thread(runnable, "download thread #" + mInteger.getAndIncrement());
+                    return thread;
+                }}, new ThreadPoolExecutor.AbortPolicy());
 
+
+
+    private Map<String, DownloadRunnable> mTaskMap = new ConcurrentHashMap<>();
     private static DownloadManager instance;
 
     public DownloadManager() {}
@@ -77,7 +99,9 @@ public class DownloadManager {
             callback.onStateChange(task.getEntity());
         }
 
-        DownloadExecutor.getInstance().execute(task);
+        if (task!=null) {
+            downloadExecutor.execute(task);
+        }
     }
 
     /** 暂停下载，需要传入一个 MediaBean 对象 */
@@ -102,7 +126,7 @@ public class DownloadManager {
             }
 
             // 在下载队列里取消排队线程
-            DownloadExecutor.getInstance().cancel(task);
+            downloadExecutor.getQueue().remove(task);
 
         } else {
             Log.w(TAG, "can not pause a download task not in mTaskMap!");
@@ -134,19 +158,12 @@ public class DownloadManager {
             }
 
             // 在下载队列里取消排队线程
-            if (DownloadExecutor.getInstance().contains(task)) {
-                DownloadExecutor.getInstance().cancel(task);
+            if (downloadExecutor.getQueue().contains(task)) {
+                downloadExecutor.getQueue().remove(task);
             }
 
         }  else {
             Log.w(TAG, "can not cancel a download task not in mTaskMap!");
         }
-    }
-
-    /** 销毁的时候关闭线程池以及当前执行的线程，并清空所有数据和把当前下载状态存进数据库 */
-    public void close() {
-        DownloadExecutor.getInstance().stop();
-        mClient = null;
-        mTaskMap.clear();
     }
 }
