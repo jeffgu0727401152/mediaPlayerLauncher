@@ -10,6 +10,8 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
 
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
@@ -39,7 +42,7 @@ public class DownloadManager {
     private static final long mKeepAliveTime = 100L;
 
     OkHttpClient mClient = new OkHttpClient();
-    ThreadPoolExecutor downloadExecutor = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime,
+    private ThreadPoolExecutor downloadExecutor = new ThreadPoolExecutor(mCorePoolSize, mMaximumPoolSize, mKeepAliveTime,
             TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
             new ThreadFactory() {
                 private AtomicInteger mInteger = new AtomicInteger(1);
@@ -72,7 +75,6 @@ public class DownloadManager {
      * 开启下载，需要传入一个MediaBean对象
      */
     public void download(MediaBean downloadBean, final DownloadCallback callback) {
-
         if (downloadBean == null || downloadBean.getUrl().isEmpty()) {
             Log.w(TAG, "download bean is not valid!" + downloadBean==null?"null":downloadBean.toString());
             return;
@@ -82,12 +84,32 @@ public class DownloadManager {
 
         DownloadRunnable task;
         if (!mTaskMap.containsKey(downloadBean.getUrl())) {
+
             // 创建一个下载任务，放入线程池
-            task = new DownloadRunnable(downloadBean, mClient, callback);
+            task = new DownloadRunnable(downloadBean, mClient, new DownloadRunnable.RunNotify(){
+                @Override
+                public void notifyReturn(String url){
+                    if (mTaskMap.containsKey(url)) {
+                        mTaskMap.remove(url);
+                    }
+                }
+            });
+
+            task.setCallback(callback);
+
             // 线程放入map里面方便管理
             mTaskMap.put(downloadBean.getUrl(), task);
         } else {
             task = mTaskMap.get(downloadBean.getUrl());
+        }
+
+        // 防止runnable下载完成或发生错误，但是还没来得通知manager从mTaskMap中移出，这个时候又处理download这个url的请求
+        // 所以这边需要强制只有已经在Task中为none/pause的状态给下载
+        if (task.getEntity().getDownloadState()!= MediaBean.STATE_DOWNLOAD_NONE
+                    && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_PAUSED)
+        {
+            Log.w(TAG,"do nothing because bean is already in downloading");
+            return;
         }
 
         // 下载之前，把状态设置为STATE_WAITING
@@ -113,9 +135,18 @@ public class DownloadManager {
         }
 
         Log.i(TAG, "pause a download task:" + pauseBean.toString());
+
         if (mTaskMap.containsKey(pauseBean.getUrl())) {
             // 拿到当前任务
             DownloadRunnable task = mTaskMap.get(pauseBean.getUrl());
+
+            if (task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_WAITING
+                    && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_START
+                    && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_DOWNLOADING)
+            {
+                Log.w(TAG,"do nothing because bean is already in pause");
+                return;
+            }
 
             // 将任务状态设置为暂停,run循环耗时代码自动结束
             task.getEntity().setDownloadState(STATE_DOWNLOAD_PAUSED);
@@ -126,7 +157,9 @@ public class DownloadManager {
             }
 
             // 在下载队列里取消排队线程
-            downloadExecutor.getQueue().remove(task);
+            if (downloadExecutor.getQueue().contains(task)) {
+                downloadExecutor.getQueue().remove(task);
+            }
 
         } else {
             Log.w(TAG, "can not pause a download task not in mTaskMap!");
@@ -162,8 +195,33 @@ public class DownloadManager {
                 downloadExecutor.getQueue().remove(task);
             }
 
+            mTaskMap.remove(cancelBean.getUrl());
+
         }  else {
             Log.w(TAG, "can not cancel a download task not in mTaskMap!");
+        }
+    }
+
+    public boolean contains(String url) {
+        if (mTaskMap.isEmpty() || url==null) {
+            return false;
+        }
+        return mTaskMap.containsKey(url);
+    }
+
+    public void pauseAll() {
+        for (Iterator<Map.Entry<String, DownloadRunnable>> it = mTaskMap.entrySet().iterator(); it.hasNext();){
+            Map.Entry<String, DownloadRunnable> item = it.next();
+            DownloadRunnable val = item.getValue();
+            pause(val.getEntity());
+        }
+    }
+
+    public void cancelAll() {
+        for (Iterator<Map.Entry<String, DownloadRunnable>> it = mTaskMap.entrySet().iterator(); it.hasNext();){
+            Map.Entry<String, DownloadRunnable> item = it.next();
+            DownloadRunnable val = item.getValue();
+            cancel(val.getEntity());
         }
     }
 }

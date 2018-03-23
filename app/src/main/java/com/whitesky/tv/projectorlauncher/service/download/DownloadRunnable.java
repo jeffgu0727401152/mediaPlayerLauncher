@@ -33,13 +33,18 @@ public class DownloadRunnable implements Runnable {
     private static final int PROGRESS_UPDATE_SIZE = 1024*1024*2;
 
     private DownloadCallback mCallback;
+    private RunNotify mManagerNotify;    //和mCallback的调用顺序，一定保证先Notify manager 再 Callback外部
     private MediaBean mEntity;
     private OkHttpClient mClient;
     private long lastUpdateProgress;
 
-    public DownloadRunnable(MediaBean mEntity,OkHttpClient client,DownloadCallback mCallback) {
-        this.mCallback = mCallback;
+    public interface RunNotify {
+        void notifyReturn(String url);
+    }
+
+    public DownloadRunnable(MediaBean mEntity, OkHttpClient client, RunNotify mNotify) {
         this.mEntity = mEntity;
+        this.mManagerNotify = mNotify;
         this.mClient = client;
         lastUpdateProgress = 0;
     }
@@ -58,6 +63,7 @@ public class DownloadRunnable implements Runnable {
 
     private void runnableErrorReturn() {
         mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
+        if (mManagerNotify!=null) mManagerNotify.notifyReturn(mEntity.getUrl());
         if(mCallback!=null) mCallback.onError(mEntity);
         return;
     }
@@ -122,6 +128,15 @@ public class DownloadRunnable implements Runnable {
             completeSize = tempFile.length();
         }
 
+        if (completeSize >= mEntity.getSize()) {
+            Log.e(TAG, "temp file size is larger than total file!" + mEntity.toString());
+
+            mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
+            mEntity.setDownloadProgress(0);
+            tempFile.delete();
+            runnableErrorReturn();
+        }
+
         lastUpdateProgress = completeSize;
         mEntity.setDownloadProgress(completeSize);
         if(mCallback!=null) mCallback.onProgress(mEntity);
@@ -154,7 +169,10 @@ public class DownloadRunnable implements Runnable {
                     os.close();
                     is.close();
 
-                    if (mEntity.getDownloadState() == STATE_DOWNLOAD_NONE) tempFile.delete();
+                    if (mEntity.getDownloadState() == STATE_DOWNLOAD_NONE) {
+                        tempFile.delete();
+                    }
+
                     return;
                 }
 
@@ -179,7 +197,8 @@ public class DownloadRunnable implements Runnable {
                 os.close();
                 is.close();
                 tempFile.renameTo(finalFile);
-                if(mCallback!=null) mCallback.onFinish(mEntity);
+                if (mManagerNotify!=null) mManagerNotify.notifyReturn(mEntity.getUrl());
+                if (mCallback!=null) mCallback.onFinish(mEntity);
 
             } else {
 
@@ -187,11 +206,11 @@ public class DownloadRunnable implements Runnable {
 
                 mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
                 mEntity.setDownloadProgress(0);
-                if(mCallback!=null) mCallback.onError(mEntity);
                 os.close();
                 is.close();
                 tempFile.delete();
-
+                if (mManagerNotify!=null) mManagerNotify.notifyReturn(mEntity.getUrl());
+                if(mCallback!=null) mCallback.onError(mEntity);
             }
         } catch (IOException e) {
             Log.e(TAG, "IOException in downloading " + e.toString());

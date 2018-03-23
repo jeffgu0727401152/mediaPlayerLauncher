@@ -15,15 +15,20 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.utils.AppUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
+import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
+import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
 import java.util.List;
 
+import static com.whitesky.tv.projectorlauncher.common.Contants.UPDATE_APK_DOWNLOAD_PATH;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 
@@ -34,13 +39,15 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 
 public class DownloadService extends Service {
     private static final String TAG = DownloadService.class.getSimpleName();
-
     private final static int DOWNLOAD_SERVICE_ID = 1002;
+
+    public static final int APK_SIZE_MAX = 100*1024*1024; // 限制apk大小100m，防止/mnt/sdcard/下空间不够
 
     public static final String ACTION_MEDIA_DOWNLOAD_START = "com.whitesky.tv.MEDIA_DOWNLOAD_START";
     public static final String ACTION_MEDIA_DOWNLOAD_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_PAUSE";
     public static final String ACTION_MEDIA_DOWNLOAD_CANCEL = "com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL";
     public static final String ACTION_MEDIA_DOWNLOAD_START_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE";
+    public static final String ACTION_MEDIA_DOWNLOAD_CANCEL_ALL = "com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL_ALL";
 
     public static final String ACTION_APK_DOWNLOAD_START = "com.whitesky.tv.APK_DOWNLOAD_START";
     public static final String ACTION_APK_DOWNLOAD_CANCEL = "com.whitesky.tv.APK_DOWNLOAD_CANCEL";
@@ -76,8 +83,13 @@ public class DownloadService extends Service {
 
         String url = intent.getStringExtra(EXTRA_KEY_URL);
 
-        if (ACTION_APK_DOWNLOAD_START.equals(intent.getAction())) {
-            MediaBean apk = new MediaBean("update.apk",0, MEDIA_UNKNOWN, MediaBean.SOURCE_CLOUD_FREE, "/mnt/sdcard/update/ota.apk",0,0L);
+        if (ACTION_MEDIA_DOWNLOAD_CANCEL_ALL.equals(intent.getAction())) {
+            DownloadManager.getInstance().cancelAll();
+
+        } else if (ACTION_APK_DOWNLOAD_START.equals(intent.getAction())) {
+            DownloadManager.getInstance().pauseAll();
+
+            MediaBean apk = new MediaBean("ota.apk",0, MEDIA_UNKNOWN, MediaBean.SOURCE_CLOUD_FREE, UPDATE_APK_DOWNLOAD_PATH,0,0L);
             apk.setUrl(url);
             apk.setDownloadState(STATE_DOWNLOAD_NONE);
             DownloadManager.getInstance().download(apk, mApkDownloadCallback);
@@ -152,18 +164,32 @@ public class DownloadService extends Service {
         return beans.get(0);
     }
 
-    private void sendResultToActivity(MediaBean bean) {
+    private void sendResultToMediaActivity(MediaBean bean) {
         new MediaBeanDao(getApplicationContext()).createOrUpdate(bean);
-        if (((MainApplication)getApplication()).isMediaActivityForeground) {
-            Intent intent=new Intent(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT, bean);
-            intent.putExtras(bundle);
-            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-        } else {
-            //Log.w(TAG,"MediaActivity is not foreground, do nothing");
-        }
+
+        Intent intent=new Intent(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT, bean);
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
     }
+
+    private void sendProgressToOtaActivity(MediaBean bean) {
+        Intent intent=new Intent(Contants.ACTION_DOWNLOAD_OTA_PROGRESS);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT, bean);
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+    }
+
+    private void sendFailToOtaActivity(MediaBean bean) {
+        Intent intent=new Intent(Contants.ACTION_DOWNLOAD_OTA_INSTALL_FAILED);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT, bean);
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+    }
+
 
     private BroadcastReceiver mNetReceiver = new BroadcastReceiver() {
 
@@ -174,10 +200,13 @@ public class DownloadService extends Service {
                 Log.i(TAG, "network status change!");
                 ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+
+                // 恢复网络的时候重新启动下载
                 if(info != null && info.isAvailable()) {
                     String name = info.getTypeName();
                     Log.d(TAG, "resume all download, network on " + name);
                     for (MediaBean tmp : new MediaBeanDao(getApplicationContext()).selectItemsDownloading()) {
+                        tmp.setDownloadState(STATE_DOWNLOAD_NONE);
                         DownloadManager.getInstance().download(tmp, mMediaDownloadCallback);
                     }
                 } else {
@@ -199,11 +228,39 @@ public class DownloadService extends Service {
         @Override
         public void onProgress(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
+            sendProgressToOtaActivity(bean);
         }
 
         @Override
         public void onFinish(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onFinish");
+            String apkPkgName = AppUtil.getApkPackageName(getApplicationContext(),UPDATE_APK_DOWNLOAD_PATH);
+            String apkVersionName = AppUtil.getApkVersionName(getApplicationContext(),UPDATE_APK_DOWNLOAD_PATH);
+            String apkSignature = AppUtil.getAPKSignature(UPDATE_APK_DOWNLOAD_PATH);
+            int apkVersionCode = AppUtil.getApkVersionCode(getApplicationContext(),UPDATE_APK_DOWNLOAD_PATH);
+
+            String mySignature = AppUtil.getSignature(getApplicationContext());
+            int myVersionCode = DeviceInfoActivity.getVersionCode(getApplicationContext());
+
+            // 包名字一致，签名一致，版本号高于本地，才真的去做升级
+            if (apkPkgName!=null && apkPkgName.equals(getPackageName())
+                    && mySignature.equals(apkSignature)
+                    && apkVersionCode > myVersionCode) {
+
+                if (((MainApplication)getApplication()).isBusyInFormat || ((MainApplication)getApplication()).isBusyInCopy) {
+                    Log.w(TAG,"can not update because device is in sata disk format/copy file to internal!");
+                    sendFailToOtaActivity(bean);
+                } else {
+                    ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_update_file_download_ready));
+                    ShellUtil.execCommand("pm install -r " + UPDATE_APK_DOWNLOAD_PATH,false,false);
+                }
+
+            } else {
+                Log.w(TAG,"can not update because apk not as our expect! " +
+                        " apkPkgName:" + apkPkgName +
+                        " apkVersionCode:"+ apkVersionCode);
+                sendFailToOtaActivity(bean);
+            }
         }
 
         @Override
@@ -215,6 +272,9 @@ public class DownloadService extends Service {
             if(info != null && info.isAvailable()) {
                 String name = info.getTypeName();
                 Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
+
+                // 发生错误自动重新下载
+                bean.setDownloadState(STATE_DOWNLOAD_NONE);
                 DownloadManager.getInstance().download(bean, mApkDownloadCallback);
             }
         }
@@ -227,26 +287,26 @@ public class DownloadService extends Service {
         @Override
         public void onStateChange(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onStateChange");
-            sendResultToActivity(bean);
+            sendResultToMediaActivity(bean);
         }
 
         @Override
         public void onProgress(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
-            sendResultToActivity(bean);
+            sendResultToMediaActivity(bean);
         }
 
         @Override
         public void onFinish(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onFinish");
             bean.setDuration(downloadFileDurationScanner.getMediaDuration(bean.getPath()));
-            sendResultToActivity(bean);
+            sendResultToMediaActivity(bean);
         }
 
         @Override
         public void onError(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onError");
-            sendResultToActivity(bean);
+            sendResultToMediaActivity(bean);
 
             ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);

@@ -15,6 +15,8 @@ public class Contants
     public static final String ACTION_PUSH_DOWNLOAD_NEED_SYNC = "com.whitesky.tv.push.downloadSync";
     public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
 
+    public static final String ACTION_DOWNLOAD_OTA_PROGRESS = "com.whitesky.tv.download.OTA_PROGRESS";
+    public static final String ACTION_DOWNLOAD_OTA_INSTALL_FAILED = "com.whitesky.tv.download.OTA_INSTALL_FAILED";
     public static final String ACTION_DOWNLOAD_STATE_UPDATE = "com.whitesky.tv.download.state";
     public static final String EXTRA_DOWNLOAD_STATE_CONTEXT = "mqtt_push_context";
 
@@ -49,5 +51,5 @@ public class Contants
     public static final String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", MASS_STORAGE_PATH};
     // MediaActivity ---
 
-    public static final String UPDATE_APK_DOWNLOAD_LOCATION = "/mnt/sdcard/updateApk";
+    public static final String UPDATE_APK_DOWNLOAD_PATH = "/mnt/sdcard/update/ota.apk";
 }

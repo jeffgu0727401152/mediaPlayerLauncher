@@ -1633,8 +1633,6 @@ public class MediaActivity extends Activity
                                     FileUtil.getAvailableCapacity(path));
                             String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path));
 
-                            Log.e(TAG,"~~~~" + fsUsed);
-
                             if (path.contains(LOCAL_SATA_MOUNT_PATH)) {
                                 updateTextViewOnUiThread(mLocalCapacityTextView, fsUsed + "/" + fsCapacity);
                             } else {

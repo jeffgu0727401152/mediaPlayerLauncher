@@ -53,8 +53,8 @@ public class OTAActivity extends Activity implements View.OnClickListener ,  Vie
                 startActivity(local);
                 break;
             case R.id.rf_settings_ota_net:
-                //Intent net = new Intent(getApplicationContext(), OTANetActivity.class);
-                //startActivity(net);
+                Intent net = new Intent(getApplicationContext(), OTANetActivity.class);
+                startActivity(net);
                 break;
             default:
                 break;

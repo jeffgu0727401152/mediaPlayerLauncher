@@ -5,7 +5,7 @@
     <string name="title_bg_ok">【  按下确定键更换  】</string>
 
     <!--Home 页-->
-    <string name="str_home_welcome">欢迎使用皓空巨幕</string>
+    <string name="str_home_welcome">欢迎使用皓空巨幕播放器</string>
     <string name="str_home_peo">个人页面</string>
     <string name="str_home_media">多媒体</string>
     <string name="str_home_sys">系统设置</string>
@@ -52,19 +52,22 @@
     <!--系统设置之系统升级页-->
     <string name="str_update_found">有可升级的升级包</string>
     <string name="str_update_btn">点击安装</string>
-    <string name="str_update_updating">正在升级中，请勿进行任何操作，请勿断开电源！！！</string>
+    <string name="str_ota_download_btn">点击下载并自动安装</string>
 
     <string name="str_install_found">有可安装的安装包</string>
     <string name="str_install_updating">正在安装中，请勿进行任何操作，请勿断开电源！！！</string>
 
-    <string name="title_check_update">检查更新</string>
-    <string name="title_net_update">正在下载请稍后...</string>
+    <string name="title_check_update">点击按钮检查更新</string>
+    <string name="title_net_update">正在下载，请稍后...</string>
     <string name="title_net_update_finish">更新完成，稍后重启</string>
-    <string name="title_net_update_new">已经是最新版</string>
+    <string name="title_net_update_not_found">没有找到更新的版本</string>
 
     <string name="str_update_local_title">使用U盘本地升级</string>
     <string name="str_update_local_not_found">无可用升级包，请检查U盘</string>
     <string name="str_update_local_check">正在检查U盘升级包，请稍候</string>
+
+    <string name="str_update_file_download_ready">升级包下载完毕，校验通过，将进行安装。。。</string>
+    <string name="str_update_file_check_failed">升级包校验失败，请联系管理员检查服务器上的升级包！</string>
 
     <!--系统设置之内存优化页-->
     <string name="title_memory_footprint">内存占用:</string>
@@ -83,8 +86,6 @@
     <string name="str_media_play_path_error">媒体文件路径错误</string>
     <string name="str_media_play_list_empty">请先添加文件到播放列表</string>
 
-    <string name="str_media_mqtt_push_Playmode_toast">播放模式被远程更新</string>
-    <string name="str_media_mqtt_push_playlist_toast">播放列表被远程更新</string>
     <string name="str_media_receive_mqtt_toast">收到远程控制命令</string>
     <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>
     <string name="str_media_usb_device_plug_out_toast">usb设备拔出:</string>

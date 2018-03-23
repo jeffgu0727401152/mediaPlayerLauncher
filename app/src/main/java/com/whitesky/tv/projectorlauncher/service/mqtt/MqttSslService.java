@@ -26,6 +26,7 @@ import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
+import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
@@ -68,6 +69,7 @@ import okhttp3.Response;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_NO_AVAILABLE;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
@@ -77,6 +79,7 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_R
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.APK_SIZE_MAX;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 import static java.lang.Thread.sleep;
 
@@ -86,6 +89,7 @@ import static java.lang.Thread.sleep;
 
 public class MqttSslService extends Service implements MqttUtil.MqttMessageCallback
 {
+    private final static String TAG = MqttSslService.class.getSimpleName();
     private final static int MQTT_SERVICE_ID = 1001;
 
     private final String STR_MQTT_MSG_TYPE_CMD  = "command~~~~~";
@@ -110,7 +114,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_PUSH_ACTION_DELETE    = "delete";    // 设置删除
     private final String STR_MQTT_PUSH_ACTION_LOCALDELETE  = "localdelete";   // 设置删除
 
-
     private final static int MSG_NONE = 0;
 
     // command
@@ -129,7 +132,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_PUSH_DELETE = 402;
     private final static int MSG_PUSH_DOWNLOAD = 403;
 
-    private final String TAG = this.getClass().getSimpleName();
     private final String keyStorePassword = "wxgh#2561";
 
     private final String SN = DeviceInfoActivity.getSysSN();
@@ -181,11 +183,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         MqttUtil.getInstance(this).setMsgCallBack(this);
         MqttUtil.getInstance(this).connect();
 
-        reportVersionInfo();
+        reportVersionAndGetUpdateInfo(getApplicationContext(),null);
 
-        heartBeat();
-
-        Log.d(TAG,"~~debug~~service onStartCommand!");
+        heartBeatThread();
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -200,8 +200,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
 
         super.onDestroy();
-
-        Log.d(TAG,"~~debug~~service onDestroy!");
 
         Log.d(TAG,"service onDestroy auto restart!");
         Intent localIntent = new Intent();
@@ -239,7 +237,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
     }
 
-    private void heartBeat() {
+    private void heartBeatThread() {
         mHeartBeatWorker.execute(new Runnable()
         {
             @Override
@@ -251,9 +249,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 {
                     try
                     {
-                        mClient =
-                                new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                                        .build();
+                        mClient = new OkHttpClient.Builder()
+                                .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                                .build();
                     }
                     catch (Exception e)
                     {
@@ -294,17 +292,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                 throw new IOException("Unexpected code " + response);
                             } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
 
-                                Log.d(TAG, "heartBeat success");
+                                Log.d(TAG, "heartbeat success");
 
                             } else {
 
-                                Log.e(TAG, "heartBeat response http code undefine! " + response.toString());
+                                Log.e(TAG, "heartbeat response http code undefine! " + response.toString());
 
                             }
                         }
 
                     } catch (Exception e) {
-                        Log.e(TAG, "Exception in heartBeat thread" + e);
+                        Log.e(TAG, "Exception in heartbeat thread" + e);
                         e.printStackTrace();
                     }
                 }
@@ -312,13 +310,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
-    private void reportVersionInfo() {
+    public interface requestVersionCallback{
+        void versionRequestDone(boolean ret, VersionCheckResultBean.Result result);
+    }
+
+    public static void reportVersionAndGetUpdateInfo(final Context context, final requestVersionCallback callback) {
         OkHttpClient mClient = new OkHttpClient();
         if (HttpConstants.URL_CHECK_VERSION.contains("https")) {
             try {
-                mClient =
-                        new OkHttpClient.Builder().sslSocketFactory(SSLContext.getDefault().getSocketFactory())
-                                .build();
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        .build();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -326,13 +328,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             mClient = new OkHttpClient();
         }
 
-        FormBody body =
-                new FormBody.Builder()
-                        .add("project", PROJECT_NAME)
-                        .add("appVer", DeviceInfoActivity.getVersionName(getApplicationContext()))
-                        .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
-                        .add("sn", SN)
-                        .build();
+        FormBody body = new FormBody.Builder()
+                .add("project", PROJECT_NAME)
+                .add("appVer", DeviceInfoActivity.getVersionName(context))
+                .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
+                .add("sn", DeviceInfoActivity.getSysSN())
+                .build();
         Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
         Call call = mClient.newCall(request);
         call.enqueue(new okhttp3.Callback() {
@@ -340,6 +341,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             @Override
             public void onFailure(Call call, IOException e) {
                 e.printStackTrace();
+                if (callback!=null) callback.versionRequestDone(false,null);
             }
 
             // 成功
@@ -347,6 +349,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             public void onResponse(Call call, Response response)
                     throws IOException {
                 if (!response.isSuccessful()) {
+                    if (callback!=null) callback.versionRequestDone(false,null);
                     Log.e(TAG,"response is not success!" + response.toString());
 
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
@@ -366,28 +369,24 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             if (serverResponse.getResult() != null) {
                                 Log.d(TAG, "VersionInfo success");
                             }
-                            // todo 检查版本是否为null,不是再比较版本,然后再download
-                            Log.d(TAG, htmlBody);
-//                                    Log.d(TAG, result.getResult().getAppVer());
-//                                    Log.d(TAG, result.getResult().getSysVer());
-//                                    Log.d(TAG, "size:" + result.getResult().getSize());
-//                                    Log.d(TAG, "time:" + result.getResult().getCreatedAt());
-//                                    Log.d(TAG, result.getResult().getUrl());
 
-                            Intent intent = new Intent().setAction(DownloadService.ACTION_APK_DOWNLOAD_START);
-                            intent.putExtra(EXTRA_KEY_URL, serverResponse.getResult().getUrl());
-                            //getApplicationContext().startService(intent);
-// todo 下载完成后检查版本，符合则升级,包名/签名不符合不安装
+                            if (callback!=null) callback.versionRequestDone(true, serverResponse.getResult());
 
+                        } else if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_NO_AVAILABLE)) {
+                            Log.i(TAG,"onResponse not have available update file in server!");
+                            if (callback!=null) callback.versionRequestDone(false,null);
                         } else {
                             Log.d(TAG,"onResponse unknown status " + serverResponse.getStatus());
+                            if (callback!=null) callback.versionRequestDone(false,null);
                         }
                     } else {
                         Log.e(TAG, "ota json parse error! " + htmlBody);
+                        if (callback!=null) callback.versionRequestDone(false,null);
                     }
 
                 } else {
                     Log.e(TAG, "onResponse http undefine code " + response.code());
+                    if (callback!=null) callback.versionRequestDone(false,null);
                 }
             }
         });
@@ -421,12 +420,16 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             if (mqttMessage.contains(STR_MQTT_REQ_ACTION_INFO)) {
                 message.what = MSG_REQUEST_INFO;
+
             } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_SHARELIST)) {
                 message.what = MSG_REQUEST_SHARELIST;
+
             } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_LOCALLIST)) {
                 message.what = MSG_REQUEST_LOCALLIST;
+
             }else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_PLAYLIST)) {
                 message.what = MSG_REQUEST_PLAYLIST;
+
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -435,14 +438,19 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYLIST)) {
                 message.what = MSG_PUSH_PLAYLIST;
+
             } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYMODE)) {
                 message.what = MSG_PUSH_PLAYMODE;
+
             } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DELETE)) {
                 message.what = MSG_PUSH_DELETE;
+
             } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DOWNLOAD)) {
                 message.what = MSG_PUSH_DOWNLOAD;
+
             } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_LOCALDELETE)) {
                 message.what = MSG_PUSH_DELETE;
+
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -502,7 +510,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     }
 
     private void callMediaDownload(MediaBean bean) {
-        if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
+        if (bean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
             Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
             intent.putExtra(EXTRA_KEY_URL, bean.getUrl());
             Log.i(TAG, "call download:" + bean.toString());
@@ -531,7 +539,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             Deque<MediaBean> dDeque;
 
             if (msg.what!=MSG_NONE) {
-                ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_media_receive_mqtt_toast));
+                ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_media_receive_mqtt_toast) + "(" + msg.what + ")");
                 Log.i(TAG,"receive mqtt cmd:"+msg.what);
             }
 
@@ -553,7 +561,23 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_CMD_OTA:
-                    // todo ota
+                    reportVersionAndGetUpdateInfo(getApplicationContext(),new requestVersionCallback(){
+                        @Override
+                        public void versionRequestDone(boolean ret, VersionCheckResultBean.Result result) {
+                            if (ret) {
+                                Log.i(TAG, "download version = " + result.getAppVer());
+                                Log.i(TAG, "download size = " + result.getSize());
+
+                                if (result.getSize()<APK_SIZE_MAX) {
+                                    Intent intent = new Intent().setAction(DownloadService.ACTION_APK_DOWNLOAD_START);
+                                    intent.putExtra(EXTRA_KEY_URL, result.getUrl());
+                                    getApplicationContext().startService(intent);
+                                } else {
+                                    Log.e(TAG,"server update apk to large!");
+                                }
+                            }
+                        }
+                    });
                     break;
 
                 case MSG_CMD_RAW:
@@ -698,7 +722,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 case MSG_PUSH_DOWNLOAD:
                     type = new TypeToken<List<FileListPushBean>>(){ }.getType();
                     ArrayList<FileListPushBean> downloadCloudList = gson.fromJson(rawStr.substring(100), type);
-
                     dDeque = new ArrayDeque<>();
                     // 这边需要处理，本地数据库中没有云端条目，而云端却发送过来让你下载的情况
                     boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadCloudList);

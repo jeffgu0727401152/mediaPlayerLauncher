@@ -19,6 +19,7 @@ public class HttpConstants
     public static final String LOGIN_STATUS_SUCCESS = "000000";
     public static final String LOGIN_STATUS_NOT_YET = "200101";
     public static final String VERSION_CHECK_STATUS_SUCCESS = "000000";
+    public static final String VERSION_CHECK_STATUS_NO_AVAILABLE = "200001";
 
     public static int HTTP_STATUS_SUCCESS = 200;
     

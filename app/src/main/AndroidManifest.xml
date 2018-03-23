@@ -41,6 +41,7 @@
 
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTAActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTALocalActivity" />
+        <activity android:name="com.whitesky.tv.projectorlauncher.settings.OTANetActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.SpeedTestActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.DiskFormatActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.settings.SysSettingActivity" />
@@ -64,6 +65,7 @@
                 <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_PAUSE"/>
                 <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL"/>
                 <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE"/>
+                <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL_ALL"/>
                 <action android:name="com.whitesky.tv.APK_DOWNLOAD_START"/>
                 <action android:name="com.whitesky.tv.APK_DOWNLOAD_CANCEL"/>
             </intent-filter>

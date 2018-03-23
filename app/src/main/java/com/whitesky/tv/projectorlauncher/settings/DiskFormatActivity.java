@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemProperties;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,6 +26,8 @@ import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
+import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -33,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import scut.carson_ho.kawaii_loadingview.Kawaii_LoadingView;
+
+import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 
 /**
  * Created by xiaoxuan on 2017/10/13.
@@ -194,8 +199,15 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mTvFormatInfo.setText(R.string.str_format_search_sata_disk);
-                        String ret = do_exec("setprop dev.wsd.formatsata.start 1");
-                        Log.i(TAG,"call sata disk format!" + ret);
+
+                        ((MainApplication)getApplication()).isBusyInFormat = true;
+                        Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL_ALL);
+                        Log.i(TAG, "call download cancel all");
+                        getApplicationContext().startService(intent);
+
+                        SystemProperties.set("dev.wsd.formatsata.start", "1");
+
+                        Log.i(TAG,"call sata disk format!");
                     }
                 })
                 .setNegativeButton(R.string.str_media_dialog_button_cancel, new DialogInterface.OnClickListener() {
@@ -205,23 +217,6 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
                     }
                 }).show();
     }
-
-    String do_exec(String cmd) {
-        String s = "";
-        try {
-            Process p = Runtime.getRuntime().exec(cmd);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(p.getInputStream()));
-            String line = null;
-            while ((line = in.readLine()) != null) {
-                s += line + "\n";
-            }
-        } catch (Exception e) {
-            Log.e(TAG,"Exception in do_exec,"+ e.toString());
-        }
-        return s;
-    }
-
 
     @Override
     public void onBackPressed()
