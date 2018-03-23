@@ -25,7 +25,6 @@ import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
-import com.whitesky.tv.projectorlauncher.media.bean.CloudListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
@@ -37,7 +36,6 @@ import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListResponseBean
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
-import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
@@ -68,10 +66,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
-import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
-import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
@@ -81,6 +77,7 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_R
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 import static java.lang.Thread.sleep;
 
 /**
@@ -350,7 +347,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             public void onResponse(Call call, Response response)
                     throws IOException {
                 if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+                    Log.e(TAG,"response is not success!" + response.toString());
 
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                     String htmlBody = response.body().string();
@@ -361,7 +358,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         serverResponse = new Gson().fromJson(htmlBody, VersionCheckResultBean.class);
                     } catch (IllegalStateException e) {
                         serverResponse = null;
-                        Log.e(TAG, "Gson parse error!" + e);
+                        Log.e(TAG, "exception in json parse!" + e.toString());
                     }
 
                     if (serverResponse != null) {
@@ -376,11 +373,21 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 //                                    Log.d(TAG, "size:" + result.getResult().getSize());
 //                                    Log.d(TAG, "time:" + result.getResult().getCreatedAt());
 //                                    Log.d(TAG, result.getResult().getUrl());
+
+                            Intent intent = new Intent().setAction(DownloadService.ACTION_APK_DOWNLOAD_START);
+                            intent.putExtra(EXTRA_KEY_URL, serverResponse.getResult().getUrl());
+                            //getApplicationContext().startService(intent);
+// todo 下载完成后检查版本，符合则升级,包名/签名不符合不安装
+
+                        } else {
+                            Log.d(TAG,"onResponse unknown status " + serverResponse.getStatus());
                         }
+                    } else {
+                        Log.e(TAG, "ota json parse error! " + htmlBody);
                     }
 
                 } else {
-                    Log.e(TAG, "VersionInfo response http code undefine!");
+                    Log.e(TAG, "onResponse http undefine code " + response.code());
                 }
             }
         });
@@ -494,10 +501,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         return false;
     }
 
-    private void callDownload(MediaBean bean) {
+    private void callMediaDownload(MediaBean bean) {
         if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
-            Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
-            intent.putExtra("path", bean.getPath());
+            Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
+            intent.putExtra(EXTRA_KEY_URL, bean.getUrl());
             Log.i(TAG, "call download:" + bean.toString());
             getApplicationContext().startService(intent);
         }
@@ -508,7 +515,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         if (!playlist.isEmpty()) {
             // 立刻开始播放
             for (PlayListBean bean : playlist) {
-                callDownload(bean.getMediaData());
+                callMediaDownload(bean.getMediaData());
             }
             startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         }
@@ -573,8 +580,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         info.setFreeCapacity(0);
                         info.setTotalCapacity(0);
                     } else {
-                        info.setFreeCapacity(FileUtil.getAvailableCapacity(LOCAL_MASS_STORAGE_PATH));
-                        info.setTotalCapacity(FileUtil.getTotalCapacity(LOCAL_MASS_STORAGE_PATH));
+                        info.setFreeCapacity(FileUtil.getAvailableCapacity(MASS_STORAGE_PATH));
+                        info.setTotalCapacity(FileUtil.getTotalCapacity(MASS_STORAGE_PATH));
                     }
                     info.setPlaying(((MainApplication)getApplication()).isMediaActivityFullScreenPlaying ==true?1:0);
 
@@ -721,7 +728,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                         }
                                         mNeedToDownloadList = null;
                                         while (!dDeque.isEmpty()) {
-                                            callDownload(dDeque.pop());
+                                            callMediaDownload(dDeque.pop());
                                         }
                                     }
                                 });
@@ -731,7 +738,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     } else {
 
                         while (!dDeque.isEmpty()) {
-                            callDownload(dDeque.pop());
+                            callMediaDownload(dDeque.pop());
                         }
 
                     }
@@ -787,8 +794,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                                 } else if (downloadState != STATE_DOWNLOAD_NONE) {
 
-                                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_CANCEL);
-                                    intent.putExtra("path", deleteBean.getPath());
+                                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
+                                    intent.putExtra(EXTRA_KEY_URL, deleteBean.getUrl());
                                     Log.i("TAG",intent.getAction().toString());
                                     startService(intent);
                                 }

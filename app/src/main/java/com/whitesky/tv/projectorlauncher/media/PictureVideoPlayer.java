@@ -24,7 +24,6 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +61,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 
 /**
  * Created by jeff on 18-1-22.
@@ -605,8 +605,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             if (fileBean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
 
                 if (fileBean.getDownloadState()==STATE_DOWNLOAD_NONE) {
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
-                    intent.putExtra("path", fileBean.getPath());
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
+                    intent.putExtra(EXTRA_KEY_URL, fileBean.getUrl());
                     Log.i(TAG, "call download:" + fileBean.toString());
                     mContext.startService(intent);
                 }

@@ -9,7 +9,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FOLD
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FREE_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PRIVATE_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
 
 /**
@@ -23,18 +23,18 @@ public class PathUtil {
     public static final int PATH_FILE_IMPORT_TO_LOCAL = 1;
     public static final int PATH_FILE_FROM_CLOUD_FREE = 2;
     public static final int PATH_FILE_FROM_CLOUD_PRIVATE = 3;
-    public static final int PATH_FILE_DOWNLOAD_FREE_TEMP = 8;
 
     public static String cloudFreeFileStoragePath() {
-        return LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
+        return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
     }
 
     public static String cloudPrivateFileStoragePath() {
-        return LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
+        return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
     }
 
-    public static File getDownloadTempFileByUrl(String url) {
-        String desFilePath = PathUtil.pathGenerate(PATH_FILE_DOWNLOAD_FREE_TEMP, url);
+    public static File getDownloadTempFileByUrl(String parentFolder, String url) {
+        String fileName = Md5Util.generateCode(url);
+        String desFilePath = parentFolder + File.separator + fileName;
         File file = new File(desFilePath);
 
         if (!file.exists()) {
@@ -52,7 +52,7 @@ public class PathUtil {
     }
 
     public static String localFileStoragePath() {
-        return LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+        return MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
     }
 
     public static String pathGenerate(String originalPath, String destination) {
@@ -91,20 +91,16 @@ public class PathUtil {
                 fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
                 break;
             case PATH_FILE_IMPORT_TO_LOCAL:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
+                basePath = MASS_STORAGE_PATH + File.separator + LOCAL_MEDIA_FOLDER;
                 fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
                 break;
             case PATH_FILE_FROM_CLOUD_FREE:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
+                basePath = MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
                 fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
                 break;
             case PATH_FILE_FROM_CLOUD_PRIVATE:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
+                basePath = MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
                 fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
-                break;
-            case PATH_FILE_DOWNLOAD_FREE_TEMP:
-                basePath = LOCAL_MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
-                fileName = Md5Util.generateCode(originalPath);
                 break;
             default:
                 Log.e(TAG,"pathGenerate error pathType " + pathType);

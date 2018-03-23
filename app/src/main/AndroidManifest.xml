@@ -60,10 +60,12 @@
         <service android:name="com.whitesky.tv.projectorlauncher.service.download.DownloadService"
             android:persistent="true">
             <intent-filter >
-                <action android:name="com.whitesky.tv.DOWNLOAD_START"/>
-                <action android:name="com.whitesky.tv.DOWNLOAD_PAUSE"/>
-                <action android:name="com.whitesky.tv.DOWNLOAD_START_PAUSE"/>
-                <action android:name="com.whitesky.tv.DOWNLOAD_CANCEL"/>
+                <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_START"/>
+                <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_PAUSE"/>
+                <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL"/>
+                <action android:name="com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE"/>
+                <action android:name="com.whitesky.tv.APK_DOWNLOAD_START"/>
+                <action android:name="com.whitesky.tv.APK_DOWNLOAD_CANCEL"/>
             </intent-filter>
         </service>
 

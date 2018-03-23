@@ -37,7 +37,7 @@ public class Contants
 
     // MediaActivity +++
     public static final String LOCAL_SATA_MOUNT_PATH = "/mnt/sata";         // 硬盘的固定挂载目录
-    public static final String LOCAL_MASS_STORAGE_PATH = "/mnt/sata/disk";  // 硬盘的固定挂载目录
+    public static final String MASS_STORAGE_PATH = "/mnt/sata/disk";  // 硬盘的固定挂载目录
     public static final String LOCAL_MEDIA_FOLDER = "local";                // usb导入本地的文件位置
     public static final String CLOUD_MEDIA_FOLDER = "cloud";                // 云端下载文件的储存总目录
     public static final String CLOUD_MEDIA_PRIVATE_FOLDER = "private";      // 用户私人上传文件的储存目录
@@ -46,6 +46,8 @@ public class Contants
     public static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";  //扫描usb媒体文件的路径
     public static final String COPY_TO_USB_MEDIA_EXPORT_FOLDER = "export";        //导出到usb设备的路径
     // 排除在外的挂载目录,设备上的所有的非usb的会被系统挂载的移动盘
-    public static final String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", LOCAL_MASS_STORAGE_PATH};
+    public static final String[] mMountExceptList = new String[]{"/mnt/sdcard", "/storage/emulated/0", MASS_STORAGE_PATH};
     // MediaActivity ---
+
+    public static final String UPDATE_APK_DOWNLOAD_LOCATION = "/mnt/sdcard/updateApk";
 }

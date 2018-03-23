@@ -244,8 +244,10 @@ public class FileUtil
             fileSizeString = df.format((double) sizeByte / 1024) + "K";
         } else if (sizeByte < 1073741824) {
             fileSizeString = df.format((double) sizeByte / 1048576) + "M";
-        } else {
+        } else if (sizeByte < 1099511627776L){
             fileSizeString = df.format((double) sizeByte / 1073741824) + "G";
+        } else {
+            fileSizeString = df.format((double) sizeByte / 1099511627776L) + "T";
         }
         return fileSizeString;
     }

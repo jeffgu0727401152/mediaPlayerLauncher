@@ -69,7 +69,7 @@ public class DownloadRunnable implements Runnable {
                 || mEntity.getDownloadState() == STATE_DOWNLOAD_NONE) {  // 等待中就暂停/取消了
             //因为有断点续传,所以即使任务没开始,也需要删除下载文件,防止上次关机之前下载的文件在
             if ( mEntity.getDownloadState() == STATE_DOWNLOAD_NONE ) {
-                File downloadTempFile = getDownloadTempFileByUrl(mEntity.getUrl());
+                File downloadTempFile = getDownloadTempFileByUrl(new File(mEntity.getPath()).getParent(),mEntity.getUrl());
                 if (downloadTempFile.exists()) {
                     downloadTempFile.delete();
                 }
@@ -101,7 +101,7 @@ public class DownloadRunnable implements Runnable {
         long completeSize = 0;
         // 磁盘检查下载文件是否存在
         File finalFile = new File(mEntity.getPath());
-        File tempFile = getDownloadTempFileByUrl(mEntity.getUrl());
+        File tempFile = getDownloadTempFileByUrl(new File(mEntity.getPath()).getParent(),mEntity.getUrl());
         if (!tempFile.exists()) {
             // 如果文件不存在
             completeSize = 0;

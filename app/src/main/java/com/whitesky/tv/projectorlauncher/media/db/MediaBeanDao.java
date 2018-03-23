@@ -236,7 +236,7 @@ public class MediaBeanDao {
         }
     }
 
-    // 根据主键取出用户信息,这里的主键是path
+    // 根据ID取出用户信息,非主键可能取出多个
     public List<MediaBean> queryById(int id) {
         synchronized (mediaDbLock) {
             List<MediaBean> retList = null;
@@ -249,4 +249,18 @@ public class MediaBeanDao {
             return retList;
         }
     }
+
+    public List<MediaBean> queryByUrl(String url) {
+        synchronized (mediaDbLock) {
+            List<MediaBean> retList = null;
+            try {
+                retList = dao.queryBuilder().where()
+                        .eq(MediaBean.COLUMNNAME_URL, url).query();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return retList;
+        }
+    }
+
 }

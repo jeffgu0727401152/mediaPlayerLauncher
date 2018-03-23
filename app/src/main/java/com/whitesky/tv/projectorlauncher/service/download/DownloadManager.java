@@ -152,7 +152,7 @@ public class DownloadManager {
             }
 
             //删除下载的临时文件
-            File file = PathUtil.getDownloadTempFileByUrl(cancelBean.getUrl());
+            File file = PathUtil.getDownloadTempFileByUrl(new File(cancelBean.getPath()).getParent(),cancelBean.getUrl());
             if (file.exists()) {
                 file.delete();
             }

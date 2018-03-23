@@ -22,7 +22,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 public class MediaScanUtil {
     private final String TAG = this.getClass().getSimpleName();
 
-    private MediaMetadataRetriever mmr = new MediaMetadataRetriever();                                  //用于获取媒体文件的播放时长度
     private MediaFileScanListener mMediaFileScanListener = null;
     ExecutorService mBackgroundService = Executors.newSingleThreadExecutor();;    // 保证单线程
     private boolean isNeedDuration = false;
@@ -42,11 +41,6 @@ public class MediaScanUtil {
         if (mBackgroundService != null) {
             mBackgroundService.shutdownNow();
             mBackgroundService = null;
-        }
-
-        if (mmr != null) {
-            mmr.release();
-            mmr = null;
         }
     }
 
@@ -110,7 +104,7 @@ public class MediaScanUtil {
                                 + fileExtension + ",filePath=" + filePath);
                         if (mMediaFileScanListener != null) {
                             int duration = 0;
-                            if (mmr != null && isNeedDuration) {
+                            if (isNeedDuration) {
                                 duration = getMediaDuration(filePath);
                             }
 
@@ -145,7 +139,7 @@ public class MediaScanUtil {
                                 + fileExtension + ",filePath=" + filePath);
                         if (mMediaFileScanListener != null) {
                             int duration = 0;
-                            if (mmr != null && isNeedDuration) {
+                            if (isNeedDuration) {
                                 duration = getMediaDuration(filePath);
                             }
 
@@ -275,8 +269,10 @@ public class MediaScanUtil {
 
             case MediaBean.MEDIA_VIDEO:
             case MediaBean.MEDIA_MUSIC:
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                 mmr.setDataSource(path);
                 String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                mmr.release();
                 return Integer.parseInt(duration);
 
             default:

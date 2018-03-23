@@ -22,6 +22,11 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 
+import java.util.List;
+
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+
 
 /**
  * Created by jeff on 18-3-13.
@@ -32,10 +37,15 @@ public class DownloadService extends Service {
 
     private final static int DOWNLOAD_SERVICE_ID = 1002;
 
-    public static final String ACTION_DOWNLOAD_START = "com.whitesky.tv.DOWNLOAD_START";
-    public static final String ACTION_DOWNLOAD_PAUSE = "com.whitesky.tv.DOWNLOAD_PAUSE";
-    public static final String ACTION_DOWNLOAD_START_PAUSE = "com.whitesky.tv.DOWNLOAD_START_PAUSE";
-    public static final String ACTION_DOWNLOAD_CANCEL = "com.whitesky.tv.DOWNLOAD_CANCEL";
+    public static final String ACTION_MEDIA_DOWNLOAD_START = "com.whitesky.tv.MEDIA_DOWNLOAD_START";
+    public static final String ACTION_MEDIA_DOWNLOAD_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_PAUSE";
+    public static final String ACTION_MEDIA_DOWNLOAD_CANCEL = "com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL";
+    public static final String ACTION_MEDIA_DOWNLOAD_START_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE";
+
+    public static final String ACTION_APK_DOWNLOAD_START = "com.whitesky.tv.APK_DOWNLOAD_START";
+    public static final String ACTION_APK_DOWNLOAD_CANCEL = "com.whitesky.tv.APK_DOWNLOAD_CANCEL";
+
+    public static final String EXTRA_KEY_URL = "extra.com.whitesky.tv.url";
 
     MediaScanUtil downloadFileDurationScanner = new MediaScanUtil();
 
@@ -63,35 +73,44 @@ public class DownloadService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String path = intent.getStringExtra("path");
-        if (ACTION_DOWNLOAD_START.equals(intent.getAction())) {
 
-            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
-            DownloadManager.getInstance().download(bean,mCallback);
+        String url = intent.getStringExtra(EXTRA_KEY_URL);
+
+        if (ACTION_APK_DOWNLOAD_START.equals(intent.getAction())) {
+            MediaBean apk = new MediaBean("update.apk",0, MEDIA_UNKNOWN, MediaBean.SOURCE_CLOUD_FREE, "/mnt/sdcard/update/ota.apk",0,0L);
+            apk.setUrl(url);
+            apk.setDownloadState(STATE_DOWNLOAD_NONE);
+            DownloadManager.getInstance().download(apk, mApkDownloadCallback);
+            Log.d(TAG,"download:"+apk.toString());
+
+        } else if (ACTION_MEDIA_DOWNLOAD_START.equals(intent.getAction())) {
+
+            MediaBean bean = queryMediaBeanByUrl(url);
+            DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
             Log.d(TAG,"download:"+bean.toString());
 
-        } else if (ACTION_DOWNLOAD_PAUSE.equals(intent.getAction())) {
+        } else if (ACTION_MEDIA_DOWNLOAD_PAUSE.equals(intent.getAction())) {
 
-            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            MediaBean bean = queryMediaBeanByUrl(url);
             DownloadManager.getInstance().pause(bean);
             Log.d(TAG,"pause:"+bean.toString());
 
-        } else if (ACTION_DOWNLOAD_START_PAUSE.equals(intent.getAction())) {
+        } else if (ACTION_MEDIA_DOWNLOAD_START_PAUSE.equals(intent.getAction())) {
 
-            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            MediaBean bean = queryMediaBeanByUrl(url);
             if (bean.getDownloadState()==MediaBean.STATE_DOWNLOAD_NONE
                     || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_PAUSED
                     || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_ERROR) {
-                DownloadManager.getInstance().download(bean, mCallback);
+                DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
                 Log.d(TAG,"download:"+bean.toString());
             } else {
                 DownloadManager.getInstance().pause(bean);
                 Log.d(TAG,"pause:"+bean.toString());
             }
 
-        } else if (ACTION_DOWNLOAD_CANCEL.equals(intent.getAction())) {
+        } else if (ACTION_MEDIA_DOWNLOAD_CANCEL.equals(intent.getAction())) {
 
-            MediaBean bean = new MediaBeanDao(getApplicationContext()).queryByPath(path);
+            MediaBean bean = queryMediaBeanByUrl(url);
             DownloadManager.getInstance().cancel(bean);
             Log.d(TAG,"cancel:"+bean.toString());
         }
@@ -114,6 +133,23 @@ public class DownloadService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private MediaBean queryMediaBeanByUrl(String url) {
+        List<MediaBean> beans = new MediaBeanDao(getApplicationContext()).queryByUrl(url);
+        if (beans==null || beans.isEmpty()) {
+            return null;
+        }
+
+        if (beans.size()>1) {
+            Log.w(TAG,"has the same url!");
+            for (MediaBean bean:beans) {
+                Log.w(TAG,bean.toString());
+            }
+            Log.w(TAG,"has the same url!");
+        }
+
+        return beans.get(0);
     }
 
     private void sendResultToActivity(MediaBean bean) {
@@ -142,7 +178,7 @@ public class DownloadService extends Service {
                     String name = info.getTypeName();
                     Log.d(TAG, "resume all download, network on " + name);
                     for (MediaBean tmp : new MediaBeanDao(getApplicationContext()).selectItemsDownloading()) {
-                        DownloadManager.getInstance().download(tmp,mCallback);
+                        DownloadManager.getInstance().download(tmp, mMediaDownloadCallback);
                     }
                 } else {
                     Log.d(TAG, "no network!");
@@ -151,9 +187,42 @@ public class DownloadService extends Service {
         }
     };
 
-    private DownloadObserver mCallback = new DownloadObserver();
+    private ApkDownloadObserver mApkDownloadCallback = new ApkDownloadObserver();
 
-    private class DownloadObserver implements DownloadCallback {
+    private class ApkDownloadObserver implements DownloadCallback {
+
+        @Override
+        public void onStateChange(MediaBean bean) {
+            Log.d(TAG,bean.getUrl() + " onStateChange");
+        }
+
+        @Override
+        public void onProgress(MediaBean bean) {
+            Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
+        }
+
+        @Override
+        public void onFinish(MediaBean bean) {
+            Log.d(TAG,bean.getUrl() + " onFinish");
+        }
+
+        @Override
+        public void onError(MediaBean bean) {
+            Log.d(TAG,bean.getUrl() + " onError");
+
+            ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+            if(info != null && info.isAvailable()) {
+                String name = info.getTypeName();
+                Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
+                DownloadManager.getInstance().download(bean, mApkDownloadCallback);
+            }
+        }
+    }
+
+    private MediaDownloadObserver mMediaDownloadCallback = new MediaDownloadObserver();
+
+    private class MediaDownloadObserver implements DownloadCallback {
 
         @Override
         public void onStateChange(MediaBean bean) {
@@ -184,7 +253,7 @@ public class DownloadService extends Service {
             if(info != null && info.isAvailable()) {
                 String name = info.getTypeName();
                 Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
-                DownloadManager.getInstance().download(bean,mCallback);
+                DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
             }
         }
     }

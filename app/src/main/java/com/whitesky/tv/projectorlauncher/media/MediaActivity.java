@@ -80,7 +80,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
-import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MASS_STORAGE_PATH;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DEFAULT;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DURATION;
@@ -99,6 +99,8 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
+import static com.whitesky.tv.projectorlauncher.utils.ShellUtil.execCommand;
 
 /**
  * Created by jeff on 18-1-16.
@@ -342,7 +344,11 @@ public class MediaActivity extends Activity
 
                 MediaBean bean = intent.getParcelableExtra(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT);
 
-                if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
+                    updateCapacityUi(MASS_STORAGE_PATH);
+                } else if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+
+                    updateCapacityUi(MASS_STORAGE_PATH);
 
                     if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()==MEDIA_IDLE) {
                         Message msg = mHandler.obtainMessage();
@@ -1158,7 +1164,6 @@ public class MediaActivity extends Activity
         loadPlaylistFromConfig();
         loadReplayMode();
         loadMediaListOrderMode();
-
         loadMediaListFromDb();
         updateMultiActionButtonUiState();
 
@@ -1185,7 +1190,7 @@ public class MediaActivity extends Activity
         discoverMountDevice();
 
         // 开线程去查询本地容量
-        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
+        updateCapacityUi(MASS_STORAGE_PATH);
 
         ((MainApplication)getApplication()).isMediaActivityForeground = true;
         ((MainApplication)getApplication()).mFirstInitDone = true;
@@ -1196,6 +1201,7 @@ public class MediaActivity extends Activity
         if (mPlayer != null) {
             mPlayer.mediaStop();
         }
+
         unregisterReceiver(usbMountEventReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceEventReceiver);
 
@@ -1367,8 +1373,8 @@ public class MediaActivity extends Activity
     }
 
     private void addToDownload(MediaBean addItem) {
-        Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START);
-        intent.putExtra("path", addItem.getPath());
+        Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
+        intent.putExtra(EXTRA_KEY_URL, addItem.getUrl());
         Log.i(TAG, "call download:" + addItem.toString());
         MediaActivity.this.startService(intent);
     }
@@ -1413,7 +1419,7 @@ public class MediaActivity extends Activity
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
 
-                    if (LOCAL_MASS_STORAGE_PATH.equals(storagePath)) {
+                    if (MASS_STORAGE_PATH.equals(storagePath)) {
                         //挂载了硬盘设备,很可能是开机,直接触发播放
                         Log.i(TAG, "mount sata device, power on complete, start play media");
                         if (mPlayer.getPlayState()==MEDIA_IDLE) {
@@ -1531,8 +1537,8 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD_OR_PAUSE:
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_START_PAUSE);
-                    intent.putExtra("path", ((MediaBean)msg.obj).getPath());
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START_PAUSE);
+                    intent.putExtra(EXTRA_KEY_URL, ((MediaBean)msg.obj).getUrl());
                     Log.i(TAG,"call download:" + ((MediaBean)msg.obj).toString());
                     startService(intent);
                     break;
@@ -1563,6 +1569,7 @@ public class MediaActivity extends Activity
                     }
                     mAllMediaListAdapter.refresh();
                     updateMultiActionButtonUiState();
+                    updateCapacityUi(MASS_STORAGE_PATH);
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
@@ -1583,7 +1590,7 @@ public class MediaActivity extends Activity
 
     public static boolean isLocalMassStorageMounted(Context context) {
         String[] mountList = FileUtil.getMountVolumePaths(context);
-        if (Arrays.asList(mountList).contains(LOCAL_MASS_STORAGE_PATH)) {
+        if (Arrays.asList(mountList).contains(MASS_STORAGE_PATH)) {
             return true;
         } else {
             return false;
@@ -1625,6 +1632,8 @@ public class MediaActivity extends Activity
                             String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path) -
                                     FileUtil.getAvailableCapacity(path));
                             String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path));
+
+                            Log.e(TAG,"~~~~" + fsUsed);
 
                             if (path.contains(LOCAL_SATA_MOUNT_PATH)) {
                                 updateTextViewOnUiThread(mLocalCapacityTextView, fsUsed + "/" + fsCapacity);
@@ -1735,8 +1744,9 @@ public class MediaActivity extends Activity
                     tmp.setSelected(false);
                 }
 
+                mUsbMediaListAdapter.refresh();
+
                 updateMediaListUiAfterCopy(copyDoneItem);
-                updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
             }
         }
     }
@@ -1945,15 +1955,17 @@ public class MediaActivity extends Activity
 
                 } else if (downloadState != STATE_DOWNLOAD_NONE) {
 
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_DOWNLOAD_CANCEL);
-                    intent.putExtra("path", needDeleteDiskData.getPath());
-                    Log.i("TAG",intent.getAction().toString());
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
+                    intent.putExtra(EXTRA_KEY_URL, needDeleteDiskData.getUrl());
+                    Log.i(TAG, intent.getAction().toString());
                     startService(intent);
                 }
             }
 
             deleteCount++;
         }
+
+        //execCommand("sync",false,false);
 
         // playlist还有剩下的元素,并且停止过播放
         if (mPlayListAdapter.getCount()>=1 && removePlaying)
@@ -1962,7 +1974,7 @@ public class MediaActivity extends Activity
         }
 
         mAllMediaListAdapter.refresh();
-        updateCapacityUi(LOCAL_MASS_STORAGE_PATH);
+        updateCapacityUi(MASS_STORAGE_PATH);
         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
     }
 }
