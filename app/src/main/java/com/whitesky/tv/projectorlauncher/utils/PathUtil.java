@@ -32,6 +32,12 @@ public class PathUtil {
         return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
     }
 
+    public static String getDownloadTempFileLockPathByUrl(String url) {
+        String path = "/tmp";
+        String fileName = Md5Util.generateCode(url);
+        return path + File.separator + fileName + ".lck";
+    }
+
     public static File getDownloadTempFileByUrl(String parentFolder, String url) {
         String fileName = Md5Util.generateCode(url);
         String desFilePath = parentFolder + File.separator + fileName;

@@ -2,6 +2,8 @@ package com.whitesky.tv.projectorlauncher.application;
 
 import android.app.Application;
 
+import com.wsd.android.NativeCertification;
+
 //import com.squareup.leakcanary.LeakCanary;
 
 
@@ -20,14 +22,12 @@ public class MainApplication extends Application
     public boolean isMediaActivityForeground = false;
     public boolean isBusyInFormat = false;
     public boolean isBusyInCopy = false;
-    public String SN = "";
-
 
     @Override
     public void onCreate()
     {
         super.onCreate();
-//        if (LeakCanary.isInAnalyzerProcess(this)) {//1
+//        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            // This process is dedicated to LeakCanary for heap analysis.
 //            // You should not init your app in this process.
 //            return;

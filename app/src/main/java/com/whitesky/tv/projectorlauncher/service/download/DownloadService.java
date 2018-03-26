@@ -22,10 +22,13 @@ import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.utils.AppUtil;
+import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
+import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 
+import java.io.File;
 import java.util.List;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.UPDATE_APK_DOWNLOAD_PATH;
@@ -92,6 +95,14 @@ public class DownloadService extends Service {
             MediaBean apk = new MediaBean("ota.apk",0, MEDIA_UNKNOWN, MediaBean.SOURCE_CLOUD_FREE, UPDATE_APK_DOWNLOAD_PATH,0,0L);
             apk.setUrl(url);
             apk.setDownloadState(STATE_DOWNLOAD_NONE);
+
+            // 因为下载apk的不会储存数据库,关机再启动不会继续任务,所以假如上次下载到一半,则磁盘上存在一个一半的下载临时文件
+            // 如果一年半载后服务器上的apk已经更新,这个时候推送更新会导致文件断点续传机制触发,下载下来的文件是错误的
+            // 所以下载apk之前首先要检查目前存在不存在任务,如果不存在任务,则直接删除临时文件一次.
+            if (DownloadManager.getInstance().contains(apk.getUrl())) {
+                PathUtil.getDownloadTempFileByUrl(new File(apk.getPath()).getParent(), apk.getUrl()).delete();
+            }
+
             DownloadManager.getInstance().download(apk, mApkDownloadCallback);
             Log.d(TAG,"download:"+apk.toString());
 

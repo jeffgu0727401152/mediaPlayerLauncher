@@ -26,7 +26,6 @@ import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
-import com.whitesky.tv.projectorlauncher.media.bean.Result;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
@@ -134,7 +133,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private final String keyStorePassword = "wxgh#2561";
 
-    private final String SN = DeviceInfoActivity.getSysSN();
+    private String SN = "";
     private ExecutorService mHeartBeatWorker = Executors.newSingleThreadExecutor();
 
     private boolean mHeartBeatRunnig = false;
@@ -172,6 +171,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         Notification notification = builer.build(); //将Builder对象转变成普通的notification
         startForeground(MQTT_SERVICE_ID, notification);  //让Service变成前台Service,并在系统的状态栏显示出来
+
+        SN = DeviceInfoActivity.getSysSn(this);
 
         super.onCreate();
     }
@@ -332,7 +333,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 .add("project", PROJECT_NAME)
                 .add("appVer", DeviceInfoActivity.getVersionName(context))
                 .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
-                .add("sn", DeviceInfoActivity.getSysSN())
+                .add("sn", DeviceInfoActivity.getSysSn(context))
                 .build();
         Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
         Call call = mClient.newCall(request);

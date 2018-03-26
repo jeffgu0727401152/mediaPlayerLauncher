@@ -126,7 +126,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         mLoginDialog = new Dialog(this, R.style.ReasonDialog);
         mLoginDialog.setContentView(view);
         ImageView imageView = (ImageView)view.findViewById(R.id.iv_admin_dialog_login);
-        String loginURL = HttpConstants.URL_LOGIN + DeviceInfoActivity.getSysSN() + URL_LOGIN_PROJECT_NAME;
+        String loginURL = HttpConstants.URL_LOGIN + DeviceInfoActivity.getSysSn(this) + URL_LOGIN_PROJECT_NAME;
         Bitmap bitmap = new QREncode.Builder(this).setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
             // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型
             .setContents(loginURL)                         // 二维码内容
@@ -196,7 +196,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         }
 
         FormBody body = new FormBody.Builder()
-                .add("sn", DeviceInfoActivity.getSysSN())
+                .add("sn", DeviceInfoActivity.getSysSn(this))
                 .build();
 
         Request request = new Request.Builder().url(HttpConstants.URL_GET_LOGIN_INFO).post(body).build();
@@ -256,7 +256,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         }
 
         FormBody body = new FormBody.Builder()
-                .add("sn", DeviceInfoActivity.getSysSN())
+                .add("sn", DeviceInfoActivity.getSysSn(this))
                 .build();
 
         Request request = new Request.Builder().url(HttpConstants.URL_DEVICE_LOGOUT).post(body).build();

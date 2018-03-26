@@ -9,15 +9,15 @@
         android:layout_width="@dimen/x256"
         android:layout_height="@dimen/x90"
         android:layout_marginLeft="@dimen/x832"
-        android:layout_marginTop="@dimen/x110"
+        android:layout_marginTop="@dimen/x80"
         android:text="@string/title_admin_device_info"
         android:textColor="@color/white"
         android:textSize="@dimen/x64" />
 
     <LinearLayout
-        android:layout_width="@dimen/x926"
+        android:layout_width="@dimen/x1046"
         android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/x20"
+        android:layout_marginBottom="@dimen/x120"
         android:layout_marginLeft="@dimen/x497"
         android:layout_marginTop="@dimen/x40"
         android:background="@drawable/border_shape2"
@@ -46,7 +46,7 @@
                     android:id="@+id/tv_admin_device_device_model"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:text="@string/str_admin_device_default"
                     android:textColor="@color/white"
@@ -71,7 +71,7 @@
                     android:id="@+id/tv_sys_version"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
@@ -95,7 +95,7 @@
                     android:id="@+id/tv_admin_device_sys_version_date"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
@@ -125,7 +125,7 @@
                     android:id="@+id/tv_admin_device_ui_version"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
@@ -156,7 +156,7 @@
                     android:id="@+id/tv_admin_device_raminfo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:text="1G"
                     android:textColor="@color/white"
@@ -181,7 +181,7 @@
                     android:id="@+id/tv_admin_device_rominfo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:text="2G"
                     android:textColor="@color/white"
@@ -212,7 +212,7 @@
                     android:id="@+id/tv_admin_device_mac"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x214"
+                    android:layout_marginLeft="@dimen/x145"
                     android:gravity="center"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
@@ -242,14 +242,12 @@
                     android:id="@+id/tv_admin_device_sys_sn"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/x314"
+                    android:layout_marginLeft="@dimen/x250"
                     android:gravity="center"
                     android:text="@string/str_admin_device_default"
                     android:textColor="@color/white"
                     android:textSize="@dimen/x40" />
             </LinearLayout>
-
-
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

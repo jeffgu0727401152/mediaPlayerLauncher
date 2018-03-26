@@ -68,6 +68,7 @@ public class MqttUtil {
     }
 
     private MqttUtil(Context context) {
+        clientId = DeviceInfoActivity.getSysSn(context);
         loadPropValue();
         mqttClientInit(context);
     }
@@ -114,7 +115,6 @@ public class MqttUtil {
         protocol = SystemProperties.get("persist.whitesky.mqtt.protocol", MQTT_DEFAULT_PROTOCOL);
         host = SystemProperties.get("persist.whitesky.mqtt.host", MQTT_DEFAULT_HOST);
         port = SystemProperties.get("persist.whitesky.mqtt.port", MQTT_DEFAULT_PORT);
-        clientId = DeviceInfoActivity.getSysSN();
         mTopic = clientId;
 
         Log.d(TAG, "clientId = " + clientId);

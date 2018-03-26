@@ -3,12 +3,16 @@ package com.whitesky.tv.projectorlauncher.service.download;
 import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
+import com.whitesky.tv.projectorlauncher.utils.FileUtil;
+import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileLock;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,6 +42,8 @@ public class DownloadRunnable implements Runnable {
     private OkHttpClient mClient;
     private long lastUpdateProgress;
 
+    private FileLock fileLock = null;
+
     public interface RunNotify {
         void notifyReturn(String url);
     }
@@ -65,6 +71,11 @@ public class DownloadRunnable implements Runnable {
         mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
         if (mManagerNotify!=null) mManagerNotify.notifyReturn(mEntity.getUrl());
         if(mCallback!=null) mCallback.onError(mEntity);
+        try {
+            if (fileLock != null) fileLock.release();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return;
     }
 
@@ -81,6 +92,21 @@ public class DownloadRunnable implements Runnable {
                 }
             }
 
+            return;
+        }
+
+        // 加文件锁,防止两个进程同时写一个文件
+        FileUtil.createFile(PathUtil.getDownloadTempFileLockPathByUrl(mEntity.getUrl()));
+        try {
+            fileLock = new FileOutputStream(PathUtil.getDownloadTempFileLockPathByUrl(mEntity.getUrl())).getChannel().tryLock();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (fileLock == null ) {
+            Log.e(TAG, " already has a thread downloading,just return");
             return;
         }
 
@@ -108,6 +134,7 @@ public class DownloadRunnable implements Runnable {
         // 磁盘检查下载文件是否存在
         File finalFile = new File(mEntity.getPath());
         File tempFile = getDownloadTempFileByUrl(new File(mEntity.getPath()).getParent(),mEntity.getUrl());
+
         if (!tempFile.exists()) {
             // 如果文件不存在
             completeSize = 0;
@@ -141,9 +168,6 @@ public class DownloadRunnable implements Runnable {
         mEntity.setDownloadProgress(completeSize);
         if(mCallback!=null) mCallback.onProgress(mEntity);
 
-        Log.d(TAG, "download temp file size = " + completeSize);
-        Log.d(TAG, "download file total size = " + mEntity.getSize());
-
         try {
             request = new Request.Builder().url(mEntity.getUrl())
                     .addHeader("Range", "bytes=" + completeSize + "-" + (mEntity.getSize() - 1))
@@ -173,6 +197,11 @@ public class DownloadRunnable implements Runnable {
                         tempFile.delete();
                     }
 
+                    try {
+                        if (fileLock != null) fileLock.release();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     return;
                 }
 
@@ -215,6 +244,13 @@ public class DownloadRunnable implements Runnable {
         } catch (IOException e) {
             Log.e(TAG, "IOException in downloading " + e.toString());
             runnableErrorReturn();
+        } finally {
+            try {
+                if (fileLock != null) fileLock.release();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
         }
     }
 }

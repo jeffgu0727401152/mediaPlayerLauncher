@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.application.MainApplication;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,8 +33,6 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
 public class DeviceInfoActivity extends Activity
 {
     private final String TAG = this.getClass().getSimpleName();
-    private static final String  EMMC_SERIAL_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
-    private static final String  EMMC_MAN_NODE = "/sys/devices/platform/soc/f9830000.himciv200.MMC/mmc_host/mmc0/mmc0:0001/serial";
 
     private TextView mDeviceModel;
     private TextView mTvSysVersion;
@@ -85,9 +84,9 @@ public class DeviceInfoActivity extends Activity
         {
             mUIVersion.setText(getVersionName(this));
         }
-        if (!TextUtils.isEmpty(getSysSN()))
+        if (!TextUtils.isEmpty(getSysSn(this)))
         {
-            mSysSN.setText(getSysSN());
+            mSysSN.setText(getSysSn(this));
         }
     }
     
@@ -112,33 +111,10 @@ public class DeviceInfoActivity extends Activity
         return simpleDateFormat.format(date);
     }
     
-    public static String getSysSN()
+    public static String getSysSn(Context context)
     {
-        File sn = new File(EMMC_SERIAL_NODE);
-        if (sn.exists())
-        {
-            FileInputStream fis = null;
-            try{
-                fis = new FileInputStream(sn);
-                byte[] data = new byte[1024];
-                int i = fis.read(data);
-                String result = new String(data,0,i);
-                result = result.substring(2).toUpperCase();
-                result = result.replaceAll("\r|\n", "");
-                return result;
-            }catch(Exception e){
-                e.printStackTrace();
-            }finally{
-                try{
-                    fis.close();
-                }catch(Exception e){
-                    Log.e("DeviceInfoActivity","error in FileInputStream"+e.toString());
-                }
-            }
-        } else {
-            return null;
-        }
-        return null;
+        String sn = SystemProperties.get("ro.device.ssn","PS500");
+        return sn.toUpperCase();
     }
 
     private static String getRamInfo()

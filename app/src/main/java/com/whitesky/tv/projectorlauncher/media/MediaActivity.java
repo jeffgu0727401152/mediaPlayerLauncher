@@ -432,7 +432,7 @@ public class MediaActivity extends Activity
         Log.d(TAG,"on Play Complete!");
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
-        mHandler.sendMessage(msg);
+        mHandler.sendMessageDelayed(msg,1000);
     }
 
     @Override
@@ -641,7 +641,7 @@ public class MediaActivity extends Activity
         }
 
         FormBody body = new FormBody.Builder()
-                .add("sn", DeviceInfoActivity.getSysSN())
+                .add("sn", DeviceInfoActivity.getSysSn(context))
                 .build();
 
         Request request = new Request.Builder().url(HttpConstants.URL_GET_SHARE_LIST).post(body).build();
