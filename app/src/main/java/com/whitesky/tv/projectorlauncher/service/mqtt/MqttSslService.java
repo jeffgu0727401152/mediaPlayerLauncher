@@ -151,7 +151,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         } else {
             Log.e(TAG,"this msg is not for this device sn!!!");
         }
-        // todo 考虑使用eventbus?
     }
     // MQTT Util callback ---
 

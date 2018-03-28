@@ -691,7 +691,6 @@ public class MediaActivity extends Activity
                             }
                         } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
                             Log.d(TAG,"onResponse device not login yet,need user login this device!");
-                            ToastUtil.showToast(context,context.getResources().getString(R.string.str_media_cloud_file_need_login_toast));
                         } else {
                             Log.d(TAG,"onResponse unknown status " + cloudList.getStatus());
                         }
