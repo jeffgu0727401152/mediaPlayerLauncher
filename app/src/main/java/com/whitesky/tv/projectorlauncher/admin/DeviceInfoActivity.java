@@ -100,7 +100,7 @@ public class DeviceInfoActivity extends Activity
     
     private static String getSysVersion()
     {
-        return SystemProperties.get("ro.build.version.release", "4.4.0");
+        return SystemProperties.get("ro.build.version.incremental", "UNKNOWN");
     }
 
     private static String getSysVersionDate()
@@ -113,13 +113,13 @@ public class DeviceInfoActivity extends Activity
     
     public static String getSysSn(Context context)
     {
-        String sn = SystemProperties.get("ro.device.ssn","PS500");
+        String sn = SystemProperties.get("ro.device.ssn","UNKNOWN");
         return sn.toUpperCase();
     }
 
     private static String getRamInfo()
     {
-        return SystemProperties.get("ro.product.mem.size","1G");
+        return SystemProperties.get("ro.product.mem.size","1G").toUpperCase();
     }
     
     private static String getRomInfo()

@@ -20,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
+import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
@@ -164,14 +165,17 @@ public class OTANetActivity extends Activity implements View.OnClickListener
                         @Override
                         public void versionRequestDone(boolean ret, VersionCheckResultBean.Result result) {
                             if (ret) {
-                                Log.i(TAG, "ota cloud found download version = " + result.getAppVer());
-                                Log.i(TAG, "ota cloud found download size = " + result.getSize());
+                                Log.i(TAG, "found ota version = " + result.getAppVer());
+                                Log.i(TAG, "found ota size = " + result.getSize());
 
-                                if (result.getSize() < APK_SIZE_MAX) {
+                                boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+
+                                if (result.getSize() < APK_SIZE_MAX && needDownload) {
                                     mOta = result;
                                     mHandler.sendEmptyMessage(MSG_HAS_UPDATE);
+
                                 } else {
-                                    Log.e(TAG, "ota server update apk to large!");
+                                    Log.e(TAG,"server update apk not as our required!");
                                 }
                             } else {
                                 mHandler.sendEmptyMessage(MSG_NO_UPDATE);
@@ -186,6 +190,23 @@ public class OTANetActivity extends Activity implements View.OnClickListener
         }
     }
 
+    public static boolean serverVersionGreaterThanDeviceVersion(String ServerVer,String DeviceVer) {
+        int versionOnServer = 0;
+        int versionOnDevice = 0;
+        String versionOnServerStr = ServerVer.replaceAll("[a-zA-Z]", "").replace(".","");
+        String versionOnDeviceStr = DeviceVer.replaceAll("[a-zA-Z]", "").replace(".","");
+        try {
+            versionOnServer = Integer.parseInt(versionOnServerStr);
+            versionOnDevice = Integer.parseInt(versionOnDeviceStr);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        if (versionOnServer>versionOnDevice) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     @Override
     public void onBackPressed()

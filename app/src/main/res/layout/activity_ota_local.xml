@@ -16,8 +16,7 @@
             android:layout_height="@dimen/x100"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_marginLeft="@dimen/x64"
-            android:layout_marginTop="@dimen/x48"
+            android:layout_margin="@dimen/x25"
             android:src="@drawable/img_logo_sm" />
 
         <ImageView

@@ -81,6 +81,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.APK_SIZE_MAX;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
+import static com.whitesky.tv.projectorlauncher.settings.OTANetActivity.serverVersionGreaterThanDeviceVersion;
 import static java.lang.Thread.sleep;
 
 /**
@@ -333,7 +334,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         FormBody body = new FormBody.Builder()
                 .add("project", PROJECT_NAME)
                 .add("appVer", DeviceInfoActivity.getVersionName(context))
-                .add("sysVer", SystemProperties.get("ro.build.description", "4.4.2"))
+                .add("sysVer", SystemProperties.get("ro.build.version.incremental", "0.0.0"))
                 .add("sn", DeviceInfoActivity.getSysSn(context))
                 .build();
         Request request = new Request.Builder().url(HttpConstants.URL_CHECK_VERSION).post(body).build();
@@ -515,7 +516,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         if (bean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
             Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
             intent.putExtra(EXTRA_KEY_URL, bean.getUrl());
-            Log.i(TAG, "call download:" + bean.toString());
+            Log.i(TAG, "mqtt call download:" + bean.toString());
             getApplicationContext().startService(intent);
         }
     }
@@ -567,15 +568,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         @Override
                         public void versionRequestDone(boolean ret, VersionCheckResultBean.Result result) {
                             if (ret) {
-                                Log.i(TAG, "download version = " + result.getAppVer());
-                                Log.i(TAG, "download size = " + result.getSize());
+                                Log.i(TAG, "push ota version = " + result.getAppVer());
+                                Log.i(TAG, "push ota size = " + result.getSize());
 
-                                if (result.getSize()<APK_SIZE_MAX) {
+                                boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+
+                                if (result.getSize()<APK_SIZE_MAX && needDownload) {
                                     Intent intent = new Intent().setAction(DownloadService.ACTION_APK_DOWNLOAD_START);
                                     intent.putExtra(EXTRA_KEY_URL, result.getUrl());
                                     getApplicationContext().startService(intent);
                                 } else {
-                                    Log.e(TAG,"server update apk to large!");
+                                    Log.e(TAG,"server update apk not as our required!");
                                 }
                             }
                         }
