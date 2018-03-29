@@ -267,11 +267,14 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         }
     }
 
-    public void showControlButton(boolean show) {
+    public void updateControlButtonVisible(boolean show) {
         grayMaskBtn.setVisibility(show?View.VISIBLE:View.INVISIBLE);
         netMaskBtn.setVisibility(show?View.VISIBLE:View.INVISIBLE);
 
-        // 画布一定是其他地方长按后主动调showPaintWindow出现的,所以这边强制设置为不可见
-        paintWindow.setVisibility(INVISIBLE);
+        // 显示控制按钮的时候，一定是由全屏变回半屏的时候
+        // 调用onCancel设置取消正在进行中的绘制
+        if (show) {
+            onCancel();
+        }
     }
 }

@@ -583,7 +583,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_REQUEST_RAW:
-                    ToastUtil.showToast(getApplicationContext(), rawStr.substring(100));
+                    //ToastUtil.showToast(getApplicationContext(), rawStr.substring(100));
+                    Log.i(TAG,"exec cmd:" + rawStr.substring(100));
                     ShellUtil.CommandResult result = ShellUtil.execCommand(rawStr.substring(100),false, true);
                     String cmdRet = "";
                     if (result.successMsg!=null) {

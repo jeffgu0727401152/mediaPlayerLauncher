@@ -83,8 +83,9 @@
 
     <string name="str_media_play_pause">暂停播放</string>
     <string name="str_media_play_resume">继续播放</string>
-    <string name="str_media_play_path_error">媒体文件路径错误</string>
-    <string name="str_media_play_list_empty">请先添加文件到播放列表</string>
+    <string name="str_media_play_path_error">空的文件路径</string>
+    <string name="str_media_play_file_not_found_error">找不到媒体文件</string>
+    <string name="str_media_play_list_empty">请检查播放列表</string>
 
     <string name="str_media_receive_mqtt_toast">收到远程控制命令</string>
     <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>

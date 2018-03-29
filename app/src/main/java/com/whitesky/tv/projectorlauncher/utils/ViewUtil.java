@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
 
 public class ViewUtil {
 
-    private final static int DOUBLE_CLICK_DELAY_MS = 600;            // 双击间隔时间,可调参数
+    private final static int DOUBLE_CLICK_DELAY_MS = 800;            // 双击间隔时间,可调参数
 
     public static float getX(View view) {
         if (Build.VERSION.SDK_INT >= 11) {

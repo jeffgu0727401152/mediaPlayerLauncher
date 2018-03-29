@@ -83,5 +83,4 @@
             android:background="@drawable/selector_media_volume_btn"
             android:layout_marginLeft="@dimen/x10" />
     </LinearLayout>
-
 </merge>

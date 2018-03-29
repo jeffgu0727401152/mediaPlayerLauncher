@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -90,7 +91,12 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAU
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MediaPlayState.MEDIA_IDLE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_NOT_EXIST;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_PATH_NONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_INVALIDED_POSITION;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_IDLE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_COMPLETE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
@@ -100,7 +106,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
-import static com.whitesky.tv.projectorlauncher.utils.ShellUtil.execCommand;
 
 /**
  * Created by jeff on 18-1-16.
@@ -350,7 +355,7 @@ public class MediaActivity extends Activity
 
                     updateCapacityUi(MASS_STORAGE_PATH);
 
-                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()==MEDIA_IDLE) {
+                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()== PLAYER_STATE_IDLE) {
                         Message msg = mHandler.obtainMessage();
                         msg.what = MSG_MEDIA_PLAY_COMPLETE;
                         mHandler.sendMessage(msg);
@@ -432,7 +437,15 @@ public class MediaActivity extends Activity
         Log.d(TAG,"on Play Complete!");
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
-        mHandler.sendMessageDelayed(msg,1000);
+
+        // 正常播放完成的状态是COMPLETE
+        // 如果这边获得状态为IDLE,则表示是文件没有下载直接当作播放完成
+        // 防止在播放列表文件全部没有下载的情况下,过于频繁的的下一首
+        if (mPlayer.getPlayState() == PLAYER_STATE_PLAY_STOP) {
+            mHandler.sendMessageDelayed(msg, 1000);
+        } else {
+            mHandler.sendMessage(msg);
+        }
     }
 
     @Override
@@ -445,8 +458,11 @@ public class MediaActivity extends Activity
             bean.setPlaying(false);
         }
 
-        if (!mPlayer.isPreview()) {
-            mPlayer.getCurPlaylistBean().setPlaying(true);
+        if (mPlayer.getCurPlaylistBean()!=null) {
+            PlayListBean curPlay = mPlayer.getCurPlaylistBean();
+            if (curPlay!=null) {
+                curPlay.setPlaying(true);
+            }
         }
 
         mPlayListAdapter.refresh();
@@ -455,8 +471,24 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayError(int error, MediaBean errorBean) {
         // 播放错误
-        Log.d(TAG,"media play error! ERR_NO" + error);
-        ToastUtil.showToast(getApplicationContext(),"media play error! ERR_NO=" + error);
+        Log.d(TAG,"media Play error! ERR_NO:" + error);
+
+        // 需要使用toast提示用户的错误
+        switch (error) {
+            case ERROR_PLAYLIST_INVALIDED_POSITION:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_list_empty);
+                break;
+
+            case ERROR_FILE_PATH_NONE:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_path_error);
+                break;
+            case ERROR_FILE_NOT_EXIST:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_file_not_found_error);
+                break;
+            default:
+                break;
+        }
+
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
         mHandler.sendMessage(msg);
@@ -691,9 +723,17 @@ public class MediaActivity extends Activity
                             }
                         } else if (cloudList.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
                             Log.d(TAG,"onResponse device not login yet,need user login this device!");
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.showToast(context,context.getResources().getString(R.string.str_media_cloud_file_need_login_toast));
+                                }
+                            });
                         } else {
                             Log.d(TAG,"onResponse unknown status " + cloudList.getStatus());
                         }
+
                     } else {
                         Log.e(TAG, "cloud list json parse error! " + htmlBody);
                     }
@@ -960,10 +1000,11 @@ public class MediaActivity extends Activity
 
             @Override
             public void onScaleChange(int position, int scaleType) {
-                if (mPlayer.getPlayState()!= MEDIA_IDLE
-                        && mPlayer.getPlayState()!= PictureVideoPlayer.MediaPlayState.MEDIA_PLAY_COMPLETE
-                        && !mPlayer.isPreview()) {
-                    if (mPlayer.getCurPlaylistBean().equals(mPlayListAdapter.getItem(position))) {
+                if (mPlayer.getPlayState()!= PLAYER_STATE_IDLE
+                        && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_STOP
+                        && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_COMPLETE) {
+                    PlayListBean curPlay = mPlayer.getCurPlaylistBean();
+                    if (curPlay!=null && curPlay.equals(mPlayListAdapter.getItem(position))) {
                         // 播放的position可能会因为改变顺序的原因而与现在的playlist不对对应.所以使用Bean比较
                         mPlayer.changeScaleNow(scaleType);
                     }
@@ -1419,9 +1460,10 @@ public class MediaActivity extends Activity
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
 
                     if (MASS_STORAGE_PATH.equals(storagePath)) {
-                        //挂载了硬盘设备,很可能是开机,直接触发播放
+                        // 挂载了硬盘设备,很可能是开机,直接触发播放
+                        // 播放类中在surfaceHolder建立的时候会尝试播放一次，但是可能会因为没有挂载SATA而失败，这边补一次
                         Log.i(TAG, "mount sata device, power on complete, start play media");
-                        if (mPlayer.getPlayState()==MEDIA_IDLE) {
+                        if (mPlayer.getPlayState()== PLAYER_STATE_IDLE) {
                             mPlayer.fullScreenSwitch(true);
                             mPlayer.mediaPlay(0);
                         }
@@ -1577,7 +1619,7 @@ public class MediaActivity extends Activity
 
                 case MSG_MEDIA_PLAY_COMPLETE:
                     if (mPlayListAdapter.hasPlayableItem()) {
-                        mPlayer.mediaReplay();
+                        mPlayer.mediaAutoReplay();
                     }
                     break;
 
