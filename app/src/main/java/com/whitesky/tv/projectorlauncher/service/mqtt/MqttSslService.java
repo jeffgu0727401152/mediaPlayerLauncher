@@ -38,6 +38,7 @@ import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBea
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
+import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.wsd.android.NativeCertification;
 
@@ -100,12 +101,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_CMD_ACTION_LOGINDONE  = "logindone";
     private final String STR_MQTT_CMD_ACTION_REBOOT     = "reboot";
     private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
-    private final String STR_MQTT_CMD_ACTION_RAW        = "rawcommand";
 
     private final String STR_MQTT_REQ_ACTION_INFO       = "info";      // 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息）
     private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist"; // 请求回应设备当前硬盘中 共享中已下载的文件列表
     private final String STR_MQTT_REQ_ACTION_LOCALLIST  = "locallist"; // 本地 U盘导入的私有文件列表
     private final String STR_MQTT_REQ_ACTION_PLAYLIST   = "playlist";  // 当前的播放列表
+    private final String STR_MQTT_REQ_ACTION_RAW        = "rawcommand";// 请求执行命令并返回执行结果
 
     private final String STR_MQTT_PUSH_ACTION_PLAYLIST  = "setlist";   // 设置播放列表
     private final String STR_MQTT_PUSH_ACTION_PLAYMODE  = "setmode";   // 设置播放模式
@@ -119,12 +120,13 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_CMD_LOGIN_DONE = 200;
     private final static int MSG_CMD_REBOOT = 201;
     private final static int MSG_CMD_OTA = 202;
-    private final static int MSG_CMD_RAW = 203;
+
     // request
     private final static int MSG_REQUEST_INFO = 300;
     private final static int MSG_REQUEST_PLAYLIST = 301;
     private final static int MSG_REQUEST_LOCALLIST = 302;
     private final static int MSG_REQUEST_SHARELIST = 303;
+    private final static int MSG_REQUEST_RAW = 304;
 
     private final static int MSG_PUSH_PLAYLIST = 400;
     private final static int MSG_PUSH_PLAYMODE = 401;
@@ -408,9 +410,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_OTA)) {
                 message.what = MSG_CMD_OTA;
 
-            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_RAW)) {
-                message.what = MSG_CMD_RAW;
-
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -429,6 +428,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             }else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_PLAYLIST)) {
                 message.what = MSG_REQUEST_PLAYLIST;
+
+            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_RAW)) {
+                message.what = MSG_REQUEST_RAW;
 
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
@@ -498,7 +500,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 case MSG_CMD_LOGIN_DONE:
                 case MSG_CMD_REBOOT:
                 case MSG_CMD_OTA:
-                case MSG_CMD_RAW:
+                case MSG_REQUEST_RAW:
                 case MSG_PUSH_DELETE:
                     return true;
                 default:
@@ -580,9 +582,15 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     });
                     break;
 
-                case MSG_CMD_RAW:
+                case MSG_REQUEST_RAW:
                     ToastUtil.showToast(getApplicationContext(), rawStr.substring(100));
-                    // todo exec raw cmd
+                    ShellUtil.CommandResult result = ShellUtil.execCommand(rawStr.substring(100),false, true);
+                    String cmdRet = "";
+                    if (result.successMsg!=null) {
+                        cmdRet = result.successMsg;
+                    }
+                    rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr.substring(0,100) + cmdRet,2);
                     break;
 
                 case MSG_REQUEST_INFO:
