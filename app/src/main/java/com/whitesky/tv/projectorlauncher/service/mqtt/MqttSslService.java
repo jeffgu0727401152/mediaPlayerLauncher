@@ -402,13 +402,13 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         if (mqttMessage.indexOf(STR_MQTT_MSG_TYPE_CMD) == 20) {
             // command 用于管理端向设备发送控制命令
 
-            if (mqttMessage.contains(STR_MQTT_CMD_ACTION_LOGINDONE)) {
+            if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_LOGINDONE) == 32) {
                 message.what = MSG_CMD_LOGIN_DONE;
 
-            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_REBOOT)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_REBOOT) == 32) {
                 message.what = MSG_CMD_REBOOT;
 
-            } else if (mqttMessage.contains(STR_MQTT_CMD_ACTION_OTA)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_OTA) == 32) {
                 message.what = MSG_CMD_OTA;
 
             } else {
@@ -418,19 +418,19 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         } else if (mqttMessage.indexOf(STR_MQTT_MSG_TYPE_REQ) == 20) {
             // request 用于管理端向设备发送请求
 
-            if (mqttMessage.contains(STR_MQTT_REQ_ACTION_INFO)) {
+            if (mqttMessage.indexOf(STR_MQTT_REQ_ACTION_INFO) == 32) {
                 message.what = MSG_REQUEST_INFO;
 
-            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_SHARELIST)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_REQ_ACTION_SHARELIST) == 32) {
                 message.what = MSG_REQUEST_SHARELIST;
 
-            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_LOCALLIST)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_REQ_ACTION_LOCALLIST) == 32) {
                 message.what = MSG_REQUEST_LOCALLIST;
 
-            }else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_PLAYLIST)) {
+            }else if (mqttMessage.indexOf(STR_MQTT_REQ_ACTION_PLAYLIST) == 32) {
                 message.what = MSG_REQUEST_PLAYLIST;
 
-            } else if (mqttMessage.contains(STR_MQTT_REQ_ACTION_RAW)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_REQ_ACTION_RAW) == 32) {
                 message.what = MSG_REQUEST_RAW;
 
             } else {
@@ -439,19 +439,19 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         } else if (mqttMessage.indexOf(STR_MQTT_MSG_TYPE_PUSH) == 20) {
 
-            if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYLIST)) {
+            if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_PLAYLIST) == 32) {
                 message.what = MSG_PUSH_PLAYLIST;
 
-            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_PLAYMODE)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_PLAYMODE) == 32) {
                 message.what = MSG_PUSH_PLAYMODE;
 
-            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DELETE)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_DELETE) == 32) {
                 message.what = MSG_PUSH_DELETE;
 
-            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_DOWNLOAD)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_DOWNLOAD) == 32) {
                 message.what = MSG_PUSH_DOWNLOAD;
 
-            } else if (mqttMessage.contains(STR_MQTT_PUSH_ACTION_LOCALDELETE)) {
+            } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_LOCALDELETE) == 32) {
                 message.what = MSG_PUSH_DELETE;
 
             } else {

@@ -630,6 +630,12 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         curPlaylistBean = mPlayList.get(position);
         curPlayPath = curPlaylistBean.getMediaData().getPath();
 
+        // 设置正在播放标志，UI上显示指示器
+        for (PlayListBean bean : mPlayList) {
+            bean.setPlaying(false);
+        }
+        curPlaylistBean.setPlaying(true);
+
         //ToastUtil.showToast(mContext, "path=" + path + ", position=" + position);
         Log.d(TAG,"media Play path:" + path + ", type:" + type);
 
@@ -679,24 +685,24 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
     public void mediaAutoReplay()
     {
-        mediaStop();
         if (mReplayMode!=MEDIA_REPLAY_ONE) {
             updatePlayPosition(true);
         }
+        mediaStop(); // 因为会在media stop中将cur play bean设置为null,而这个变量又被update Play Position用到,所以这边必须遵循这个调用顺序
         mediaPlay(mPlayPosition);
     }
 
     public void mediaPlayNext()
     {
-        mediaStop();
         updatePlayPosition(true);
+        mediaStop();
         mediaPlay(mPlayPosition);
     }
 
     public void mediaPlayPrevious()
     {
-        mediaStop();
         updatePlayPosition(false);
+        mediaStop();
         mediaPlay(mPlayPosition);
     }
 

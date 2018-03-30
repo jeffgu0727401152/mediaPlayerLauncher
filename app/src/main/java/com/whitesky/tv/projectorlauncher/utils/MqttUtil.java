@@ -48,7 +48,7 @@ public class MqttUtil {
     private boolean mMqttMsgRetained = false;
     private int mMqttTimeout_s = 10;
     private int mMqttHeartBeat_s = 60;
-    private int mMqttRetryDelay_ms = 100000;
+    private int mMqttRetryDelay_ms = 20*1000;
     private int mMqttMsgQos = 1;
 
     public interface MqttMessageCallback

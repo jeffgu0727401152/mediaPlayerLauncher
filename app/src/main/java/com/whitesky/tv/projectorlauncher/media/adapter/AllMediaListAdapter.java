@@ -165,6 +165,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
                 holder.getButton(R.id.bt_media_delete).setEnabled(true);
             }
         } else {
+            holder.getButton(R.id.bt_media_download).setBackgroundResource(R.drawable.selector_media_download_btn);
             holder.getButton(R.id.bt_media_download).setEnabled(false);
             holder.getButton(R.id.bt_media_preview).setEnabled(true);
             holder.getButton(R.id.bt_media_delete).setEnabled(true);

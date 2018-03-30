@@ -19,6 +19,7 @@ import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
+import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.utils.AppUtil;
@@ -108,6 +109,11 @@ public class DownloadService extends Service {
 
         } else if (ACTION_MEDIA_DOWNLOAD_START.equals(intent.getAction())) {
 
+            if (!MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
+                Log.e(TAG,"!!!!!!!!!!!!!!!!!!!!!!!!!not mount ret");
+                return super.onStartCommand(intent, flags, startId);
+            }
+
             MediaBean bean = queryMediaBeanByUrl(url);
             DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
             Log.d(TAG,"download:"+bean.toString());
@@ -119,6 +125,10 @@ public class DownloadService extends Service {
             Log.d(TAG,"pause:"+bean.toString());
 
         } else if (ACTION_MEDIA_DOWNLOAD_START_PAUSE.equals(intent.getAction())) {
+
+            if (!MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
+                return super.onStartCommand(intent, flags, startId);
+            }
 
             MediaBean bean = queryMediaBeanByUrl(url);
             if (bean.getDownloadState()==MediaBean.STATE_DOWNLOAD_NONE
@@ -213,7 +223,7 @@ public class DownloadService extends Service {
                 NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
 
                 // 恢复网络的时候重新启动下载
-                if(info != null && info.isAvailable()) {
+                if(info != null && info.isAvailable() && MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
                     String name = info.getTypeName();
                     Log.d(TAG, "resume all download, network on " + name);
                     for (MediaBean tmp : new MediaBeanDao(getApplicationContext()).selectItemsDownloading()) {
@@ -282,7 +292,7 @@ public class DownloadService extends Service {
             NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
             if(info != null && info.isAvailable()) {
                 String name = info.getTypeName();
-                Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
+                Log.d(TAG, bean.getUrl() + " network is ok, retry download now!");
 
                 // 发生错误自动重新下载
                 bean.setDownloadState(STATE_DOWNLOAD_NONE);
@@ -321,9 +331,9 @@ public class DownloadService extends Service {
 
             ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-            if(info != null && info.isAvailable()) {
+            if(info != null && info.isAvailable()  && MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
                 String name = info.getTypeName();
-                Log.d(TAG, bean.getUrl() + "network is ok, retry download now!");
+                Log.d(TAG, bean.getUrl() + " network is ok, retry download now!");
                 DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
             }
         }

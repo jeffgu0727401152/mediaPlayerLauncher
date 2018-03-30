@@ -25,7 +25,12 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADING;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_START;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
 
 /**
  * Created by jeff on 18-1-16.
@@ -131,6 +136,33 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 refresh();
             }
         });
+
+        if (item.getMediaData().getSource()==SOURCE_LOCAL) {
+            holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
+        } else {
+            if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_NONE) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
+            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_WAITING) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_waiting));
+            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_DOWNLOADING) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
+            } else if(item.getMediaData().getDownloadState() == STATE_DOWNLOAD_PAUSED) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state,
+                        mContext.getResources().getString(R.string.str_media_download_pause) + String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
+            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_ERROR) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_error));
+            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_START) {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_media_state, "...");
+            } else {
+                holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
+            }
+        }
+
     }
 
 
