@@ -261,6 +261,8 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
             Log.i(TAG,"default will show polygon mask");
             if (!showPolygonMask()) {
                 showNoneMask();
+            } else {
+                lastMaskStateBeforePaint = SCREEN_MASK_MODE_NONE;
             }
         } else {
             showNoneMask();

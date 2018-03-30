@@ -571,8 +571,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                 Log.i(TAG, "push ota version = " + result.getAppVer());
                                 Log.i(TAG, "push ota size = " + result.getSize());
 
-                                boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
-
+                                //boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+                                boolean needDownload = true;
                                 if (result.getSize()<APK_SIZE_MAX && needDownload) {
                                     Intent intent = new Intent().setAction(DownloadService.ACTION_APK_DOWNLOAD_START);
                                     intent.putExtra(EXTRA_KEY_URL, result.getUrl());

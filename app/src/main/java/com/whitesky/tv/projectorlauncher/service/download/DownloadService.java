@@ -253,10 +253,10 @@ public class DownloadService extends Service {
             String mySignature = AppUtil.getSignature(getApplicationContext());
             int myVersionCode = DeviceInfoActivity.getVersionCode(getApplicationContext());
 
-            // 包名字一致，签名一致，版本号高于本地，才真的去做升级
+            // 包名字一致，签名一致，才真的去做升级
             if (apkPkgName!=null && apkPkgName.equals(getPackageName())
                     && mySignature.equals(apkSignature)
-                    && apkVersionCode >= myVersionCode) {
+                    /*&& apkVersionCode > myVersionCode*/) {
 
                 if (((MainApplication)getApplication()).isBusyInFormat || ((MainApplication)getApplication()).isBusyInCopy) {
                     Log.w(TAG,"can not update because device is in sata disk format/copy file to internal!");

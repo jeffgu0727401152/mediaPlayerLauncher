@@ -546,6 +546,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             videoStop();
         }
 
+        mMediaStop = true;    //保证上一个mSeekBarUpdateService一定可以被结束
+
         curPlaylistBean = null;
         curPlayPath = null;
 
@@ -553,14 +555,11 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         {
             mOnMediaEventListener.onMediaPlayStop();
         }
-
-        mMediaStop = true;    //保证上一个mSeekBarUpdateService一定可以被结束
     }
 
     public void mediaPlay(int position)
     {
         curPreviewMediaBean = null;
-        mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
         Log.d(TAG,"media Play position:" + position);
 
         String path="";
@@ -570,7 +569,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
         if (position==INVALID_POSITION || position>=mPlayList.size()) {
             Log.e(TAG,"media Play position(" + position +") POSITION INVALID!");
-            mPlayState = PLAYER_STATE_PLAY_STOP;
+            mPlayState = PLAYER_STATE_IDLE;
             if (mOnMediaEventListener!=null)
             {
                 mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
@@ -625,6 +624,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             return;
         }
 
+        mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
+
         mPlayPosition = position;
         curPlaylistBean = mPlayList.get(position);
         curPlayPath = curPlaylistBean.getMediaData().getPath();
@@ -651,6 +652,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         {
             case PLAYER_STATE_IDLE:
                 mediaPlay(0);
+                break;
             case PLAYER_STATE_PLAY_PICTURE:
                 mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
                 picturePause();

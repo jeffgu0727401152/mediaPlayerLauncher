@@ -168,7 +168,11 @@ public class OTANetActivity extends Activity implements View.OnClickListener
                                 Log.i(TAG, "found ota version = " + result.getAppVer());
                                 Log.i(TAG, "found ota size = " + result.getSize());
 
-                                boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+                                //boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+                                // device端不判断版本,只要是服务器端说有新版本,一律允许安装,这样赋予服务器更大的自由权
+                                // 而服务端根据你上传的version取，去查询服务器上这个version是不是最后上传的apk（所有出货apk在服务器上都上传了）
+                                // 如果这个version找不到/这个version上传的日期后面又上传了新的apk，则允许服务器会告诉设备最新版的apk更新存在
+                                boolean needDownload = true;
 
                                 if (result.getSize() < APK_SIZE_MAX && needDownload) {
                                     mOta = result;

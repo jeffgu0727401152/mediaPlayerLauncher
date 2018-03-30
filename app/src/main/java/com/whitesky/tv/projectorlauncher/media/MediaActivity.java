@@ -142,7 +142,6 @@ public class MediaActivity extends Activity
     private final int MSG_MEDIA_PLAY_STOP = 102;
 
     private static final String BUNDLE_KEY_STORAGE_PATH = "storagePath";
-
     private static final String BUNDLE_KEY_MEDIA_TYPE = "type";
     private static final String BUNDLE_KEY_MEDIA_SIZE = "size";
     private static final String BUNDLE_KEY_MEDIA_DURATION = "duration";
@@ -450,7 +449,7 @@ public class MediaActivity extends Activity
 
     @Override
     public void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps) {
-        // 在UI显示播放信息
+        // 直接改变UI显示的播放信息
         Log.d(TAG,"on Play Info Update!");
         setMediaInfoUi(name, mimeType, width, height, size, bps);
 
@@ -478,7 +477,6 @@ public class MediaActivity extends Activity
             case ERROR_PLAYLIST_INVALIDED_POSITION:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_list_empty);
                 break;
-
             case ERROR_FILE_PATH_NONE:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_path_error);
                 break;
