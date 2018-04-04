@@ -277,21 +277,15 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             {
                 mHeartBeatRunnig = true;
                 OkHttpClient mClient = new OkHttpClient();
-                if (HttpConstants.URL_HEARTBEAT.contains("https"))
-                {
-                    try
-                    {
+                if (HttpConstants.URL_HEARTBEAT.contains("https")) {
+                    try {
                         mClient = new OkHttpClient.Builder()
                                 .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
                                 .build();
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }
-                else
-                {
+                } else {
                     mClient = new OkHttpClient();
                 }
 
@@ -304,33 +298,26 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 int loopCount = 0;
 
                 while (mHeartBeatRunnig) {
-
                     try {
-
-                        sleep(1000);
-
-                        if (loopCount < HEARTBEAT_INTERVAL_S){
-
-                            loopCount++;
-
-                        } else {
-
-                            loopCount = 0;
-
+                        if (loopCount==0) {
                             Call call = mClient.newCall(request);
                             Response response = call.execute();
 
                             if (!response.isSuccessful()) {
                                 throw new IOException("Unexpected code " + response);
                             } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
-
                                 Log.d(TAG, "heartbeat success");
-
                             } else {
-
                                 Log.e(TAG, "heartbeat response http code undefine! " + response.toString());
 
                             }
+                        }
+
+                        sleep(1000);
+                        if (loopCount < HEARTBEAT_INTERVAL_S){
+                            loopCount++;
+                        } else {
+                            loopCount = 0;
                         }
 
                     } catch (Exception e) {
