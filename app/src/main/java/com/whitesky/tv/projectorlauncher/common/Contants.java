@@ -9,11 +9,15 @@ public class Contants
 {
     public static final String PROJECT_NAME = "PS500";
 
+    public static final String ACTION_CMD_PLAY_CONTROL = "com.whitesky.tv.cmd.playControl";
+    public static final String ACTION_CMD_QRCODE_CONTROL = "com.whitesky.tv.push.qrCodeControl";
+
     public static final String ACTION_PUSH_PLAYLIST = "com.whitesky.tv.push.playList";
     public static final String ACTION_PUSH_PLAYMODE = "com.whitesky.tv.push.playMode";
     public static final String ACTION_PUSH_DELETE = "com.whitesky.tv.push.delete";
     public static final String ACTION_PUSH_DOWNLOAD_NEED_SYNC = "com.whitesky.tv.push.downloadSync";
-    public static final String EXTRA_PUSH_CONTEXT = "mqtt_push_context";
+
+    public static final String EXTRA_MQTT_ACTION_CONTEXT = "mqtt_action_context";
 
     public static final String ACTION_DOWNLOAD_OTA_PROGRESS = "com.whitesky.tv.download.OTA_PROGRESS";
     public static final String ACTION_DOWNLOAD_OTA_INSTALL_FAILED = "com.whitesky.tv.download.OTA_INSTALL_FAILED";
@@ -21,14 +25,13 @@ public class Contants
     public static final String EXTRA_DOWNLOAD_STATE_CONTEXT = "mqtt_push_context";
 
     public static final String PREF_CONFIG = "PREF_CONFIG";             // 存放app的所有配置信息
-
     public static final String CONFIG_PLAYLIST = "playList";            // 播放列表
-
     public static final String CONFIG_REPLAY_MODE = "replayMode";       // 播放下一首的选择顺序
-
     public static final String CONFIG_SHOW_MASK = "showMask";           // 是否显示polygon mask
-
     public static final String CONFIG_MEDIA_LIST_ORDER = "mediaOrder";  // 列表的显示排序
+    public static final String CONFIG_SHOW_QRCODE = "showQRcode";       // 是否显示控制二维码
+    public static final String CONFIG_QRCODE_URL = "QRcodeURL";       // 储存控制二维码
+
     public static final int MEDIA_LIST_ORDER_NAME = 0;  // 列表的显示排序
     public static final int MEDIA_LIST_ORDER_DURATION = 1;  // 列表的显示排序
     public static final int MEDIA_LIST_ORDER_SOURCE = 2;  // 列表的显示排序

@@ -15,11 +15,15 @@ public class HttpConstants
     public static final String URL_CHECK_VERSION = "https://screen.whitesky.com.cn:5443/api/checkVersion";
     public static final String URL_HEARTBEAT = "https://screen.whitesky.com.cn:5443/api/heartBeat";
     public static final String URL_GET_SHARE_LIST = "https://screen.whitesky.com.cn:5443/api/getShareList";
+    public static final String URL_GET_QRCODE = "https://screen.whitesky.com.cn/api/getQrcode";
 
     public static final String LOGIN_STATUS_SUCCESS = "000000";
     public static final String LOGIN_STATUS_NOT_YET = "200101";
+
     public static final String VERSION_CHECK_STATUS_SUCCESS = "000000";
     public static final String VERSION_CHECK_STATUS_NO_AVAILABLE = "200001";
+
+    public static final String QRCODE_GET_STATUS_SUCCESS = "000000";
 
     public static int HTTP_STATUS_SUCCESS = 200;
     

@@ -16,6 +16,13 @@
         android:background="@drawable/shape_media_polygon_paint_background"
         android:visibility="invisible" />
 
+    <ImageView
+        android:id="@+id/iv_qrcode"
+        android:layout_width="@dimen/x100"
+        android:layout_height="@dimen/x100"
+        android:layout_gravity="top|right"
+        android:visibility="invisible" />
+
     <Button
         android:id="@+id/btn_netMask"
         android:layout_width="@dimen/x40"

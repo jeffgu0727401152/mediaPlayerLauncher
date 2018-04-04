@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.mylhyl.zxing.scanner.encode.QREncode;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
@@ -38,6 +40,7 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
     public static final int SCREEN_MASK_MODE_POLYGON = 6;
 
     private ImageView maskArea;
+    private ImageView qrCodeArea;
     private PolygonWindow paintWindow;
     private Button netMaskBtn;
     private Button grayMaskBtn;
@@ -52,6 +55,7 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
 
         LayoutInflater.from(context).inflate(R.layout.mask_controller, this, true);
         maskArea = (ImageView) findViewById(R.id.iv_mask);
+        qrCodeArea = (ImageView) findViewById(R.id.iv_qrcode);
         maskArea.setScaleType(ImageView.ScaleType.FIT_XY);
         paintWindow = (PolygonWindow) findViewById(R.id.iv_polygon_paint_window);
         paintWindow.setOnPolygonWindowEventListener(this);
@@ -278,5 +282,25 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         if (show) {
             onCancel();
         }
+    }
+
+    public void showQrCode(String codeStr, Rect position) {
+        Bitmap bitmap = new QREncode.Builder(attachedContext)
+                .setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
+                // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型
+                .setContents(codeStr)                          // 二维码内容
+                // .setLogoBitmap(logoBitmap)                  // 二维码中间logo
+                .build()
+                .encodeAsBitmap();
+        qrCodeArea.setImageBitmap(bitmap);
+        qrCodeArea.setVisibility(View.VISIBLE);
+
+        if (position!=null) {
+            // todo set position
+        }
+    }
+
+    public void hideQrCode() {
+        qrCodeArea.setVisibility(View.INVISIBLE);
     }
 }

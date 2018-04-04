@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -34,6 +35,7 @@ import com.whitesky.tv.projectorlauncher.service.mqtt.bean.DeviceInfoResponseBea
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListResponseBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.QrCodeResultBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
@@ -69,10 +71,15 @@ import okhttp3.Response;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
+import static com.whitesky.tv.projectorlauncher.common.HttpConstants.QRCODE_GET_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_NO_AVAILABLE;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.needShowQRcode;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveQRcodeUrlToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowQRcodeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
@@ -81,7 +88,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.APK_SIZE_MAX;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
-import static com.whitesky.tv.projectorlauncher.settings.OTANetActivity.serverVersionGreaterThanDeviceVersion;
 import static java.lang.Thread.sleep;
 
 /**
@@ -102,6 +108,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_CMD_ACTION_LOGINDONE  = "logindone";
     private final String STR_MQTT_CMD_ACTION_REBOOT     = "reboot";
     private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
+    private final String STR_MQTT_CMD_ACTION_PREVIOUS   = "previous";
+    private final String STR_MQTT_CMD_ACTION_NEXT       = "next";
+    private final String STR_MQTT_CMD_ACTION_QRCODE_ENABLE   = "controlqrcode:1";
+    private final String STR_MQTT_CMD_ACTION_QRCODE_DISABLE  = "controlqrcode:0";
 
     private final String STR_MQTT_REQ_ACTION_INFO       = "info";      // 请求回应设备当前信息（开关机情况，开机时间，剩余磁盘容量，机顶盒软件版本信息）
     private final String STR_MQTT_REQ_ACTION_SHARELIST  = "sharelist"; // 请求回应设备当前硬盘中 共享中已下载的文件列表
@@ -121,6 +131,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_CMD_LOGIN_DONE = 200;
     private final static int MSG_CMD_REBOOT = 201;
     private final static int MSG_CMD_OTA = 202;
+    public final static int MSG_CMD_PREVIOUS = 203;
+    public final static int MSG_CMD_NEXT = 204;
+    public final static int MSG_CMD_QRCODE_ENABLE = 205;
+    public final static int MSG_CMD_QRCODE_DISABLE = 206;
 
     // request
     private final static int MSG_REQUEST_INFO = 300;
@@ -138,9 +152,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private String SN = "";
     private ExecutorService mHeartBeatWorker = Executors.newSingleThreadExecutor();
+    private ExecutorService mGetQrCodeWorker = Executors.newSingleThreadExecutor();
 
     private boolean mHeartBeatRunnig = false;
+    private boolean mGetQrCodeRunnig = false;
     private final static int HEARTBEAT_INTERVAL_S = 60 * 3;
+    private final static int GET_QRCODE_URL_INTERVAL_S = 60 * 60;
 
     private ArrayList<FileListPushBean> mNeedToDownloadList = null;
     private ArrayList<MediaListPushBean> mNeedToPlayList = null;
@@ -188,7 +205,13 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         reportVersionAndGetUpdateInfo(getApplicationContext(),null);
 
-        heartBeatThread();
+        if (mHeartBeatRunnig==false) {
+            heartBeatThread();
+        }
+
+        if (needShowQRcode(getApplicationContext()) && mGetQrCodeRunnig==false) {
+            getQrCodeUrlThread();
+        }
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -200,6 +223,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         if (mHeartBeatWorker!=null) {
             mHeartBeatWorker.shutdownNow();
             mHeartBeatWorker = null;
+        }
+
+        mGetQrCodeRunnig = false;
+        if (mGetQrCodeWorker!=null) {
+            mGetQrCodeWorker.shutdownNow();
+            mGetQrCodeWorker = null;
         }
 
         super.onDestroy();
@@ -280,7 +309,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                         sleep(1000);
 
-                        if (loopCount<HEARTBEAT_INTERVAL_S){
+                        if (loopCount < HEARTBEAT_INTERVAL_S){
 
                             loopCount++;
 
@@ -305,8 +334,51 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         }
 
                     } catch (Exception e) {
-                        Log.e(TAG, "Exception in heartbeat thread" + e);
-                        e.printStackTrace();
+                        Log.e(TAG, "Exception in heartbeat thread" + e.toString());
+                    }
+                }
+            }
+        });
+    }
+
+    private void getQrCodeUrlThread() {
+        mGetQrCodeWorker.execute(new Runnable() {
+            @Override
+            public void run() {
+                mGetQrCodeRunnig = true;
+                int loopCount = 0;
+                while (mGetQrCodeRunnig) {
+                    try {
+                        if (loopCount==0 && needShowQRcode(getApplicationContext())) {
+                            getControlQrcode(getApplicationContext(), new getQrCodeCallback() {
+                                @Override
+                                public void qrCodeRequestDone(boolean ret, QrCodeResultBean.Result result) {
+
+                                    if (ret == true) {
+
+                                        saveQRcodeUrlToConfig(getApplicationContext(), result.getUrl());
+
+                                        if (((MainApplication) getApplication()).isMediaActivityForeground) {
+                                            Intent intent = new Intent(Contants.ACTION_CMD_QRCODE_CONTROL);
+                                            Bundle bundle = new Bundle();
+                                            bundle.putString(Contants.EXTRA_MQTT_ACTION_CONTEXT, result.getUrl());
+                                            intent.putExtras(bundle);
+                                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        sleep(1000);
+                        if (loopCount < GET_QRCODE_URL_INTERVAL_S) {
+                            loopCount++;
+                        } else {
+                            loopCount = 0;
+                        }
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in get QRcode Url thread" + e.toString());
                     }
                 }
             }
@@ -369,12 +441,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                     if (serverResponse != null) {
                         if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_SUCCESS)) {
-                            if (serverResponse.getResult() != null) {
-                                Log.d(TAG, "VersionInfo success");
-                            }
-
-                            if (callback!=null) callback.versionRequestDone(true, serverResponse.getResult());
-
+                            Log.d(TAG, "get version response success");
+                            if (callback!=null) callback.versionRequestDone(serverResponse.getResult()==null?false:true, serverResponse.getResult());
                         } else if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_NO_AVAILABLE)) {
                             Log.i(TAG,"onResponse not have available update file in server!");
                             if (callback!=null) callback.versionRequestDone(false,null);
@@ -395,6 +463,88 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
+    public interface getQrCodeCallback{
+        void qrCodeRequestDone(boolean ret, QrCodeResultBean.Result result);
+    }
+
+    public static void getControlQrcode(final Context context, final getQrCodeCallback callback) {
+        OkHttpClient mClient = new OkHttpClient();
+        if (HttpConstants.URL_CHECK_VERSION.contains("https")) {
+            try {
+                mClient = new OkHttpClient.Builder()
+                        .sslSocketFactory(SSLContext.getDefault().getSocketFactory())
+                        .build();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            mClient = new OkHttpClient();
+        }
+
+        FormBody body = new FormBody.Builder()
+                .add("sn", DeviceInfoActivity.getSysSn(context))
+                .build();
+        Request request = new Request.Builder().url(HttpConstants.URL_GET_QRCODE).post(body).build();
+        Call call = mClient.newCall(request);
+        call.enqueue(new okhttp3.Callback() {
+            // 失败
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+                if (callback!=null) callback.qrCodeRequestDone(false,null);
+            }
+
+            // 成功
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    if (callback!=null) callback.qrCodeRequestDone(false,null);
+                    Log.e(TAG,"response is not success!" + response.toString());
+
+                } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
+                    String htmlBody = response.body().string();
+
+                    QrCodeResultBean serverResponse = null;
+
+                    try {
+                        serverResponse = new Gson().fromJson(htmlBody, QrCodeResultBean.class);
+                    } catch (IllegalStateException e) {
+                        serverResponse = null;
+                        Log.e(TAG, "exception in json parse!" + e.toString());
+                    }
+
+                    if (serverResponse != null) {
+                        if (serverResponse.getStatus().equals(QRCODE_GET_STATUS_SUCCESS)) {
+                            Log.d(TAG, "get QRcode response success");
+                            if (callback!=null) callback.qrCodeRequestDone(serverResponse.getResult()==null?false:true, serverResponse.getResult());
+                        } else if (serverResponse.getStatus().equals(LOGIN_STATUS_NOT_YET)) {
+                            Log.d(TAG,"onResponse device not login yet,need user login this device!");
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.showToast(context,context.getResources().getString(R.string.str_media_cloud_file_need_login_toast));
+                                }
+                            });
+                            if (callback!=null) callback.qrCodeRequestDone(false,null);
+                        } else {
+                            Log.d(TAG,"onResponse unknown status " + serverResponse.getStatus());
+                            if (callback!=null) callback.qrCodeRequestDone(false,null);
+                        }
+                    } else {
+                        Log.e(TAG, "server response null! " + htmlBody);
+                        if (callback!=null) callback.qrCodeRequestDone(false,null);
+                    }
+
+                } else {
+                    Log.e(TAG, "onResponse http undefine code " + response.code());
+                    if (callback!=null) callback.qrCodeRequestDone(false,null);
+                }
+            }
+        });
+    }
+
     private void parserMqttMessage(String mqttMessage) {
         Message message = mqttUtilHandler.obtainMessage();
         message.what = MSG_NONE;
@@ -410,6 +560,18 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_OTA) == 32) {
                 message.what = MSG_CMD_OTA;
+
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_PREVIOUS) == 32) {
+                message.what = MSG_CMD_PREVIOUS;
+
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_NEXT) == 32) {
+                message.what = MSG_CMD_NEXT;
+
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_QRCODE_ENABLE) == 32) {
+                message.what = MSG_CMD_QRCODE_ENABLE;
+
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_QRCODE_DISABLE) == 32) {
+                message.what = MSG_CMD_QRCODE_DISABLE;
 
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
@@ -485,9 +647,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     }
 
     private boolean mustIgnoreThisMessage(int msgWhat) {
+        // 机器格式化硬盘的时候是白名单,只允许远程查询机器信息,而且机器信息中的硬盘容量不返回
         if (((MainApplication)getApplication()).isBusyInFormat) {
             switch (msgWhat) {
-                // 机器格式化硬盘的时候,只允许远程查询机器信息,而机器信息中的硬盘容量不返回
                 case MSG_REQUEST_INFO:
                     return false;
                 default:
@@ -497,15 +659,14 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
         if (((MainApplication)getApplication()).isBusyInCopy) {
             switch (msgWhat) {
-                // 机器正在拷贝的时候,不允许重启,登录跳转,升级,删除
-                case MSG_CMD_LOGIN_DONE:
-                case MSG_CMD_REBOOT:
-                case MSG_CMD_OTA:
-                case MSG_REQUEST_RAW:
-                case MSG_PUSH_DELETE:
-                    return true;
-                default:
+                case MSG_REQUEST_INFO:
+                case MSG_REQUEST_PLAYLIST:
+                case MSG_REQUEST_LOCALLIST:
+                case MSG_REQUEST_SHARELIST:
+                case MSG_PUSH_DOWNLOAD:
                     return false;
+                default:
+                    return true;
             }
         }
 
@@ -583,6 +744,41 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             }
                         }
                     });
+                    break;
+
+                case MSG_CMD_PREVIOUS:
+                case MSG_CMD_NEXT:
+
+                    if (((MainApplication)getApplication()).isMediaActivityForeground) {
+
+                        Intent intent=new Intent(Contants.ACTION_CMD_PLAY_CONTROL);
+                        Bundle bundle = new Bundle();
+                        bundle.putInt(Contants.EXTRA_MQTT_ACTION_CONTEXT, msg.what);
+                        intent.putExtras(bundle);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+                    } else {
+                        startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    }
+                    break;
+
+                case MSG_CMD_QRCODE_ENABLE:
+                    saveShowQRcodeToConfig(getApplicationContext(),true);
+                    getQrCodeUrlThread();
+                    break;
+
+                case MSG_CMD_QRCODE_DISABLE:
+                    mGetQrCodeRunnig = false;
+                    saveShowQRcodeToConfig(getApplicationContext(),false);
+                    saveQRcodeUrlToConfig(getApplicationContext(),"");
+
+                    if (((MainApplication)getApplication()).isMediaActivityForeground) {
+                        Intent intent=new Intent(Contants.ACTION_CMD_QRCODE_CONTROL);
+                        Bundle bundle = new Bundle();
+                        bundle.putString(Contants.EXTRA_MQTT_ACTION_CONTEXT, "");
+                        intent.putExtras(bundle);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                    }
                     break;
 
                 case MSG_REQUEST_RAW:
@@ -670,7 +866,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                         Intent intent=new Intent(Contants.ACTION_PUSH_PLAYLIST);
                         Bundle bundle = new Bundle();
-                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, playCloudList);
+                        bundle.putParcelableArrayList(Contants.EXTRA_MQTT_ACTION_CONTEXT, playCloudList);
                         intent.putExtras(bundle);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
@@ -711,7 +907,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                         Intent intent=new Intent(Contants.ACTION_PUSH_PLAYMODE);
                         Bundle bundle = new Bundle();
-                        bundle.putParcelable(Contants.EXTRA_PUSH_CONTEXT, playMode);
+                        bundle.putParcelable(Contants.EXTRA_MQTT_ACTION_CONTEXT, playMode);
                         intent.putExtras(bundle);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
@@ -720,14 +916,14 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         if (playMode.getPlayMode()==MEDIA_REPLAY_SHUFFLE
                                 || playMode.getPlayMode()==MEDIA_REPLAY_ONE
                                 || playMode.getPlayMode()==MEDIA_REPLAY_ALL) {
-
-                            saveReplayModeToConfig(getApplicationContext(),playMode.getPlayMode());
-                            saveShowMaskToConfig(getApplicationContext(),playMode.getMask()==0?false:true);
-                            startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-
-                        } else {
-                            Log.e(TAG, "unknown replay mode (" + playMode.getPlayMode() + ")");
+                            saveReplayModeToConfig(getApplicationContext(), playMode.getPlayMode());
                         }
+
+                        if (playMode.getMask()==0 || playMode.getMask()==1) {
+                            saveShowMaskToConfig(getApplicationContext(),playMode.getMask()==0?false:true);
+                        }
+
+                        startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     }
                     break;
 
@@ -743,7 +939,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             // 交给MediaActivity同步，同步结束后下载这些文件
                             Intent intent=new Intent(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC);
                             Bundle bundle = new Bundle();
-                            bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, downloadCloudList);
+                            bundle.putParcelableArrayList(Contants.EXTRA_MQTT_ACTION_CONTEXT, downloadCloudList);
                             intent.putExtras(bundle);
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
@@ -787,7 +983,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                         Intent intent=new Intent(Contants.ACTION_PUSH_DELETE);
                         Bundle bundle = new Bundle();
-                        bundle.putParcelableArrayList(Contants.EXTRA_PUSH_CONTEXT, deleteList);
+                        bundle.putParcelableArrayList(Contants.EXTRA_MQTT_ACTION_CONTEXT, deleteList);
                         intent.putExtras(bundle);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 

@@ -76,10 +76,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.whitesky.tv.projectorlauncher.common.Contants.ACTION_CMD_QRCODE_CONTROL;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_MEDIA_LIST_ORDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_QRCODE_URL;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_QRCODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
@@ -94,6 +97,9 @@ import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATU
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_NOT_EXIST;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_PATH_NONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_INVALIDED_POSITION;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_COMPLETE;
@@ -106,6 +112,8 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
+import static com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService.MSG_CMD_NEXT;
+import static com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService.MSG_CMD_PREVIOUS;
 
 /**
  * Created by jeff on 18-1-16.
@@ -232,9 +240,32 @@ public class MediaActivity extends Activity
 
             String action = intent.getAction();
 
-            if (action.equals(Contants.ACTION_PUSH_PLAYLIST)) {
+            if (action.equals(Contants.ACTION_CMD_PLAY_CONTROL)) {
 
-                ArrayList<MediaListPushBean> cloudPushPlaylist = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+                int playControlMsg = intent.getIntExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT,-1);
+                if (playControlMsg == -1) {
+                    Log.e(TAG,"mqtt receive a error format play control!");
+                    return;
+                }
+                if (mPlayListAdapter.hasPlayableItem()) {
+                    if (playControlMsg==MSG_CMD_PREVIOUS) {
+                        mPlayer.mediaPlayPrevious();
+                    } else if (playControlMsg==MSG_CMD_NEXT)
+                        mPlayer.mediaPlayNext();
+                }
+
+            }  else if (action.equals(ACTION_CMD_QRCODE_CONTROL)) {
+
+                String qrCodeStr = intent.getStringExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
+                if (qrCodeStr == null || qrCodeStr.isEmpty()) {
+                    mPlayer.getMaskController().hideQrCode();
+                } else {
+                    mPlayer.getMaskController().showQrCode(qrCodeStr,null);
+                }
+
+            } else if (action.equals(Contants.ACTION_PUSH_PLAYLIST)) {
+
+                ArrayList<MediaListPushBean> cloudPushPlaylist = intent.getParcelableArrayListExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
 
                 if (cloudPushPlaylist==null) {
                     Log.e(TAG,"mqtt receive a error format push play list!");
@@ -278,22 +309,28 @@ public class MediaActivity extends Activity
 
             } else if (action.equals(Contants.ACTION_PUSH_PLAYMODE)) {
 
-                PlayModePushBean pushReq = intent.getParcelableExtra(Contants.EXTRA_PUSH_CONTEXT);
+                PlayModePushBean pushReq = intent.getParcelableExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
 
                 if (pushReq==null) {
                     Log.e(TAG,"mqtt receive a error format push play mode!");
                     return;
                 }
 
-                saveReplayModeToConfig(getApplicationContext(),pushReq.getPlayMode());
-                loadReplayMode();
+                if (pushReq.getPlayMode()==MEDIA_REPLAY_SHUFFLE
+                        || pushReq.getPlayMode()==MEDIA_REPLAY_ONE
+                        || pushReq.getPlayMode()==MEDIA_REPLAY_ALL) {
+                    saveReplayModeToConfig(getApplicationContext(), pushReq.getPlayMode());
+                    loadReplayMode();
+                }
 
-                saveShowMaskToConfig(getApplicationContext(),pushReq.getMask()==0?false:true);
-                mPlayer.getMaskController().showDefaultMask();
+                if (pushReq.getMask()==0 || pushReq.getMask()==1) {
+                    saveShowMaskToConfig(getApplicationContext(), pushReq.getMask() == 0 ? false : true);
+                    mPlayer.getMaskController().showDefaultMask();
+                }
 
             } else if (action.equals(Contants.ACTION_PUSH_DELETE)) {
 
-                ArrayList<FileListPushBean> pushList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+                ArrayList<FileListPushBean> pushList = intent.getParcelableArrayListExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
 
                 if (pushList==null) {
                     Log.e(TAG,"mqtt receive a error format delete list!");
@@ -307,7 +344,7 @@ public class MediaActivity extends Activity
 
             } else if (action.equals(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC)) {
 
-                ArrayList<FileListPushBean> downloadCloudList = intent.getParcelableArrayListExtra(Contants.EXTRA_PUSH_CONTEXT);
+                ArrayList<FileListPushBean> downloadCloudList = intent.getParcelableArrayListExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
 
                 if (downloadCloudList==null) {
                     Log.e(TAG,"mqtt receive a error format push sync list!");
@@ -530,6 +567,31 @@ public class MediaActivity extends Activity
 
     }
 
+    public static String loadQRcodeUrlFromConfig(Context context) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        return config.getString(CONFIG_QRCODE_URL);
+    }
+
+    public static void saveQRcodeUrlToConfig(Context context, String qrCodeStr) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putString(CONFIG_QRCODE_URL,qrCodeStr);
+    }
+
+    public static boolean needShowQRcode(Context context) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        return config.getBoolean(CONFIG_SHOW_QRCODE);
+    }
+
+    public static void saveShowQRcodeToConfig(Context context, boolean showQrcode) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putBoolean(CONFIG_SHOW_QRCODE,showQrcode);
+    }
+
+    public static void saveShowMaskToConfig(Context context, boolean showMask) {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
+        config.putBoolean(CONFIG_SHOW_MASK,showMask);
+    }
+
     public static void saveMediaOrderModeToConfig(Context context, int orderMode) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         config.putInt(CONFIG_MEDIA_LIST_ORDER, orderMode);
@@ -569,11 +631,6 @@ public class MediaActivity extends Activity
     public static int loadReplayModeFromConfig(Context context) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         return config.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
-    }
-
-    public static void saveShowMaskToConfig(Context context, boolean showMask) {
-        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        config.putBoolean(CONFIG_SHOW_MASK,showMask);
     }
 
     private void loadReplayMode() {
@@ -1202,6 +1259,12 @@ public class MediaActivity extends Activity
         updateMultiActionButtonUiState();
         loadPlaylistFromConfig();
 
+        if (!needShowQRcode(this) || loadQRcodeUrlFromConfig(this).isEmpty()) {
+            mPlayer.getMaskController().hideQrCode();
+        } else {
+            mPlayer.getMaskController().showQrCode(loadQRcodeUrlFromConfig(this),null);
+        }
+
         // 监听usb插拔事件
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
@@ -1212,9 +1275,11 @@ public class MediaActivity extends Activity
 
         // 监听mqtt控制命令
         IntentFilter serviceEventFilter = new IntentFilter();
+        serviceEventFilter.addAction(Contants.ACTION_CMD_PLAY_CONTROL);
         serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYLIST);
         serviceEventFilter.addAction(Contants.ACTION_PUSH_PLAYMODE);
         serviceEventFilter.addAction(Contants.ACTION_PUSH_DELETE);
+        serviceEventFilter.addAction(Contants.ACTION_CMD_QRCODE_CONTROL);
         serviceEventFilter.addAction(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC);
         serviceEventFilter.addAction(Contants.ACTION_DOWNLOAD_STATE_UPDATE);
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceEventReceiver, serviceEventFilter);
