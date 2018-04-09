@@ -71,7 +71,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int  MEDIA_REPLAY_MODE_DEFAULT = MEDIA_REPLAY_ALL;
 
     // 播放器的播放状态
-    public static final int PLAYER_STATE_IDLE = -1;
+    public static final int PLAYER_STATE_IDLE = -1;              //表示从来没有播放,只要开始播放过就不可能是IDLE
     public static final int PLAYER_STATE_PLAY_STOP = 0;
     public static final int PLAYER_STATE_PLAY_VIDEO = 1;
     public static final int PLAYER_STATE_PLAY_PICTURE = 2;
@@ -294,14 +294,14 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             case MEDIA_SCALE_FIT_XY:
                 if (mPlayState == PLAYER_STATE_PLAY_PICTURE || mPlayState == PLAYER_STATE_PAUSE_PICTURE){
                     mPictureView.setScaleType(ImageView.ScaleType.FIT_XY);
-                } else {
+                } else if (mPlayState == PLAYER_STATE_PLAY_VIDEO || mPlayState == PLAYER_STATE_PAUSE_VIDEO) {
                     mMediaPlayer.setVideoScalingMode(VIDEO_SCALING_MODE_SCALE_TO_FIT);
                 }
                 break;
             case MEDIA_SCALE_FIT_CENTER:
                 if (mPlayState == PLAYER_STATE_PLAY_PICTURE || mPlayState == PLAYER_STATE_PAUSE_PICTURE){
                     mPictureView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                } else {
+                } else  if (mPlayState == PLAYER_STATE_PLAY_VIDEO || mPlayState == PLAYER_STATE_PAUSE_VIDEO) {
                     mMediaPlayer.setVideoScalingMode(VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
                 }
                 break;
@@ -569,7 +569,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
         if (position==INVALID_POSITION || position>=mPlayList.size()) {
             Log.e(TAG,"media Play position(" + position +") POSITION INVALID!");
-            mPlayState = PLAYER_STATE_IDLE;
+            mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
                 mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
@@ -604,7 +604,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
             Log.w(TAG,"could not start to play file which not downloaded, play next directly");
 
-            // 这边特别设置IDLE表示是因为文件没有下载而直接完成
+            // 这边特别设置STOP表示是因为文件没有下载而直接完成
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {

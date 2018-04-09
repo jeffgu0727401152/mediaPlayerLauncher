@@ -390,7 +390,7 @@ public class MediaActivity extends Activity
 
                     updateCapacityUi(MASS_STORAGE_PATH);
 
-                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()== PLAYER_STATE_IDLE) {
+                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()== PLAYER_STATE_PLAY_STOP) {
                         Message msg = mHandler.obtainMessage();
                         msg.what = MSG_MEDIA_PLAY_COMPLETE;
                         mHandler.sendMessage(msg);
@@ -893,7 +893,6 @@ public class MediaActivity extends Activity
 
     private void initView() {
         setContentView(R.layout.activity_media);
-
         mPlayer = (com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer) findViewById(R.id.pictureVideoPlayer_playArea);
 
         mMultiCopyToLocalBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_left);
@@ -1209,7 +1208,6 @@ public class MediaActivity extends Activity
                 mHandler.sendMessage(msg);
             }
         });
-
 
         mUsbMediaScanner = new MediaScanUtil();
         mUsbMediaScanner.setNeedSize(true);
