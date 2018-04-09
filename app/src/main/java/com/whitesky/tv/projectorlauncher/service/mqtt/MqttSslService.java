@@ -322,6 +322,11 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                     } catch (Exception e) {
                         Log.e(TAG, "Exception in heartbeat thread" + e.toString());
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ie) {
+                            ie.printStackTrace();
+                        }
                     }
                 }
             }
