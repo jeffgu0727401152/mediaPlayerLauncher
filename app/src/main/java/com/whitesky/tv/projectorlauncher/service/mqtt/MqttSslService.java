@@ -124,6 +124,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_PUSH_ACTION_DOWNLOAD  = "download";  // 设置下载任务
     private final String STR_MQTT_PUSH_ACTION_DELETE    = "delete";    // 设置删除
     private final String STR_MQTT_PUSH_ACTION_LOCALDELETE  = "localdelete";   // 设置删除
+    private final String STR_MQTT_PUSH_ACTION_WAKEUPGROUP  = "wakeup";   // 网络唤醒局域网其他设备
 
     private final static int MSG_NONE = 0;
 
@@ -147,6 +148,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final static int MSG_PUSH_PLAYMODE = 401;
     private final static int MSG_PUSH_DELETE = 402;
     private final static int MSG_PUSH_DOWNLOAD = 403;
+    private final static int MSG_PUSH_WAKEUP = 404;
 
     private final String keyStorePassword = "wxgh#2561";
 
@@ -608,6 +610,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_LOCALDELETE) == 32) {
                 message.what = MSG_PUSH_DELETE;
 
+            } else if (mqttMessage.indexOf(STR_MQTT_PUSH_ACTION_WAKEUPGROUP) == 32) {
+                message.what = MSG_PUSH_WAKEUP;
+
             } else {
                 Log.e(TAG,"unknown msg action(" + mqttMessage.substring(32,64) + ")!");
             }
@@ -643,6 +648,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         if (((MainApplication)getApplication()).isBusyInFormat) {
             switch (msgWhat) {
                 case MSG_REQUEST_INFO:
+                case MSG_PUSH_WAKEUP:
                     return false;
                 default:
                     return true;
@@ -656,6 +662,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 case MSG_REQUEST_LOCALLIST:
                 case MSG_REQUEST_SHARELIST:
                 case MSG_PUSH_DOWNLOAD:
+                case MSG_PUSH_WAKEUP:
                     return false;
                 default:
                     return true;
@@ -1026,6 +1033,19 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         }
 
                         MediaActivity.savePlaylistToConfig(getApplication(), pList);
+                    }
+                    break;
+
+                case MSG_PUSH_WAKEUP:
+                    String[] macList = rawStr.substring(100).split(",");
+                    if (macList!=null && macList.length>0) {
+                        WakeupGroupThread wakeTrigger = new WakeupGroupThread();
+                        for (String mac:macList) {
+                            String needWakeupMac = mac.replace("[","").replace("\"","");
+                            Log.d(TAG,"will wake up mac:" + needWakeupMac);
+                            wakeTrigger.add(needWakeupMac);
+                        }
+                        wakeTrigger.run();
                     }
                     break;
 
