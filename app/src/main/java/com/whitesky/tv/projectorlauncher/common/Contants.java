@@ -37,8 +37,7 @@ public class Contants
     public static final int MEDIA_LIST_ORDER_SOURCE = 2;  // 列表的显示排序
     public static final int MEDIA_LIST_ORDER_DEFAULT = MEDIA_LIST_ORDER_SOURCE;  // 列表的显示排序
 
-    public static final String IS_ACTIVATE = "false"; // 设备是否被激活
-    public static final String IS_SETUP_PASS = "false"; // 设置引导是否跳过
+    public static final String IS_ACTIVATE = "isLogin"; // 设备是否被激活
 
     // MediaActivity +++
     public static final String LOCAL_SATA_MOUNT_PATH = "/mnt/sata";         // 硬盘的固定挂载目录

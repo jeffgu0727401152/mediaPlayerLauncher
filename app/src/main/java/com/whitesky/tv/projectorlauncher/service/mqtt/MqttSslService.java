@@ -35,7 +35,7 @@ import com.whitesky.tv.projectorlauncher.service.mqtt.bean.DeviceInfoResponseBea
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListResponseBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.PlayModePushBean;
-import com.whitesky.tv.projectorlauncher.service.mqtt.bean.QrCodeResultBean;
+import com.whitesky.tv.projectorlauncher.service.mqtt.bean.QRcodeResultBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.VersionCheckResultBean;
 import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MqttUtil;
@@ -107,6 +107,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private final String STR_MQTT_CMD_ACTION_LOGINDONE  = "logindone";
     private final String STR_MQTT_CMD_ACTION_REBOOT     = "reboot";
+    private final String STR_MQTT_CMD_ACTION_STANDBY    = "standby";
     private final String STR_MQTT_CMD_ACTION_OTA        = "otaupdate";
     private final String STR_MQTT_CMD_ACTION_PREVIOUS   = "previous";
     private final String STR_MQTT_CMD_ACTION_NEXT       = "next";
@@ -131,11 +132,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     // command
     private final static int MSG_CMD_LOGIN_DONE = 200;
     private final static int MSG_CMD_REBOOT = 201;
-    private final static int MSG_CMD_OTA = 202;
-    public final static int MSG_CMD_PREVIOUS = 203;
-    public final static int MSG_CMD_NEXT = 204;
-    public final static int MSG_CMD_QRCODE_ENABLE = 205;
-    public final static int MSG_CMD_QRCODE_DISABLE = 206;
+    private final static int MSG_CMD_STANDBY = 202;
+    private final static int MSG_CMD_OTA = 203;
+    public final static int MSG_CMD_PREVIOUS = 204;
+    public final static int MSG_CMD_NEXT = 205;
+    public final static int MSG_CMD_QRCODE_ENABLE = 206;
+    public final static int MSG_CMD_QRCODE_DISABLE = 207;
 
     // request
     private final static int MSG_REQUEST_INFO = 300;
@@ -154,10 +156,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
     private String SN = "";
     private ExecutorService mHeartBeatWorker = Executors.newSingleThreadExecutor();
-    private ExecutorService mGetQrCodeWorker = Executors.newSingleThreadExecutor();
+    private ExecutorService mGetQRcodeWorker = Executors.newSingleThreadExecutor();
 
     private boolean mHeartBeatRunnig = false;
-    private boolean mGetQrCodeRunnig = false;
+    private boolean mGetQRcodeRunnig = false;
     private final static int HEARTBEAT_INTERVAL_S = 60 * 3;
     private final static int GET_QRCODE_URL_INTERVAL_S = 60 * 60;
 
@@ -211,8 +213,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             heartBeatThread();
         }
 
-        if (needShowQRcode(getApplicationContext()) && mGetQrCodeRunnig==false) {
-            getQrCodeUrlThread();
+        if (needShowQRcode(getApplicationContext()) && mGetQRcodeRunnig ==false) {
+            getQRcodeUrlThread();
         }
 
         return super.onStartCommand(intent, flags, startId);
@@ -227,10 +229,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             mHeartBeatWorker = null;
         }
 
-        mGetQrCodeRunnig = false;
-        if (mGetQrCodeWorker!=null) {
-            mGetQrCodeWorker.shutdownNow();
-            mGetQrCodeWorker = null;
+        mGetQRcodeRunnig = false;
+        if (mGetQRcodeWorker !=null) {
+            mGetQRcodeWorker.shutdownNow();
+            mGetQRcodeWorker = null;
         }
 
         super.onDestroy();
@@ -335,18 +337,18 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
-    private void getQrCodeUrlThread() {
-        mGetQrCodeWorker.execute(new Runnable() {
+    private void getQRcodeUrlThread() {
+        mGetQRcodeWorker.execute(new Runnable() {
             @Override
             public void run() {
-                mGetQrCodeRunnig = true;
+                mGetQRcodeRunnig = true;
                 int loopCount = 0;
-                while (mGetQrCodeRunnig) {
+                while (mGetQRcodeRunnig) {
                     try {
                         if (loopCount==0 && needShowQRcode(getApplicationContext())) {
-                            getControlQrcode(getApplicationContext(), new getQrCodeCallback() {
+                            getControlQrcode(getApplicationContext(), new getQRcodeCallback() {
                                 @Override
-                                public void qrCodeRequestDone(boolean ret, QrCodeResultBean.Result result) {
+                                public void qrCodeRequestDone(boolean ret, QRcodeResultBean.Result result) {
 
                                     if (ret == true) {
 
@@ -457,11 +459,11 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         });
     }
 
-    public interface getQrCodeCallback{
-        void qrCodeRequestDone(boolean ret, QrCodeResultBean.Result result);
+    public interface getQRcodeCallback {
+        void qrCodeRequestDone(boolean ret, QRcodeResultBean.Result result);
     }
 
-    public static void getControlQrcode(final Context context, final getQrCodeCallback callback) {
+    public static void getControlQrcode(final Context context, final getQRcodeCallback callback) {
         OkHttpClient mClient = new OkHttpClient();
         if (HttpConstants.URL_CHECK_VERSION.contains("https")) {
             try {
@@ -499,10 +501,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 } else if (response.code() == HttpConstants.HTTP_STATUS_SUCCESS) {
                     String htmlBody = response.body().string();
 
-                    QrCodeResultBean serverResponse = null;
+                    QRcodeResultBean serverResponse = null;
 
                     try {
-                        serverResponse = new Gson().fromJson(htmlBody, QrCodeResultBean.class);
+                        serverResponse = new Gson().fromJson(htmlBody, QRcodeResultBean.class);
                     } catch (IllegalStateException e) {
                         serverResponse = null;
                         Log.e(TAG, "exception in json parse!" + e.toString());
@@ -551,6 +553,9 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
             } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_REBOOT) == 32) {
                 message.what = MSG_CMD_REBOOT;
+
+            } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_STANDBY) == 32) {
+                message.what = MSG_CMD_STANDBY;
 
             } else if (mqttMessage.indexOf(STR_MQTT_CMD_ACTION_OTA) == 32) {
                 message.what = MSG_CMD_OTA;
@@ -711,7 +716,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 case MSG_CMD_LOGIN_DONE:
                     SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PREF_CONFIG);
                     shared.putBoolean(Contants.IS_ACTIVATE, true);
-                    shared.putBoolean(Contants.IS_SETUP_PASS, true);
 
                     Intent homeIntent = new Intent(getApplicationContext(), HomeActivity.class);
                     homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -721,6 +725,12 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 case MSG_CMD_REBOOT:
                     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     powerManager.reboot("mqtt request");
+                    break;
+
+                case MSG_CMD_STANDBY:
+                    homeIntent = new Intent(getApplicationContext(), HomeActivity.class);
+                    homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(homeIntent);
                     break;
 
                 case MSG_CMD_OTA:
@@ -763,11 +773,11 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_CMD_QRCODE_ENABLE:
                     saveShowQRcodeToConfig(getApplicationContext(),true);
-                    getQrCodeUrlThread();
+                    getQRcodeUrlThread();
                     break;
 
                 case MSG_CMD_QRCODE_DISABLE:
-                    mGetQrCodeRunnig = false;
+                    mGetQRcodeRunnig = false;
                     saveShowQRcodeToConfig(getApplicationContext(),false);
                     saveQRcodeUrlToConfig(getApplicationContext(),"");
 

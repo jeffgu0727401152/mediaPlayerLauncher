@@ -284,7 +284,7 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         }
     }
 
-    public void showQrCode(String codeStr, Rect position) {
+    public void showQRcode(String codeStr, Rect position) {
         Bitmap bitmap = new QREncode.Builder(attachedContext)
                 .setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
                 // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型
@@ -300,7 +300,7 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         }
     }
 
-    public void hideQrCode() {
+    public void hideQRcode() {
         qrCodeArea.setVisibility(View.INVISIBLE);
     }
 }

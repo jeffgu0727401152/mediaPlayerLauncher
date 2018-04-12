@@ -4,7 +4,7 @@ package com.whitesky.tv.projectorlauncher.service.mqtt.bean;
  * Created by jeff on 18-3-5.
  */
 
-public class QrCodeResultBean {
+public class QRcodeResultBean {
 
     public class Result {
         private String url;

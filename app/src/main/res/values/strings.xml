@@ -106,6 +106,7 @@
     <string name="str_media_file_delete_dialog_title">您是否要删除文件?</string>
     <string name="str_media_file_copy_same_dialog_title">个文件在目标文件夹内已存在</string>
     <string name="str_media_file_copy_process_dialog_prompt">正在拷贝文件,请耐心等待,不要退出或插拔usb设备!</string>
+    <string name="str_media_file_copy_capacity_prompt">磁盘容量不足，请删除部分内容再进行拷贝!</string>
 
 
     <string name="str_media_full_screen_quite">您是否要退出全屏？</string>

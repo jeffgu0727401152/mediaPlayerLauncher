@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,6 +125,8 @@ public class MediaActivity extends Activity
         RadioGroup.OnCheckedChangeListener {
 
     private static final String TAG = MediaActivity.class.getSimpleName();
+
+    private static final long LOCAL_CAPACITY_WARNING_SIZE = 1024l*1024l*1024l*5;     //5G以下容量红色提示
 
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
@@ -256,11 +259,11 @@ public class MediaActivity extends Activity
 
             }  else if (action.equals(ACTION_CMD_QRCODE_CONTROL)) {
 
-                String qrCodeStr = intent.getStringExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
-                if (qrCodeStr == null || qrCodeStr.isEmpty()) {
-                    mPlayer.getMaskController().hideQrCode();
+                String QRCodeStr = intent.getStringExtra(Contants.EXTRA_MQTT_ACTION_CONTEXT);
+                if (QRCodeStr == null || QRCodeStr.isEmpty()) {
+                    mPlayer.getMaskController().hideQRcode();
                 } else {
-                    mPlayer.getMaskController().showQrCode(qrCodeStr,null);
+                    mPlayer.getMaskController().showQRcode(QRCodeStr,null);
                 }
 
             } else if (action.equals(Contants.ACTION_PUSH_PLAYLIST)) {
@@ -1258,9 +1261,9 @@ public class MediaActivity extends Activity
         loadPlaylistFromConfig();
 
         if (!needShowQRcode(this) || loadQRcodeUrlFromConfig(this).isEmpty()) {
-            mPlayer.getMaskController().hideQrCode();
+            mPlayer.getMaskController().hideQRcode();
         } else {
-            mPlayer.getMaskController().showQrCode(loadQRcodeUrlFromConfig(this),null);
+            mPlayer.getMaskController().showQRcode(loadQRcodeUrlFromConfig(this),null);
         }
 
         // 监听usb插拔事件
@@ -1661,7 +1664,6 @@ public class MediaActivity extends Activity
                     }
                     mAllMediaListAdapter.refresh();
                     updateMultiActionButtonUiState();
-                    updateCapacityUi(MASS_STORAGE_PATH);
                     break;
 
                 case MSG_USB_MEDIA_SCAN_DONE:
@@ -1706,6 +1708,15 @@ public class MediaActivity extends Activity
         });
     }
 
+    private void changeTextViewColorOnUiThread(final TextView textView, final int color) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setTextColor(color);
+            }
+        });
+    }
+
     private void updateTextViewOnUiThread(final TextView textView, final String text) {
         runOnUiThread(new Runnable() {
             @Override
@@ -1721,11 +1732,13 @@ public class MediaActivity extends Activity
                     @Override
                     public void run() {
                         try {
-                            String fsUsed = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path) -
-                                    FileUtil.getAvailableCapacity(path));
-                            String fsCapacity = FileUtil.formatFileSize(FileUtil.getTotalCapacity(path));
+                            long totalSize = FileUtil.getTotalCapacity(path);
+                            long availableSize = FileUtil.getAvailableCapacity(path);
+                            String fsUsed = FileUtil.formatFileSize(totalSize - availableSize);
+                            String fsCapacity = FileUtil.formatFileSize(totalSize);
 
                             if (path.contains(LOCAL_SATA_MOUNT_PATH)) {
+                                changeTextViewColorOnUiThread(mLocalCapacityTextView,availableSize> LOCAL_CAPACITY_WARNING_SIZE ? Color.WHITE:Color.RED);
                                 updateTextViewOnUiThread(mLocalCapacityTextView, fsUsed + "/" + fsCapacity);
                             } else {
                                 updateTextViewOnUiThread(mUsbCapacityTextView, fsUsed + "/" + fsCapacity);
@@ -1738,6 +1751,7 @@ public class MediaActivity extends Activity
     }
 
     private void updateMediaListUiAfterCopy(final Deque<String> items) {
+        updateCapacityUi(MASS_STORAGE_PATH);
         mCopyToInternalDoneUpdateUiService.execute(
                 new Thread() {
                     @Override
@@ -1844,7 +1858,7 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void checkAndCopy(CopyTask.CopyTaskParam param, Deque<String> waitCopyDeque) {
+    private void checkCapacityAndCopy(CopyTask.CopyTaskParam param, Deque<String> waitCopyDeque) {
         Deque<String> sameMediaDeque = new ArrayDeque<String>();
         sameMediaDeque.clear();
         synchronized (waitCopyDeque) {
@@ -1865,6 +1879,11 @@ public class MediaActivity extends Activity
                 param.totalSize += FileUtil.getFileSize(path);
                 param.fromList.push(path);
             }
+        }
+
+        if (param.totalSize > FileUtil.getAvailableCapacity(param.desFolder)) {
+            ToastUtil.showToast(this,getResources().getString(R.string.str_media_file_copy_capacity_prompt));
+            return;
         }
 
         if (!sameMediaDeque.isEmpty())
@@ -1893,7 +1912,7 @@ public class MediaActivity extends Activity
         param.desFolder = PathUtil.localFileStoragePath();
         param.callback = new CopyToInternalCallback();
 
-        checkAndCopy(param,mCopyDeque);
+        checkCapacityAndCopy(param,mCopyDeque);
     }
 
     private void copyInternalFileToUsb() {
@@ -1918,7 +1937,7 @@ public class MediaActivity extends Activity
         param.desFolder = usbDeviceMountPoint + File.separator + COPY_TO_USB_MEDIA_EXPORT_FOLDER;
         param.callback = new CopyToUsbCallback();
 
-        checkAndCopy(param,mCopyDeque);
+        checkCapacityAndCopy(param,mCopyDeque);
     }
 
     private void askUserChooseCopyOrNot(final CopyTask.CopyTaskParam param, final Deque<String> sameItems) {
