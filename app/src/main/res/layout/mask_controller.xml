@@ -18,8 +18,8 @@
 
     <ImageView
         android:id="@+id/iv_qrcode"
-        android:layout_width="@dimen/x100"
-        android:layout_height="@dimen/x100"
+        android:layout_width="@dimen/x80"
+        android:layout_height="@dimen/x80"
         android:layout_gravity="top|right"
         android:visibility="invisible" />
 

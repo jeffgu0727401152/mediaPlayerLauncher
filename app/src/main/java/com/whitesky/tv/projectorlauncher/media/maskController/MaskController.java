@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -295,9 +296,19 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         qrCodeArea.setImageBitmap(bitmap);
         qrCodeArea.setVisibility(View.VISIBLE);
 
+        FrameLayout.LayoutParams flpQRcode = (FrameLayout.LayoutParams) qrCodeArea.getLayoutParams();
         if (position!=null) {
-            // todo set position
+            flpQRcode.width = position.right - position.left;
+            flpQRcode.height = position.bottom - position.top;
+            flpQRcode.setMargins(position.left,position.top,0,0);
+            flpQRcode.gravity = Gravity.LEFT|Gravity.TOP;
+        } else {
+            flpQRcode.width = 80;
+            flpQRcode.height = 80;
+            flpQRcode.setMargins(0,0,0,0);
+            flpQRcode.gravity = Gravity.RIGHT|Gravity.TOP;
         }
+        qrCodeArea.setLayoutParams(flpQRcode);
     }
 
     public void hideQRcode() {
