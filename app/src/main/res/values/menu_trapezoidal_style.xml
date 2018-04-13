@@ -1,43 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- combo button -->
-    <style name="menu_sty_combo_btn">
-        <item name="android:layout_width">275dip</item>
-        <item name="android:layout_height">35dip</item>
-        <item name="android:background">@drawable/pic_mode_focus_state</item>
-        <item name="android:orientation">horizontal</item>
-        <item name="android:focusable">true</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:layout_marginBottom">8dip</item>
-    </style>
-    <style name="menu_sty_combo_name">
-        <item name="android:layout_width">124dip</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="android:textSize">15dip</item>
-        <item name="android:gravity">left</item>
-        <item name="android:layout_marginLeft">27dip</item>
-    </style>
-    <style name="menu_sty_combo_indicator">
-        <item name="android:layout_width">97dip</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="android:textSize">15dip</item>
-        <item name="android:gravity">center</item>
-    </style>
     <!-- arrows -->
-    <style name="menu_sty_leftarrow">
-        <item name="android:layout_width">13dip</item>
-        <item name="android:layout_height">13dip</item>
-        <item name="android:layout_marginLeft">0dip</item>
-        <item name="android:background">@drawable/common_img_arrow_l</item>
-        <item name="android:visibility">gone</item>
-    </style>
-    <style name="menu_sty_rightarrow">
-        <item name="android:layout_width">13dip</item>
-        <item name="android:layout_height">13dip</item>
-        <item name="android:layout_marginLeft">0dip</item>
-        <item name="android:background">@drawable/common_img_arrow_r</item>
-        <item name="android:visibility">gone</item>
-    </style>
 </resources>

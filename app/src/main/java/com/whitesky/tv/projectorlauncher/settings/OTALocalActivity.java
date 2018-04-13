@@ -20,7 +20,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
@@ -81,11 +81,11 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ota_local);
-        mBtUpdate = (Button)findViewById(R.id.bt_local_update);
+        mBtUpdate = findViewById(R.id.bt_local_update);
         mBtUpdate.setVisibility(View.INVISIBLE);
-        mTvUpdateInfo = (TextView)findViewById(R.id.tv_ota_update_info);
-        mLvLoadingView = (Kawaii_LoadingView)findViewById(R.id.lv_ota_update_padding);
-        mIvLogo = (ImageView)findViewById(R.id.iv_ota_local_logo_big);
+        mTvUpdateInfo = findViewById(R.id.tv_ota_update_info);
+        mLvLoadingView = findViewById(R.id.lv_ota_update_padding);
+        mIvLogo = findViewById(R.id.iv_ota_local_logo_big);
         mBtUpdate.setOnClickListener(this);
     }
 
@@ -99,7 +99,7 @@ public class OTALocalActivity extends Activity implements View.OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        RelativeLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
         // 监听usb插拔事件

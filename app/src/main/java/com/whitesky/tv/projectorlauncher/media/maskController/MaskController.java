@@ -55,16 +55,16 @@ public class MaskController extends FrameLayout implements View.OnClickListener,
         super(context, attrs);
 
         LayoutInflater.from(context).inflate(R.layout.mask_controller, this, true);
-        maskArea = (ImageView) findViewById(R.id.iv_mask);
-        qrCodeArea = (ImageView) findViewById(R.id.iv_qrcode);
+        maskArea = findViewById(R.id.iv_mask);
+        qrCodeArea = findViewById(R.id.iv_qrcode);
         maskArea.setScaleType(ImageView.ScaleType.FIT_XY);
-        paintWindow = (PolygonWindow) findViewById(R.id.iv_polygon_paint_window);
+        paintWindow = findViewById(R.id.iv_polygon_paint_window);
         paintWindow.setOnPolygonWindowEventListener(this);
         // 使用小bmp图,节约内存
         paintWindow.setPolygonBmpSize(960,540);
 
-        netMaskBtn = (Button) findViewById(R.id.btn_netMask);
-        grayMaskBtn = (Button) findViewById(R.id.btn_grayMask);
+        netMaskBtn = findViewById(R.id.btn_netMask);
+        grayMaskBtn = findViewById(R.id.btn_grayMask);
         grayMaskBtn.setOnClickListener(this);
         netMaskBtn.setOnClickListener(this);
 

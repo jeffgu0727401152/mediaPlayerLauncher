@@ -80,12 +80,12 @@ public class PolygonWindow extends FrameLayout implements View.OnClickListener, 
     public PolygonWindow(Context context, AttributeSet attrs) {
         super(context, attrs);
         LayoutInflater.from(context).inflate(R.layout.polygon_window, this, true);
-        paintView = (PaintPolygonView) findViewById(R.id.iv_paint_view);
-        paintControlBar = (GridLayout) findViewById(R.id.ll_paint_controlBar);
-        cancelBtn = (Button) findViewById(R.id.btn_paint_cancel);
-        undoBtn = (Button) findViewById(R.id.btn_paint_undo);
-        nextBtn = (Button) findViewById(R.id.btn_paint_next);
-        doneBtn = (Button) findViewById(R.id.btn_paint_done);
+        paintView = findViewById(R.id.iv_paint_view);
+        paintControlBar = findViewById(R.id.ll_paint_controlBar);
+        cancelBtn = findViewById(R.id.btn_paint_cancel);
+        undoBtn = findViewById(R.id.btn_paint_undo);
+        nextBtn = findViewById(R.id.btn_paint_next);
+        doneBtn = findViewById(R.id.btn_paint_done);
 
         cancelBtn.setOnClickListener(this);
         undoBtn.setOnClickListener(this);

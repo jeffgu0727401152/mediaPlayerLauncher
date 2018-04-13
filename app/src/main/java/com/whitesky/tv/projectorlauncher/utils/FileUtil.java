@@ -19,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -58,12 +57,12 @@ public class FileUtil
                 StorageInfo info = null;
                 for (int i = 0; i < invokes.length; i++) {
                     Object obj = invokes[i];
-                    Method getPath = obj.getClass().getMethod("getPath", new Class[0]);
+                    Method getPath = obj.getClass().getMethod("getPath");
                     String path = (String) getPath.invoke(obj, new Object[0]);
                     info = new StorageInfo(path);
                     File file = new File(info.path);
                     if ((file.exists()) && (file.isDirectory()) && (file.canWrite())) {
-                        Method isRemovable = obj.getClass().getMethod("isRemovable", new Class[0]);
+                        Method isRemovable = obj.getClass().getMethod("isRemovable");
                         String state = null;
                         try {
                             Method getVolumeState = StorageManager.class.getMethod("getVolumeState", String.class);
@@ -230,8 +229,7 @@ public class FileUtil
         }
 
         File file = new File(path);
-        long size = file.length();
-        return size;
+        return file.length();
     }
 
     public static String formatFileSize(long sizeByte) {
@@ -486,7 +484,7 @@ public class FileUtil
                 if (temp.isFile()) {
                     FileInputStream input = new FileInputStream(temp);
                     FileOutputStream output = new FileOutputStream(desPath
-                            + "/" + (temp.getName()).toString());
+                            + "/" + (temp.getName()));
                     byte[] b = new byte[COPY_STEP_BYTE];
                     int len;
                     while ((len = input.read(b)) != -1) {

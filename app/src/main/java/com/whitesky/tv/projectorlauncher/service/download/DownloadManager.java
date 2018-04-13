@@ -10,7 +10,6 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
 
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
@@ -48,8 +46,7 @@ public class DownloadManager {
                 private AtomicInteger mInteger = new AtomicInteger(1);
                 @Override
                 public Thread newThread(Runnable runnable) {
-                    Thread thread = new Thread(runnable, "download thread #" + mInteger.getAndIncrement());
-                    return thread;
+                    return new Thread(runnable, "download thread #" + mInteger.getAndIncrement());
                 }}, new ThreadPoolExecutor.AbortPolicy());
 
 

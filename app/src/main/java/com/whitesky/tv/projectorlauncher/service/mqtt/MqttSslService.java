@@ -1037,7 +1037,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                                     Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
                                     intent.putExtra(EXTRA_KEY_URL, deleteBean.getUrl());
-                                    Log.i("TAG",intent.getAction().toString());
+                                    Log.i("TAG", intent.getAction());
                                     startService(intent);
                                 }
                             }

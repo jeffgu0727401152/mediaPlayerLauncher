@@ -31,12 +31,12 @@ public class OTAActivity extends Activity implements View.OnClickListener ,  Vie
         initBorder();
         BorderView border = new BorderView(this);
         border.setBackgroundResource(R.drawable.border_white2);
-        ViewGroup list = (ViewGroup)findViewById(R.id.rl_settings_ota_list);
+        ViewGroup list = findViewById(R.id.rl_settings_ota_list);
         border.attachTo(list);
-        RoundedFrameLayout localPage = (RoundedFrameLayout)findViewById(R.id.rf_settings_ota_local);
+        RoundedFrameLayout localPage = findViewById(R.id.rf_settings_ota_local);
         localPage.setOnClickListener(this);
         localPage.setOnHoverListener(this);
-        RoundedFrameLayout netPage = (RoundedFrameLayout)findViewById(R.id.rf_settings_ota_net);
+        RoundedFrameLayout netPage = findViewById(R.id.rf_settings_ota_net);
         netPage.setOnClickListener(this);
         netPage.setOnHoverListener(this);
 
@@ -65,7 +65,7 @@ public class OTAActivity extends Activity implements View.OnClickListener ,  Vie
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
     

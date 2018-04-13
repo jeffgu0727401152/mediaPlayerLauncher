@@ -250,7 +250,7 @@ public class DownloadRunnable implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return;
         }
+        return;
     }
 }

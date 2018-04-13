@@ -34,34 +34,34 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
         initBorder(true);
         BorderView border = new BorderView(this);
         border.setBackgroundResource(R.drawable.border_white2);
-        ViewGroup list = (ViewGroup)findViewById(R.id.rl_settings_list);
+        ViewGroup list = findViewById(R.id.rl_settings_list);
         border.attachTo(list);
 
-        RoundedFrameLayout netPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_net);
+        RoundedFrameLayout netPage = findViewById(R.id.rf_sys_net);
         netPage.setOnClickListener(this);
         netPage.setOnHoverListener(this);
 
-        RoundedFrameLayout seoPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_seo);
+        RoundedFrameLayout seoPage = findViewById(R.id.rf_sys_seo);
         seoPage.setOnClickListener(this);
         seoPage.setOnHoverListener(this);
 
-        RoundedFrameLayout dispalyPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_display);
+        RoundedFrameLayout dispalyPage = findViewById(R.id.rf_sys_display);
         dispalyPage.setOnClickListener(this);
         dispalyPage.setOnHoverListener(this);
 
-        RoundedFrameLayout formatPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_format);
+        RoundedFrameLayout formatPage = findViewById(R.id.rf_sys_format);
         formatPage.setOnClickListener(this);
         formatPage.setOnHoverListener(this);
 
-        RoundedFrameLayout languagePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_language);
+        RoundedFrameLayout languagePage = findViewById(R.id.rf_sys_language);
         languagePage.setOnClickListener(this);
         languagePage.setOnHoverListener(this);
 
-        RoundedFrameLayout speedPage = (RoundedFrameLayout)findViewById(R.id.rf_sys_speed);
+        RoundedFrameLayout speedPage = findViewById(R.id.rf_sys_speed);
         speedPage.setOnClickListener(this);
         speedPage.setOnHoverListener(this);
 
-        RoundedFrameLayout updatePage = (RoundedFrameLayout)findViewById(R.id.rf_sys_update);
+        RoundedFrameLayout updatePage = findViewById(R.id.rf_sys_update);
         updatePage.setOnClickListener(this);
         updatePage.setOnHoverListener(this);
 
@@ -116,7 +116,7 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
     

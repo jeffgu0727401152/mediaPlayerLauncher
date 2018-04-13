@@ -17,7 +17,7 @@ public class MediaBeanDao {
     private Context context;
     // ORMLite提供的DAO类对象，第一个泛型是要操作的数据表映射成的实体类；第二个泛型是这个实体类中ID的数据类型
     private Dao<MediaBean, String> dao;
-    static Object mediaDbLock = new Object();
+    static final Object mediaDbLock = new Object();
 
     public MediaBeanDao(Context context) {
         this.context = context;

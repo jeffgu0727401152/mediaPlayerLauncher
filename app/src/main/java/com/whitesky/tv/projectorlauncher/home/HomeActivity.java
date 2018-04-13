@@ -25,7 +25,6 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.AdminActivity;
 import com.whitesky.tv.projectorlauncher.app.AppActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
-import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
@@ -79,20 +78,20 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home2);
 
-        mEthConnectImg = (ImageView)findViewById(R.id.iv_home2_net);
-        mWifiConnectImg = (ImageView)findViewById(R.id.iv_home2_wifi);
-        mLogoView = (ImageView)findViewById(R.id.iv_home2_1);
+        mEthConnectImg = findViewById(R.id.iv_home2_net);
+        mWifiConnectImg = findViewById(R.id.iv_home2_wifi);
+        mLogoView = findViewById(R.id.iv_home2_1);
         mLogoView.setOnClickListener(this);
 
-        TvScrollTextView scrollingView = (TvScrollTextView)findViewById(R.id.sv_home2_message);
+        TvScrollTextView scrollingView = findViewById(R.id.sv_home2_message);
         scrollingView.setText(getString(R.string.str_home_welcome));
         scrollingView.setClickable(true);
         scrollingView.setSpeed(SCROLLING_MARQUEE_SPEED);
         scrollingView.setTimes(SCROLLING_MARQUEE_TIMES);
 
-        final RoundedFrameLayout mediaPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_media);
-        final RoundedFrameLayout peoplePage = (RoundedFrameLayout)findViewById(R.id.rf_home2_admin);
-        final RoundedFrameLayout sysPage = (RoundedFrameLayout)findViewById(R.id.rf_home2_sys);
+        final RoundedFrameLayout mediaPage = findViewById(R.id.rf_home2_media);
+        final RoundedFrameLayout peoplePage = findViewById(R.id.rf_home2_admin);
+        final RoundedFrameLayout sysPage = findViewById(R.id.rf_home2_sys);
 
         mediaPage.setOnClickListener(this);
         mediaPage.setOnHoverListener(this);
@@ -106,7 +105,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         BorderView border = new BorderView(getApplicationContext());
         initBorder();
         border.setBackgroundResource(R.drawable.border_white2);
-        ViewGroup list = (ViewGroup)findViewById(R.id.rl_home2_list);
+        ViewGroup list = findViewById(R.id.rl_home2_list);
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
 
@@ -121,7 +120,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
         mNetworkStatusReceiver = new NetworkStateBroadcastReceiver();

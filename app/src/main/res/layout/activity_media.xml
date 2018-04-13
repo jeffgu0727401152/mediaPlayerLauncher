@@ -145,7 +145,6 @@
                 android:orientation="horizontal"
                 android:background="@drawable/img_media_list_title" >
                 <TextView
-                    android:id="@+id/tv_media_play_list_file_name"
                     android:layout_width="@dimen/x200"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x100"
@@ -156,7 +155,6 @@
                     android:textStyle="bold"
                     android:text="@string/str_media_file_title"/>
                 <TextView
-                    android:id="@+id/tv_media_play_list_file_duration"
                     android:layout_width="@dimen/x100"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x80"
@@ -167,7 +165,6 @@
                     android:textStyle="bold"
                     android:text="@string/str_media_file_duration"/>
                 <TextView
-                    android:id="@+id/tv_media_play_list_file_scale"
                     android:layout_width="@dimen/x80"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x40"
@@ -178,7 +175,6 @@
                     android:textStyle="bold"
                     android:text="@string/str_media_display_scale"/>
                 <TextView
-                    android:id="@+id/tv_media_play_list_file_state"
                     android:layout_width="@dimen/x140"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x30"
@@ -264,11 +260,9 @@
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
                     android:layout_marginLeft="@dimen/x8"
-                    android:layout_centerVertical="true"
                     android:layout_gravity="center"/>
 
                 <TextView
-                    android:id="@+id/tv_media_all_list_name"
                     android:layout_width="@dimen/x100"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/x20"
@@ -422,7 +416,6 @@
                     android:layout_width="@dimen/x40"
                     android:layout_height="@dimen/x30"
                     android:layout_marginLeft="@dimen/x8"
-                    android:layout_centerVertical="true"
                     android:layout_gravity="center" />
 
                 <TextView

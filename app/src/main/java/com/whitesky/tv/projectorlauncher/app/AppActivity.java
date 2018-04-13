@@ -78,14 +78,14 @@ public class AppActivity extends Activity implements View.OnFocusChangeListener,
         mAppRead = new AppUtil(this);
         // 读取所有的应用
         mAppData = mAppRead.getLaunchAppList();
-        mAppGridView = (TvRecyclerView)findViewById(R.id.rv_app_list);
-        mFocusLayout = (FocusListenerLinearLayout)findViewById(R.id.layoutContent);
+        mAppGridView = findViewById(R.id.rv_app_list);
+        mFocusLayout = findViewById(R.id.layoutContent);
         mFocusLayout.setOnFocusSearchListener(this);
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.item_space);
         mAppGridView.addItemDecoration(new SpaceItemDecoration(spacingInPixels));
         mAppGridView.setItemAnimator(new DefaultItemAnimator());
         mAppGridView.setLayoutManager(mGridlayoutManager);
-        mMainUpView = (MainUpView)findViewById(R.id.mainUpView1);
+        mMainUpView = findViewById(R.id.mainUpView1);
         mMainUpView.setEffectBridge(new RecyclerViewBridge());
         mRecyclerViewBridge = (RecyclerViewBridge)mMainUpView.getEffectBridge();
         mRecyclerViewBridge.setUpRectResource(R.drawable.item_rectangle);
@@ -156,7 +156,7 @@ public class AppActivity extends Activity implements View.OnFocusChangeListener,
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
 

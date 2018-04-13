@@ -2,7 +2,6 @@ package com.whitesky.tv.projectorlauncher.media.db;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;

@@ -11,6 +11,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 
@@ -62,7 +63,6 @@ public class SpeedTestActivity extends Activity implements OnClickListener
 
     private Handler handler = new Handler()
     {
-        
         @Override
         public void handleMessage(Message msg)
         {
@@ -141,19 +141,19 @@ public class SpeedTestActivity extends Activity implements OnClickListener
     public void Init()
     {
         networkSpeedInfo = new SpeedModel();
-        DidNotStart = (Button)findViewById(R.id.speedtest_btn_start);
-        InStart = (Button)findViewById(R.id.speedtset_btn_stoptest);
-        StartAgain = (Button)findViewById(R.id.speedtest_btn_startagain);
+        DidNotStart = findViewById(R.id.speedtest_btn_start);
+        InStart = findViewById(R.id.speedtset_btn_stoptest);
+        StartAgain = findViewById(R.id.speedtest_btn_startagain);
         DidNotStart.setOnClickListener(this);
         InStart.setOnClickListener(this);
         StartAgain.setOnClickListener(this);
-        DidNotStartLayout = (LinearLayout)findViewById(R.id.speedtset_didinotlayout);
-        InStartLayout = (LinearLayout)findViewById(R.id.speedtest_instartlayout);
-        StartAgainLayout = (LinearLayout)findViewById(R.id.speedtest_startagainlayout);
-        SpeedProgressBar = (ProgressBar)findViewById(R.id.speedtest_progressBar);
-        Speed = (TextView)findViewById(R.id.speedtest_speed);
-        Movie_TYPE = (TextView)findViewById(R.id.speed_movietype);
-        percent = (TextView)findViewById(R.id.speed_test_percent);
+        DidNotStartLayout = findViewById(R.id.speedtset_didinotlayout);
+        InStartLayout = findViewById(R.id.speedtest_instartlayout);
+        StartAgainLayout = findViewById(R.id.speedtest_startagainlayout);
+        SpeedProgressBar = findViewById(R.id.speedtest_progressBar);
+        Speed = findViewById(R.id.speedtest_speed);
+        Movie_TYPE = findViewById(R.id.speed_movietype);
+        percent = findViewById(R.id.speed_test_percent);
     }
     
     @Override
@@ -249,7 +249,7 @@ public class SpeedTestActivity extends Activity implements OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        RelativeLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
 

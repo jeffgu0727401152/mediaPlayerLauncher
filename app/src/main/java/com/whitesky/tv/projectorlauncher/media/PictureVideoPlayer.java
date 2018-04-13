@@ -194,20 +194,20 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mContext = context;
 
         LayoutInflater.from(context).inflate(R.layout.picture_video_player, this, true);
-        mSurfaceView = (SurfaceView) findViewById(R.id.sv_playVideo);
-        mPictureView = (ImageView) findViewById(R.id.iv_playPicture);
-        mMaskController = (com.whitesky.tv.projectorlauncher.media.maskController.MaskController) findViewById(R.id.maskControl_maskArea);
+        mSurfaceView = findViewById(R.id.sv_playVideo);
+        mPictureView = findViewById(R.id.iv_playPicture);
+        mMaskController = findViewById(R.id.maskControl_maskArea);
 
-        mPlayBtn = (Button) findViewById(R.id.bt_play);
-        mPreviousBtn = (Button) findViewById(R.id.bt_playPrevious);
-        mNextBtn = (Button) findViewById(R.id.bt_playNext);
-        mVolumeBtn = (Button) findViewById(R.id.bt_volume);
+        mPlayBtn = findViewById(R.id.bt_play);
+        mPreviousBtn = findViewById(R.id.bt_playPrevious);
+        mNextBtn = findViewById(R.id.bt_playNext);
+        mVolumeBtn = findViewById(R.id.bt_volume);
 
-        mPlayProgressSeekBar = (SeekBar) findViewById(R.id.sb_playProgress);
-        mMediaVolumeLevelSeekBar = (SeekBar) findViewById(R.id.sb_volume_level);
+        mPlayProgressSeekBar = findViewById(R.id.sb_playProgress);
+        mMediaVolumeLevelSeekBar = findViewById(R.id.sb_volume_level);
 
-        mMediaPlayedTimeTextView = (TextView) findViewById(R.id.tv_playedTime);
-        mMediaDurationTimeTextView = (TextView) findViewById(R.id.tv_durationTime);
+        mMediaPlayedTimeTextView = findViewById(R.id.tv_playedTime);
+        mMediaDurationTimeTextView = findViewById(R.id.tv_durationTime);
 
         mSurfaceView.setOnClickListener(this);
         mPictureView.setOnClickListener(this);
@@ -328,7 +328,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         }
 
         if (setFullScreen) {
-            LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_playControlBar);
+            LinearLayout controlBarLayout = findViewById(R.id.ll_playControlBar);
             controlBarLayout.setVisibility(View.INVISIBLE);
             mMediaVolumeLevelSeekBar.setVisibility(View.INVISIBLE);
             FrameLayout.LayoutParams flpSurface = (FrameLayout.LayoutParams) mSurfaceView.getLayoutParams();
@@ -347,7 +347,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
             mIsFullScreen = true;
         } else {
-            LinearLayout controlBarLayout = (LinearLayout) findViewById(R.id.ll_playControlBar);
+            LinearLayout controlBarLayout = findViewById(R.id.ll_playControlBar);
             controlBarLayout.setVisibility(View.VISIBLE);
 
             FrameLayout.LayoutParams flpSurface = (FrameLayout.LayoutParams) mSurfaceView.getLayoutParams();

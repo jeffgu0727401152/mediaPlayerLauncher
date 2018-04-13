@@ -38,14 +38,14 @@ public class AdminActivity extends Activity implements View.OnClickListener , Vi
         setContentView(R.layout.activity_admin);
         BorderView border = new BorderView(this);
         border.setBackgroundResource(R.drawable.border_white2);
-        ViewGroup list = (ViewGroup)findViewById(R.id.rl_admin_list);
+        ViewGroup list = findViewById(R.id.rl_admin_list);
         border.attachTo(list);
         mFocusBorder.boundGlobalFocusListener(this);
 
-        ImageView mImgAccount = (ImageView)findViewById(R.id.iv_admin_1);
+        ImageView mImgAccount = findViewById(R.id.iv_admin_1);
         mImgAccount.requestFocus();
-        final RoundedFrameLayout mAccount = (RoundedFrameLayout)findViewById(R.id.rf_admin_account);
-        final RoundedFrameLayout mInfo = (RoundedFrameLayout)findViewById(R.id.rf_admin_device);
+        final RoundedFrameLayout mAccount = findViewById(R.id.rf_admin_account);
+        final RoundedFrameLayout mInfo = findViewById(R.id.rf_admin_device);
         mAccount.setOnClickListener(this);
         mAccount.setOnHoverListener(this);
         mInfo.setOnClickListener(this);
@@ -84,7 +84,7 @@ public class AdminActivity extends Activity implements View.OnClickListener , Vi
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
 

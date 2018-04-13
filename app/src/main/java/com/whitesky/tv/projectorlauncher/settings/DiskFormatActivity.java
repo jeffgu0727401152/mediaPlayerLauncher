@@ -18,7 +18,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
@@ -27,17 +27,12 @@ import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
-import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
 import scut.carson_ho.kawaii_loadingview.Kawaii_LoadingView;
-
-import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 
 /**
  * Created by xiaoxuan on 2017/10/13.
@@ -92,11 +87,11 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_format_disk);
-        mBtnFormat = (Button)findViewById(R.id.bt_format_disk);
+        mBtnFormat = findViewById(R.id.bt_format_disk);
         mBtnFormat.setVisibility(View.VISIBLE);
-        mTvFormatInfo = (TextView)findViewById(R.id.tv_disk_format_info);
-        mLvFormatPaddingView = (Kawaii_LoadingView)findViewById(R.id.lv_disk_format_padding);
-        mIvLogo = (ImageView)findViewById(R.id.iv_disk_format_logo_big);
+        mTvFormatInfo = findViewById(R.id.tv_disk_format_info);
+        mLvFormatPaddingView = findViewById(R.id.lv_disk_format_padding);
+        mIvLogo = findViewById(R.id.iv_disk_format_logo_big);
         mBtnFormat.setOnClickListener(this);
     }
 
@@ -111,7 +106,7 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        RelativeLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
         // 监听format事件

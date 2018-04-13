@@ -40,6 +40,8 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
+    private final Object mListLock = new Object();
+
     private OnAllMediaListItemEventListener mOnALlMediaListItemEventListener;
 
     public AllMediaListAdapter(Context context, List<AllMediaListBean> data)
@@ -228,16 +230,18 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
     }
 
     public boolean exchange(int src, int dst) {
-        if (src != INVALID_POSITION && dst != INVALID_POSITION) {
-            Collections.swap(getListDatas(), src, dst);
-            refresh();
-            return true;
+        synchronized (mListLock) {
+            if (src != INVALID_POSITION && dst != INVALID_POSITION) {
+                Collections.swap(getListDatas(), src, dst);
+                refresh();
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
     public void update(MediaBean data) {
-        synchronized (listDatas) {
+        synchronized (mListLock) {
             for (AllMediaListBean it : listDatas) {
                 if (it.getMediaData().getPath().equals(data.getPath())) {
                     it.setMediaData(data);
@@ -248,7 +252,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
     }
 
     public void removeItem(MediaBean data) {
-        synchronized (listDatas) {
+        synchronized (mListLock) {
             AllMediaListBean found = null;
             for (AllMediaListBean it : listDatas) {
                 if (it.getMediaData().getPath().equals(data.getPath())) {

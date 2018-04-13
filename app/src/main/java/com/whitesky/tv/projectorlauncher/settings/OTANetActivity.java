@@ -15,12 +15,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
-import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
@@ -62,13 +61,13 @@ public class OTANetActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ota_net);
 
-        mBtnUpdate = (Button)findViewById(R.id.bt_ota_net_update);
+        mBtnUpdate = findViewById(R.id.bt_ota_net_update);
         mBtnUpdate.setVisibility(View.VISIBLE);
         mBtnUpdate.setOnClickListener(this);
 
-        mIvLogo = (ImageView)findViewById(R.id.iv_ota_net_logo);
-        mTvUpdateInfo = (TextView)findViewById(R.id.tv_ota_net_info);
-        mProcessBar = (ProgressBar)findViewById(R.id.pb_ota_net_update);
+        mIvLogo = findViewById(R.id.iv_ota_net_logo);
+        mTvUpdateInfo = findViewById(R.id.tv_ota_net_info);
+        mProcessBar = findViewById(R.id.pb_ota_net_update);
     }
 
     @Override
@@ -81,7 +80,7 @@ public class OTANetActivity extends Activity implements View.OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        RelativeLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
         showDefaultView();

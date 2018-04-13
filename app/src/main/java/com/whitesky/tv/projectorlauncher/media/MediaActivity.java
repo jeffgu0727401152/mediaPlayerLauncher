@@ -892,51 +892,50 @@ public class MediaActivity extends Activity
         String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
         Type type = new TypeToken<List<PlayListBean>>() {
         }.getType();
-        List<PlayListBean> data = gson.fromJson(jsonStr, type);
-        return data;
+        return gson.fromJson(jsonStr, type);
     }
 
     private void initView() {
         setContentView(R.layout.activity_media);
-        mPlayer = (com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer) findViewById(R.id.pictureVideoPlayer_playArea);
+        mPlayer = findViewById(R.id.pictureVideoPlayer_playArea);
 
-        mMultiCopyToLocalBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_left);
-        mMultiDeleteLocalBtn = (Button) findViewById(R.id.bt_media_multi_delete);
-        mMultiAddToPlayListBtn = (Button) findViewById(R.id.bt_media_multi_add);
-        mMultiDownloadBtn = (Button) findViewById(R.id.bt_media_multi_download);
-        mMultiCopyToUsbBtn = (Button) findViewById(R.id.bt_media_multi_copy_to_right);
+        mMultiCopyToLocalBtn = findViewById(R.id.bt_media_multi_copy_to_left);
+        mMultiDeleteLocalBtn = findViewById(R.id.bt_media_multi_delete);
+        mMultiAddToPlayListBtn = findViewById(R.id.bt_media_multi_add);
+        mMultiDownloadBtn = findViewById(R.id.bt_media_multi_download);
+        mMultiCopyToUsbBtn = findViewById(R.id.bt_media_multi_copy_to_right);
 
-        mLocalMediaListRefreshBtn = (Button) findViewById(R.id.bt_media_local_list_refresh);
-        mCloudMediaListRefreshBtn = (Button) findViewById(R.id.bt_media_cloud_list_refresh);
+        mLocalMediaListRefreshBtn = findViewById(R.id.bt_media_local_list_refresh);
+        mCloudMediaListRefreshBtn = findViewById(R.id.bt_media_cloud_list_refresh);
 
-        mMediaInfoNameTextView = (TextView) findViewById(R.id.tv_media_play_info_name);
-        mMediaInfoTypeTextView = (TextView) findViewById(R.id.tv_media_play_info_type);
-        mMediaInfoWidthHeightTextView = (TextView) findViewById(R.id.tv_media_play_info_wh);
-        mMediaInfoSizeTextView = (TextView) findViewById(R.id.tv_media_play_info_size);
-        mMediaInfoBpsTextView = (TextView) findViewById(R.id.tv_media_play_info_bps);
+        mMediaInfoNameTextView = findViewById(R.id.tv_media_play_info_name);
+        mMediaInfoTypeTextView = findViewById(R.id.tv_media_play_info_type);
+        mMediaInfoWidthHeightTextView = findViewById(R.id.tv_media_play_info_wh);
+        mMediaInfoSizeTextView = findViewById(R.id.tv_media_play_info_size);
+        mMediaInfoBpsTextView = findViewById(R.id.tv_media_play_info_bps);
 
-        mReplayModeRadioGroup = (RadioGroup) findViewById(R.id.rg_media_replay_mode);
-        mReplayAllRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_all);
-        mReplayOneRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_one);
-        mReplayShuffleRadioButton = (RadioButton) findViewById(R.id.rb_media_replay_shuffle);
+        mReplayModeRadioGroup = findViewById(R.id.rg_media_replay_mode);
+        mReplayAllRadioButton = findViewById(R.id.rb_media_replay_all);
+        mReplayOneRadioButton = findViewById(R.id.rb_media_replay_one);
+        mReplayShuffleRadioButton = findViewById(R.id.rb_media_replay_shuffle);
 
-        mMediaListOrderRadioGroup = (RadioGroup) findViewById(R.id.rg_media_list_order_mode);
-        mMediaListOrderNameRadioButton = (RadioButton) findViewById(R.id.rb_media_order_name);
-        mMediaListOrderDurationRadioButton = (RadioButton) findViewById(R.id.rb_media_order_duration);
-        mMediaListOrderSourceRadioButton = (RadioButton) findViewById(R.id.rb_media_order_source);
+        mMediaListOrderRadioGroup = findViewById(R.id.rg_media_list_order_mode);
+        mMediaListOrderNameRadioButton = findViewById(R.id.rb_media_order_name);
+        mMediaListOrderDurationRadioButton = findViewById(R.id.rb_media_order_duration);
+        mMediaListOrderSourceRadioButton = findViewById(R.id.rb_media_order_source);
 
-        mAllMediaListView = (ListView) findViewById(R.id.lv_media_all_list);
-        mUsbMediaListView = (ListView) findViewById(R.id.lv_media_usb_list);
-        mDragPlayListView = (DragListView) findViewById(R.id.lv_media_playList);
+        mAllMediaListView = findViewById(R.id.lv_media_all_list);
+        mUsbMediaListView = findViewById(R.id.lv_media_usb_list);
+        mDragPlayListView = findViewById(R.id.lv_media_playList);
 
-        mLocalCapacityTextView = (TextView) findViewById(R.id.tv_media_all_list_capacity);
-        mUsbCapacityTextView = (TextView) findViewById(R.id.tv_media_usb_list_capacity);
-        mUsbPartitionSpinner = (Spinner) findViewById(R.id.sp_media_usb_partition_spinner);
+        mLocalCapacityTextView = findViewById(R.id.tv_media_all_list_capacity);
+        mUsbCapacityTextView = findViewById(R.id.tv_media_usb_list_capacity);
+        mUsbPartitionSpinner = findViewById(R.id.sp_media_usb_partition_spinner);
 
-        mUsbListTitle = (TextView) findViewById(R.id.tv_media_usb_list_name);
+        mUsbListTitle = findViewById(R.id.tv_media_usb_list_name);
 
-        mAllMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_all_list_check);
-        mUsbMediaListCheckBox = (CheckBox) findViewById(R.id.cb_media_usb_list_check);
+        mAllMediaListCheckBox = findViewById(R.id.cb_media_all_list_check);
+        mUsbMediaListCheckBox = findViewById(R.id.cb_media_usb_list_check);
     }
 
     private void prepareListView() {
@@ -948,7 +947,7 @@ public class MediaActivity extends Activity
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_USB_PARTITION_SWITCH;
                 msg.arg1 = position;
-                msg.obj = mUsbPartitionAdapter.getItem(position).toString();
+                msg.obj = mUsbPartitionAdapter.getItem(position);
                 mHandler.sendMessage(msg);
             }
 
@@ -1117,8 +1116,7 @@ public class MediaActivity extends Activity
 
             @Override
             public boolean canExchange(int srcPosition, int position) {
-                boolean result = mPlayListAdapter.exchange(srcPosition, position);
-                return result;
+                return mPlayListAdapter.exchange(srcPosition, position);
             }
         });
 
@@ -1258,7 +1256,7 @@ public class MediaActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
-        LinearLayout layout = (LinearLayout) findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
         loadReplayMode();
@@ -1641,7 +1639,7 @@ public class MediaActivity extends Activity
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD_OR_PAUSE:
                     Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START_PAUSE);
                     intent.putExtra(EXTRA_KEY_URL, ((MediaBean)msg.obj).getUrl());
-                    Log.i(TAG,"call download:" + ((MediaBean)msg.obj).toString());
+                    Log.i(TAG,"call download:" + msg.obj.toString());
                     startService(intent);
                     break;
 
@@ -2076,7 +2074,7 @@ public class MediaActivity extends Activity
 
                     Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
                     intent.putExtra(EXTRA_KEY_URL, needDeleteDiskData.getUrl());
-                    Log.i(TAG, intent.getAction().toString());
+                    Log.i(TAG, intent.getAction());
                     startService(intent);
                 }
             }

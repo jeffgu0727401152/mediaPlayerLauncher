@@ -5,7 +5,6 @@
     android:orientation="horizontal" >
 
     <com.whitesky.sdk.widget.TvDateView
-        android:id="@+id/date_TV"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:textColor="@color/white"
@@ -20,7 +19,6 @@
         android:background="@color/white" />
 
     <com.whitesky.sdk.widget.TvTimeView
-        android:id="@+id/time_TV"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginLeft="@dimen/x10"
@@ -29,7 +27,6 @@
         android:textStyle="bold" />
 
     <com.whitesky.sdk.widget.TvTimeAPMView
-        android:id="@+id/apm_TV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/x10"

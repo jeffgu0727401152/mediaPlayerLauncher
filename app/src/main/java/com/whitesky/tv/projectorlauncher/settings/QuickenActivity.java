@@ -90,8 +90,8 @@ public class QuickenActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quicken);
-        mWlvLoading = (WaveLoadingView)findViewById(R.id.wlv_quicken_loading);
-        mBtnClean = (Button)findViewById(R.id.bt_quicken_clean);
+        mWlvLoading = findViewById(R.id.wlv_quicken_loading);
+        mBtnClean = findViewById(R.id.bt_quicken_clean);
         mBtnClean.setOnClickListener(this);
     }
     

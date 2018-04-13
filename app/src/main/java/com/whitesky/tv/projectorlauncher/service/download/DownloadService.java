@@ -15,7 +15,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
@@ -26,7 +25,6 @@ import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.utils.AppUtil;
-import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import com.whitesky.tv.projectorlauncher.utils.ShellUtil;

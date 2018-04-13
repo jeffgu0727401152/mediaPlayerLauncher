@@ -2,8 +2,6 @@ package com.whitesky.tv.projectorlauncher.application;
 
 import android.app.Application;
 
-import com.wsd.android.NativeCertification;
-
 //import com.squareup.leakcanary.LeakCanary;
 
 

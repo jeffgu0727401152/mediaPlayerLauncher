@@ -87,7 +87,7 @@ public class AppUtil
         {
             if (!localIterator.hasNext())
                 break;
-            ResolveInfo localResolveInfo = (ResolveInfo)localIterator.next();
+            ResolveInfo localResolveInfo = localIterator.next();
             AppBean localAppBean = new AppBean();
             localAppBean.setIcon(localResolveInfo.activityInfo.loadIcon(localPackageManager));
             localAppBean.setName(localResolveInfo.activityInfo.loadLabel(localPackageManager).toString());
@@ -194,7 +194,7 @@ public class AppUtil
         {
             if (!localIterator.hasNext())
                 break;
-            ResolveInfo localResolveInfo = (ResolveInfo)localIterator.next();
+            ResolveInfo localResolveInfo = localIterator.next();
             AppBean localAppBean = new AppBean();
             localAppBean.setIcon(localResolveInfo.activityInfo.loadIcon(localPackageManager));
             localAppBean.setName(localResolveInfo.activityInfo.loadLabel(localPackageManager).toString());

@@ -8,15 +8,11 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.whitesky.tv.projectorlauncher.R;
-import com.whitesky.tv.projectorlauncher.application.MainApplication;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.text.SimpleDateFormat;
@@ -49,14 +45,14 @@ public class DeviceInfoActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
-        mDeviceModel = (TextView)findViewById(R.id.tv_admin_device_device_model);
-        mTvSysVersion = (TextView)findViewById(R.id.tv_sys_version);
-        mTvSysVersionDate = (TextView)findViewById(R.id.tv_admin_device_sys_version_date);
-        mUIVersion = (TextView)findViewById(R.id.tv_admin_device_ui_version);
-        mRAMInfo = (TextView)findViewById(R.id.tv_admin_device_raminfo);
-        mROMInfo = (TextView)findViewById(R.id.tv_admin_device_rominfo);
-        mEthMac = (TextView)findViewById(R.id.tv_admin_device_mac);
-        mSysSN = (TextView)findViewById(R.id.tv_admin_device_sys_sn);
+        mDeviceModel = findViewById(R.id.tv_admin_device_device_model);
+        mTvSysVersion = findViewById(R.id.tv_sys_version);
+        mTvSysVersionDate = findViewById(R.id.tv_admin_device_sys_version_date);
+        mUIVersion = findViewById(R.id.tv_admin_device_ui_version);
+        mRAMInfo = findViewById(R.id.tv_admin_device_raminfo);
+        mROMInfo = findViewById(R.id.tv_admin_device_rominfo);
+        mEthMac = findViewById(R.id.tv_admin_device_mac);
+        mSysSN = findViewById(R.id.tv_admin_device_sys_sn);
 
         mDeviceModel.setText(PROJECT_NAME);
 
@@ -94,7 +90,7 @@ public class DeviceInfoActivity extends Activity
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
     

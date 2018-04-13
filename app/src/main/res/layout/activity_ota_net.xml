@@ -1,66 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ll_skin"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/iv_ota_net"
-            android:layout_width="@dimen/x180"
-            android:layout_height="@dimen/x100"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_margin="@dimen/x25"
-            android:src="@drawable/img_logo_sm" />
+    <ImageView
+        android:id="@+id/iv_ota_net"
+        android:layout_width="@dimen/x180"
+        android:layout_height="@dimen/x100"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/x25"
+        android:src="@drawable/img_logo_sm" />
 
-        <ImageView
-            android:id="@+id/iv_ota_net_logo"
-            android:layout_width="@dimen/x380"
-            android:layout_height="@dimen/x220"
-            android:layout_below="@+id/iv_ota_net"
-            android:layout_marginLeft="@dimen/x770"
-            android:layout_marginTop="@dimen/x240"
-            android:src="@drawable/img_logo_big" />
+    <ImageView
+        android:id="@+id/iv_ota_net_logo"
+        android:layout_width="@dimen/x380"
+        android:layout_height="@dimen/x220"
+        android:layout_below="@+id/iv_ota_net"
+        android:layout_marginLeft="@dimen/x770"
+        android:layout_marginTop="@dimen/x240"
+        android:src="@drawable/img_logo_big" />
 
-        <ProgressBar
-            android:id="@+id/pb_ota_net_update"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="@dimen/x868"
-            android:layout_height="@dimen/x69"
-            android:layout_below="@+id/iv_ota_net_logo"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="15dp"
-            android:max="100"
-            android:progressDrawable="@drawable/progress_ota_bg"
-            android:visibility="gone" />
+    <ProgressBar
+        android:id="@+id/pb_ota_net_update"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="@dimen/x868"
+        android:layout_height="@dimen/x69"
+        android:layout_below="@+id/iv_ota_net_logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="15dp"
+        android:max="100"
+        android:progressDrawable="@drawable/progress_ota_bg"
+        android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/tv_ota_net_info"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/x81"
-            android:layout_below="@+id/pb_ota_net_update"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="@dimen/x20"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:textSize="@dimen/x40" />
+    <TextView
+        android:id="@+id/tv_ota_net_info"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/x81"
+        android:layout_below="@+id/pb_ota_net_update"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/x20"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="@dimen/x40" />
 
-        <Button
-            android:id="@+id/bt_ota_net_update"
-            android:layout_width="@dimen/x380"
-            android:layout_height="@dimen/x120"
-            android:layout_alignStart="@+id/iv_ota_net_logo"
-            android:layout_below="@+id/tv_ota_net_info"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/button_selector_ota"
-            android:text="@string/title_check_update"
-            android:textColor="@color/white" />
-    </RelativeLayout>
+    <Button
+        android:id="@+id/bt_ota_net_update"
+        android:layout_width="@dimen/x380"
+        android:layout_height="@dimen/x120"
+        android:layout_alignStart="@+id/iv_ota_net_logo"
+        android:layout_below="@+id/tv_ota_net_info"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/button_selector_ota"
+        android:text="@string/title_check_update"
+        android:textColor="@color/white" />
 
-</LinearLayout>
+</RelativeLayout>

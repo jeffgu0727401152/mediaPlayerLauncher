@@ -9,7 +9,6 @@
         android:layout_width="@dimen/x40"
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x10"
-        android:layout_centerVertical="true"
         android:layout_gravity="center"
         />
 
@@ -29,7 +28,6 @@
         android:layout_width="@dimen/x20"
         android:layout_height="@dimen/x20"
         android:layout_marginLeft="@dimen/x10"
-        android:layout_centerVertical="true"
         android:layout_gravity="center"
         android:scaleType="fitXY" />
 

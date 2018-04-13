@@ -182,7 +182,7 @@ public class MqttUtil {
     // MQTT监听并且接受消息
     private MqttCallback mqttCallback = new MqttCallback() {
         @Override
-        public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+        public void messageArrived(String topic, MqttMessage mqttMessage) {
             String msg = new String(mqttMessage.getPayload());
             Log.d(TAG, "messageArrived:" + msg);
             if (mMsgCallback!=null) {

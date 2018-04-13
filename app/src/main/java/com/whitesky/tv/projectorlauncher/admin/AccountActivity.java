@@ -14,8 +14,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -74,14 +74,14 @@ public class AccountActivity extends Activity implements View.OnClickListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_account);
-        mTvAccount = (TextView)findViewById(R.id.tv_admin_account_ac);
-        mBtLogin = (Button)findViewById(R.id.bt_admin_account_login);
+        mTvAccount = findViewById(R.id.tv_admin_account_ac);
+        mBtLogin = findViewById(R.id.bt_admin_account_login);
         mBtLogin.requestFocus();
         mBtLogin.setOnClickListener(this);
-        mBtLogout = (Button)findViewById(R.id.bt_admin_account_logout);
+        mBtLogout = findViewById(R.id.bt_admin_account_logout);
         mBtLogout.requestFocus();
         mBtLogout.setOnClickListener(this);
-        mLvAccount = (ListView)findViewById(R.id.lv_admin_account_list);
+        mLvAccount = findViewById(R.id.lv_admin_account_list);
 
         getAccountInfo();
     }
@@ -90,7 +90,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
     protected void onResume()
     {
         super.onResume();
-        LinearLayout layout = (LinearLayout)findViewById(R.id.ll_skin);
+        RelativeLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
     }
     
@@ -125,7 +125,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
         final View view = LayoutInflater.from(this).inflate(R.layout.dialog_login2, null);
         mLoginDialog = new Dialog(this, R.style.ReasonDialog);
         mLoginDialog.setContentView(view);
-        ImageView imageView = (ImageView)view.findViewById(R.id.iv_admin_dialog_login);
+        ImageView imageView = view.findViewById(R.id.iv_admin_dialog_login);
         String loginURL = HttpConstants.URL_LOGIN + DeviceInfoActivity.getSysSn(this) + URL_LOGIN_PROJECT_NAME;
         Bitmap bitmap = new QREncode.Builder(this).setColor(getResources().getColor(R.color.colorPrimary))// 二维码颜色
             // .setParsedResultType(ParsedResultType.TEXT) //默认是TEXT类型

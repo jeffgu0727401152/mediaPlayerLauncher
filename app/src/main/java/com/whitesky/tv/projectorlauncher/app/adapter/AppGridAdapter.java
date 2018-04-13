@@ -6,9 +6,6 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.whitesky.sdk.widget.MarqueeText;
 import com.whitesky.tv.projectorlauncher.R;
@@ -34,9 +31,9 @@ public class AppGridAdapter extends BaseRecyclerViewAdapter<AppBean> implements 
     {
         View itemView = LayoutInflater.from(mContext).inflate(R.layout.item_app_launcher, null);
         AppViewHolder viewHolder = new AppViewHolder(itemView);
-        viewHolder.appIcon = (ImageView)itemView.findViewById(R.id.appIcon);
-        viewHolder.appName = (TextView)itemView.findViewById(R.id.appName);
-        viewHolder.appLayout = (LinearLayout)itemView.findViewById(R.id.ll_app);
+        viewHolder.appIcon = itemView.findViewById(R.id.appIcon);
+        viewHolder.appName = itemView.findViewById(R.id.appName);
+        viewHolder.appLayout = itemView.findViewById(R.id.ll_app);
         return viewHolder;
     }
     
@@ -59,7 +56,7 @@ public class AppGridAdapter extends BaseRecyclerViewAdapter<AppBean> implements 
     public void onFocusChange(View view, boolean hasFocus)
     {
         // 滚动提示
-        MarqueeText tvTitle = (MarqueeText)view.findViewById(R.id.appName);
+        MarqueeText tvTitle = view.findViewById(R.id.appName);
         tvTitle.setSelected(hasFocus);
         if (hasFocus)
         {
