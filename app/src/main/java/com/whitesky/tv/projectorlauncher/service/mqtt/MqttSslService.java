@@ -543,7 +543,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     }
 
     private void parserMqttMessage(String mqttMessage) {
-        Message message = mqttUtilHandler.obtainMessage();
+        Message message = mqttServiceHandler.obtainMessage();
         message.what = MSG_NONE;
 
         if (mqttMessage.indexOf(STR_MQTT_MSG_TYPE_CMD) == 20) {
@@ -646,7 +646,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
 
         message.obj = mqttMessage;
-        mqttUtilHandler.sendMessage(message);
+        mqttServiceHandler.sendMessage(message);
     }
 
     private boolean mustIgnoreThisMessage(int msgWhat) {
@@ -698,7 +698,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
     }
 
-    private Handler mqttUtilHandler = new Handler() {
+    private Handler mqttServiceHandler = new Handler() {
         public void handleMessage(Message msg) {
             String rawStr = (String) msg.obj;
             Gson gson = new Gson();

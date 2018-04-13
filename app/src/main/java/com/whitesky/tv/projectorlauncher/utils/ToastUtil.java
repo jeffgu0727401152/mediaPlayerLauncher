@@ -1,6 +1,8 @@
 package com.whitesky.tv.projectorlauncher.utils;
 
 import android.content.Context;
+import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -30,6 +32,14 @@ public class ToastUtil
      */
     public static void showToast(Context context, String msg)
     {
+        if (Looper.getMainLooper().getThread() != Thread.currentThread()){
+
+            Log.e("~~~~~~~~~~~~","call showToast not in UI thread");
+            Exception here = new Exception();
+            here.printStackTrace();
+            return;
+        }
+
         if (toast == null)
         {
             toast = Toast.makeText(context, msg, Toast.LENGTH_SHORT);

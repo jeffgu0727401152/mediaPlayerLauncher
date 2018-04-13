@@ -10,9 +10,12 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
@@ -58,7 +61,9 @@ public class DownloadService extends Service {
 
     public static final String EXTRA_KEY_URL = "extra.com.whitesky.tv.url";
 
-    MediaScanUtil downloadFileDurationScanner = new MediaScanUtil();
+    private static final int MSG_OTA_READY_TO_INSTALL = 1;
+
+    private MediaScanUtil downloadFileDurationScanner = new MediaScanUtil();
 
     @Override
     public void onCreate() {
@@ -103,7 +108,6 @@ public class DownloadService extends Service {
             if (DownloadManager.getInstance().contains(apk.getUrl())) {
                 PathUtil.getDownloadTempFileByUrl(new File(apk.getPath()).getParent(), apk.getUrl()).delete();
             }
-
             DownloadManager.getInstance().download(apk, mApkDownloadCallback);
             Log.d(TAG,"download:"+apk.toString());
 
@@ -272,8 +276,7 @@ public class DownloadService extends Service {
                     Log.w(TAG,"can not update because device is in sata disk format/copy file to internal!");
                     sendFailToOtaActivity(bean);
                 } else {
-                    ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_update_file_download_ready));
-                    ShellUtil.execCommand("pm install -r " + UPDATE_APK_DOWNLOAD_PATH,false,false);
+                    downloadServiceHandler.sendEmptyMessage(MSG_OTA_READY_TO_INSTALL);
                 }
 
             } else {
@@ -338,5 +341,26 @@ public class DownloadService extends Service {
             }
         }
     }
+
+    private Handler downloadServiceHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+
+                case MSG_OTA_READY_TO_INSTALL:
+                    ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_update_file_download_ready));
+                    ShellUtil.CommandResult result = ShellUtil.execCommand("pm install -r " + UPDATE_APK_DOWNLOAD_PATH,false,true);
+                    if (result.successMsg!=null) {
+                        Log.d(TAG,result.successMsg);
+                    }
+                    break;
+
+                default:
+                    Log.i(TAG, "unknown msg " + msg.what);
+                    break;
+            }
+            super.handleMessage(msg);
+        }
+    };
+
 }
 

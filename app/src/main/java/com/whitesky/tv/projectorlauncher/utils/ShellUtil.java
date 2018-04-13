@@ -61,8 +61,6 @@ public class ShellUtil {
             return new CommandResult(result, null, null);
         }
 
-        Log.e("!@#","123");
-
         Process process = null;
         BufferedReader successResult = null;
         BufferedReader errorResult = null;
