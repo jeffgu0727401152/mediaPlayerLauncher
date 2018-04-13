@@ -43,8 +43,10 @@ public class OTANetActivity extends Activity implements View.OnClickListener
 
     private static final int MSG_NO_UPDATE = 0;
     private static final int MSG_HAS_UPDATE = 1;
-    private static final int MSG_INSTALL_UPDATE = 2;
-    private static final int MSG_CHECK_UPDATE_APK_FAIL = 3;
+    private static final int MSG_UPDATE_TOO_LARGE = 2;
+    private static final int MSG_COULD_NOT_CONNECT_UPDATE_SERVER = 3;
+    private static final int MSG_INSTALL_UPDATE = 4;
+    private static final int MSG_CHECK_UPDATE_APK_FAIL = 5;
 
     private final MyHandler mHandler = new MyHandler(this);
     private Button mBtnUpdate;
@@ -128,6 +130,20 @@ public class OTANetActivity extends Activity implements View.OnClickListener
         mBtnUpdate.setVisibility(View.VISIBLE);
     }
 
+    private void showCouldNotConnectView() {
+        mTvUpdateInfo.setVisibility(View.VISIBLE);
+        mTvUpdateInfo.setText(R.string.title_server_connect_error);
+        mProcessBar.setVisibility(View.INVISIBLE);
+        mBtnUpdate.setVisibility(View.VISIBLE);
+    }
+
+    private void showUpdateTooLargeView() {
+        mTvUpdateInfo.setVisibility(View.VISIBLE);
+        mTvUpdateInfo.setText(R.string.title_net_update_too_large);
+        mProcessBar.setVisibility(View.INVISIBLE);
+        mBtnUpdate.setVisibility(View.VISIBLE);
+    }
+
     private void showNoUpdateView() {
         mTvUpdateInfo.setVisibility(View.VISIBLE);
         mTvUpdateInfo.setText(R.string.title_net_update_not_found);
@@ -164,25 +180,31 @@ public class OTANetActivity extends Activity implements View.OnClickListener
                     MqttSslService.reportVersionAndGetUpdateInfo(getApplicationContext(), new MqttSslService.requestVersionCallback() {
                         @Override
                         public void versionRequestDone(boolean ret, VersionCheckResultBean.Result result) {
-                            if (ret) {
-                                Log.i(TAG, "found ota version = " + result.getAppVer());
-                                Log.i(TAG, "found ota size = " + result.getSize());
+                            if (ret==true) {
+                                if (result!=null) {
+                                    Log.i(TAG, "found ota version = " + result.getAppVer());
+                                    Log.i(TAG, "found ota size = " + result.getSize());
 
-                                //boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
-                                // device端不判断版本,只要是服务器端说有新版本,一律允许安装,这样赋予服务器更大的自由权
-                                // 而服务端根据你上传的version取，去查询服务器上这个version是不是最后上传的apk（所有出货apk在服务器上都上传了）
-                                // 如果这个version找不到/这个version上传的日期后面又上传了新的apk，则允许服务器会告诉设备最新版的apk更新存在
-                                boolean needDownload = true;
+                                    //boolean needDownload = serverVersionGreaterThanDeviceVersion(result.getAppVer(),DeviceInfoActivity.getVersionName(getApplicationContext()));
+                                    // device端不判断版本,只要是服务器端说有新版本,一律允许安装,这样赋予服务器更大的自由权
+                                    // 而服务端根据你上传的version取，去查询服务器上这个version是不是最后上传的apk（所有出货apk在服务器上都上传了）
+                                    // 如果这个version找不到/这个version上传的日期后面又上传了新的apk，则允许服务器会告诉设备最新版的apk更新存在
+                                    boolean needDownload = true;
 
-                                if (result.getSize() < APK_SIZE_MAX && needDownload) {
-                                    mOta = result;
-                                    mHandler.sendEmptyMessage(MSG_HAS_UPDATE);
+                                    if (result.getSize() < APK_SIZE_MAX && needDownload) {
+                                        mOta = result;
+                                        mHandler.sendEmptyMessage(MSG_HAS_UPDATE);
 
+                                    } else {
+                                        Log.e(TAG,"server update apk not as our required!");
+                                        mHandler.sendEmptyMessage(MSG_UPDATE_TOO_LARGE);
+                                    }
                                 } else {
-                                    Log.e(TAG,"server update apk not as our required!");
+                                    mHandler.sendEmptyMessage(MSG_NO_UPDATE);
                                 }
                             } else {
-                                mHandler.sendEmptyMessage(MSG_NO_UPDATE);
+                                Log.e(TAG,"server connect error!");
+                                mHandler.sendEmptyMessage(MSG_COULD_NOT_CONNECT_UPDATE_SERVER);
                             }
                         }
                     });
@@ -244,7 +266,14 @@ public class OTANetActivity extends Activity implements View.OnClickListener
 
                     case MSG_HAS_UPDATE:
                         activity.showHaveUpdateView();
+                        break;
 
+                    case MSG_UPDATE_TOO_LARGE:
+                        activity.showUpdateTooLargeView();
+                        break;
+
+                    case MSG_COULD_NOT_CONNECT_UPDATE_SERVER:
+                        activity.showCouldNotConnectView();
                         break;
 
                     case MSG_INSTALL_UPDATE:

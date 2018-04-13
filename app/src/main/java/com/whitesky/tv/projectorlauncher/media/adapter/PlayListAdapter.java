@@ -40,6 +40,12 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
+    public static final int CHANGE_EVENT_ADD = 0;
+    public static final int CHANGE_EVENT_REMOVE = 1;
+    public static final int CHANGE_EVENT_EXCHANGE = 2;
+    public static final int CHANGE_EVENT_SCALE = 3;
+    public static final int CHANGE_EVENT_TIME = 4;
+
     private OnPlaylistItemEventListener mOnPlaylistItemEventListener = null;
 
     public PlayListAdapter(Context context, List<PlayListBean> data)
@@ -88,9 +94,13 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         ((Spinner) holder.getView(R.id.sp_media_scale)).setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
+                if (getItem(position).getPlayScale() == pos) {
+                    return;
+                }
+
                 getItem(position).setPlayScale(pos);
                 if (mOnPlaylistItemEventListener != null) {
-                    mOnPlaylistItemEventListener.onPlaylistChange();
+                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_SCALE,getItem(position));
                     mOnPlaylistItemEventListener.onScaleChange(position, pos);
                 }
             }
@@ -116,7 +126,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 int duration = getItem(position).getMediaData().getDuration();
                 getItem(position).getMediaData().setDuration(duration + 5000);
                 if (mOnPlaylistItemEventListener != null) {
-                    mOnPlaylistItemEventListener.onPlaylistChange();
+                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_TIME,getItem(position));
                 }
                 refresh();
             }
@@ -130,7 +140,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 if (duration > 10000) {
                     getItem(position).getMediaData().setDuration(duration - 5000);
                     if (mOnPlaylistItemEventListener != null) {
-                        mOnPlaylistItemEventListener.onPlaylistChange();
+                        mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_TIME,getItem(position));
                     }
                 }
                 refresh();
@@ -171,7 +181,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             Collections.swap(getListDatas(), src, dst);
 
             if (mOnPlaylistItemEventListener != null) {
-                mOnPlaylistItemEventListener.onPlaylistChange();
+                mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_EXCHANGE,null);
             }
 
             refresh();
@@ -184,7 +194,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public void clear() {
         super.clear();
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange();
+            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,null);
         }
         refresh();
     }
@@ -193,7 +203,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public void addItem(PlayListBean item) {
         super.addItem(item);
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange();
+            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_ADD,item);
         }
         refresh();
     }
@@ -202,7 +212,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public void removeItem(PlayListBean item) {
         super.removeItem(item);
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange();
+            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,item);
         }
         refresh();
     }
@@ -220,9 +230,10 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     public void removeItem(int position) {
-        super.removeItem(getItem(position));
+        PlayListBean removeBean = getItem(position);
+        super.removeItem(removeBean);
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange();
+            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,removeBean);
         }
         refresh();
     }
@@ -259,7 +270,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     public interface OnPlaylistItemEventListener {
-        void onPlaylistChange();
+        void onPlaylistChange(int event,PlayListBean bean);
         void onScaleChange(int position, int scaleType);
     }
 

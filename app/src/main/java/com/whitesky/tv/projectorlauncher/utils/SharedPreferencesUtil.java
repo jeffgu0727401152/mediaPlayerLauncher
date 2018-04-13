@@ -3,6 +3,8 @@ package com.whitesky.tv.projectorlauncher.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.io.IOException;
+
 /**
  * Created by mac on 17-6-2.
  *
@@ -46,12 +48,21 @@ public class SharedPreferencesUtil
         mFileName = fileName;
         mMode = mode;
     }
-    
+
+    private void syncFlush() {
+        try {
+            Runtime.getRuntime().exec("sync");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // 读写配置文件
     public boolean putString(String name, String value)
     {
         mEditor.putString(name, value);
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     
@@ -59,6 +70,7 @@ public class SharedPreferencesUtil
     {
         mEditor.putLong(name, value);
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     
@@ -66,6 +78,7 @@ public class SharedPreferencesUtil
     {
         mEditor.putInt(name, value);
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     
@@ -73,6 +86,7 @@ public class SharedPreferencesUtil
     {
         mEditor.putBoolean(name, value);
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     
@@ -80,6 +94,7 @@ public class SharedPreferencesUtil
     {
         mEditor.remove(name);
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     
@@ -87,6 +102,7 @@ public class SharedPreferencesUtil
     {
         mEditor.clear();
         boolean result = mEditor.commit();
+        syncFlush();
         return result;
     }
     

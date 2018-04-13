@@ -104,6 +104,7 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_R
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_COMPLETE;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_REMOVE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
@@ -491,6 +492,7 @@ public class MediaActivity extends Activity
         // 直接改变UI显示的播放信息
         Log.d(TAG,"on Play Info Update!");
         setMediaInfoUi(name, mimeType, width, height, size, bps);
+        savePlaylistToConfig();
         mPlayListAdapter.refresh();
     }
 
@@ -1049,8 +1051,13 @@ public class MediaActivity extends Activity
         mPlayListAdapter = new PlayListAdapter(getApplicationContext(), mPlayListBeans);
         mPlayListAdapter.setOnPlaylistItemEventListener(new PlayListAdapter.OnPlaylistItemEventListener() {
             @Override
-            public void onPlaylistChange() {
+            public void onPlaylistChange(int event, PlayListBean bean) {
                 savePlaylistToConfig();
+                if (event == CHANGE_EVENT_REMOVE) {
+                    if (bean==mPlayer.getCurPlaylistBean() && mPlayer.getPlayState()!=PLAYER_STATE_PLAY_STOP && mPlayer.getPlayState()!=PLAYER_STATE_IDLE) {
+                        mPlayer.mediaPlayNext();
+                    }
+                }
             }
 
             @Override
@@ -1522,7 +1529,7 @@ public class MediaActivity extends Activity
                         Log.i(TAG, "mount sata device means power on complete, start full screen play media");
                         if (mPlayer.getPlayState()== PLAYER_STATE_IDLE) {
                             mPlayer.fullScreenSwitch(true);
-                            mPlayer.mediaPlay(0);
+                            mPlayer.mediaPlay();
                         }
 
                     } else {

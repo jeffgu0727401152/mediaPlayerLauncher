@@ -382,6 +382,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     }
 
     public interface requestVersionCallback{
+        // ret==false表示没有与服务器正常连接, result==null表示没有发现更新
         void versionRequestDone(boolean ret, VersionCheckResultBean.Result result);
     }
 
@@ -437,18 +438,18 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                     if (serverResponse != null) {
                         if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_SUCCESS)) {
-                            Log.d(TAG, "get version response success");
-                            if (callback!=null) callback.versionRequestDone(serverResponse.getResult()==null?false:true, serverResponse.getResult());
+                            Log.i(TAG, "get version response have available!");
+                            if (callback!=null) callback.versionRequestDone(true, serverResponse.getResult());
                         } else if (serverResponse.getStatus().equals(VERSION_CHECK_STATUS_NO_AVAILABLE)) {
-                            Log.i(TAG,"onResponse not have available update file in server!");
-                            if (callback!=null) callback.versionRequestDone(false,null);
+                            Log.i(TAG,"get version response not have available!");
+                            if (callback!=null) callback.versionRequestDone(true,null);
                         } else {
-                            Log.d(TAG,"onResponse unknown status " + serverResponse.getStatus());
-                            if (callback!=null) callback.versionRequestDone(false,null);
+                            Log.d(TAG,"get version response unknown status " + serverResponse.getStatus());
+                            if (callback!=null) callback.versionRequestDone(true,null);
                         }
                     } else {
-                        Log.e(TAG, "ota json parse error! " + htmlBody);
-                        if (callback!=null) callback.versionRequestDone(false,null);
+                        Log.e(TAG, "get version response unknown json! " + htmlBody);
+                        if (callback!=null) callback.versionRequestDone(true,null);
                     }
 
                 } else {
@@ -737,7 +738,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     reportVersionAndGetUpdateInfo(getApplicationContext(),new requestVersionCallback(){
                         @Override
                         public void versionRequestDone(boolean ret, VersionCheckResultBean.Result result) {
-                            if (ret) {
+                            if (ret && result!=null) {
                                 Log.i(TAG, "push ota version = " + result.getAppVer());
                                 Log.i(TAG, "push ota size = " + result.getSize());
 

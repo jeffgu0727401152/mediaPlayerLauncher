@@ -413,8 +413,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                     && mStartRightNow==true
                     && MediaActivity.isLocalMassStorageMounted(mContext)) {
                 // 每次surface从隐藏到出现都是一次surfaceCreated,所以这里必须mStartRightNow来标志这次的surfaceCreated是由于MediaActivity onResume引起的
-                mediaPlay(0);
                 fullScreenSwitch(true);
+                mediaPlay();
                 Log.i(TAG, "SurfaceHolder auto play media");
             }
             // 强制清空mStartRightNow标志,防止下次图片视频切换再自动播放
@@ -557,6 +557,23 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         }
     }
 
+    // 寻找播放列表中上一次记录的播放的位置开始播放
+    public void mediaPlay() {
+        if (mPlayList==null || mPlayList.isEmpty()) {
+            Log.w(TAG, "play list is empty");
+            return;
+        }
+
+        int idx = 0;
+        for (PlayListBean bean:mPlayList) {
+            if (bean.isPlaying()) {
+                break;
+            }
+            idx++;
+        }
+        mediaPlay(idx);
+    }
+
     public void mediaPlay(int position)
     {
         curPreviewMediaBean = null;
@@ -630,7 +647,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         curPlaylistBean = mPlayList.get(position);
         curPlayPath = curPlaylistBean.getMediaData().getPath();
 
-        // 设置正在播放标志，UI上显示指示器
+        // 设置正在播放标志，后面onMediaPlayInfoUpdate用adapter的refresh在UI上显示指示器
         for (PlayListBean bean : mPlayList) {
             bean.setPlaying(false);
         }
@@ -657,7 +674,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         switch(mPlayState)
         {
             case PLAYER_STATE_IDLE:
-                mediaPlay(0);
+                mediaPlay();
                 break;
             case PLAYER_STATE_PLAY_PICTURE:
                 mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);

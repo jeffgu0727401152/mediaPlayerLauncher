@@ -60,7 +60,9 @@
     <string name="title_check_update">点击按钮检查更新</string>
     <string name="title_net_update">正在下载，请稍后...</string>
     <string name="title_net_update_finish">更新完成，稍后重启</string>
-    <string name="title_net_update_not_found">没有找到更新的版本</string>
+    <string name="title_net_update_not_found">没有找到更新的版本！</string>
+    <string name="title_server_connect_error">服务器连接失败！</string>
+    <string name="title_net_update_too_large">网络升级包过大,请使用本地升级！</string>
 
     <string name="str_update_local_title">使用U盘本地升级</string>
     <string name="str_update_local_not_found">无可用升级包，请检查U盘</string>
