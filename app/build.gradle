@@ -15,8 +15,8 @@ android {
         applicationId "com.whitesky.tv.projectorlauncher"
         minSdkVersion 19
         targetSdkVersion 19
-        versionCode 10
-        versionName "0.4.4"
+        versionCode 11
+        versionName "0.4.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

@@ -45,6 +45,7 @@ public class Contants
     public static final String LOCAL_MEDIA_FOLDER = "local";                // usb导入本地的文件位置
     public static final String CLOUD_MEDIA_FOLDER = "cloud";                // 云端下载文件的储存总目录
     public static final String CLOUD_MEDIA_PRIVATE_FOLDER = "private";      // 用户私人上传文件的储存目录
+    public static final String CLOUD_MEDIA_PUBLIC_FOLDER = "public";        // 用户私人上传文件的储存目录
     public static final String CLOUD_MEDIA_FREE_FOLDER = "free";            // 公司或用户上传的共享文件的储存目录
 
     public static final String USB_DEVICE_DEFAULT_SEARCH_MEDIA_FOLDER = "media";  //扫描usb媒体文件的路径

@@ -8,6 +8,7 @@ import java.io.IOException;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FREE_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PRIVATE_FOLDER;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PUBLIC_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_MEDIA_FOLDER;
@@ -23,6 +24,7 @@ public class PathUtil {
     public static final int PATH_FILE_IMPORT_TO_LOCAL = 1;
     public static final int PATH_FILE_FROM_CLOUD_FREE = 2;
     public static final int PATH_FILE_FROM_CLOUD_PRIVATE = 3;
+    public static final int PATH_FILE_FROM_CLOUD_PUBLIC = 4;
 
     public static String cloudFreeFileStoragePath() {
         return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_FREE_FOLDER;
@@ -30,6 +32,10 @@ public class PathUtil {
 
     public static String cloudPrivateFileStoragePath() {
         return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
+    }
+
+    public static String cloudPublicFileStoragePath() {
+        return MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PUBLIC_FOLDER;
     }
 
     public static String getDownloadTempFileLockPathByUrl(String url) {
@@ -106,6 +112,10 @@ public class PathUtil {
                 break;
             case PATH_FILE_FROM_CLOUD_PRIVATE:
                 basePath = MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PRIVATE_FOLDER;
+                fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
+                break;
+            case PATH_FILE_FROM_CLOUD_PUBLIC:
+                basePath = MASS_STORAGE_PATH + File.separator + CLOUD_MEDIA_FOLDER + File.separator + CLOUD_MEDIA_PUBLIC_FOLDER;
                 fileName = FileUtil.getFilePrefix(originalPath) + "." + FileUtil.getFileExtension(originalPath);
                 break;
             default:

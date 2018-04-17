@@ -54,6 +54,7 @@ import com.whitesky.tv.projectorlauncher.utils.FileUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
+import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
 import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
@@ -78,6 +79,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import static com.whitesky.tv.projectorlauncher.common.Contants.ACTION_CMD_QRCODE_CONTROL;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FREE_FOLDER;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PRIVATE_FOLDER;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PUBLIC_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_MEDIA_LIST_ORDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_QRCODE_URL;
@@ -107,6 +111,9 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_
 import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_REMOVE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PRIVATE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PUBLIC;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
@@ -662,12 +669,19 @@ public class MediaActivity extends Activity
     }
 
     private void loadMediaListFromDb() {
+        String localMediaStorePath = PathUtil.localFileStoragePath();
+        File localFolder = new File(localMediaStorePath);
+        if (!localFolder.exists()) {
+            localFolder.mkdir();
+        } else if (!localFolder.isDirectory()) {
+            localFolder.delete();
+            localFolder.mkdir();
+        }
+
         // 初始化媒体列表
         if (new MediaBeanDao(MediaActivity.this).selectAll().isEmpty())
         {   // 如果数据库为空,则扫描一次本地媒体文件
             Log.i(TAG, "empty media database, so scan and download media list");
-            String localMediaStorePath = PathUtil.localFileStoragePath();
-            FileUtil.createDir(localMediaStorePath);
             int ret = mLocalMediaScanner.safeScanning(localMediaStorePath);
             if (ret==-2) {
                 Log.e(TAG,PathUtil.localFileStoragePath() + " not found!");
@@ -810,6 +824,9 @@ public class MediaActivity extends Activity
 
         File cloudPrivateFolder = new File(PathUtil.cloudPrivateFileStoragePath());
         updateCloudDbItemByTraversal(cloudPrivateFolder,context,scanner);
+
+        File cloudPublicFolder = new File(PathUtil.cloudPublicFileStoragePath());
+        updateCloudDbItemByTraversal(cloudPublicFolder,context,scanner);
     }
 
     private static void updateCloudDbItemByTraversal(File cloudStorageFolder, Context context, MediaScanUtil scanner) {
@@ -837,7 +854,16 @@ public class MediaActivity extends Activity
                 } else {
                     // 可能是云端下载的,但是云端已经删除了
                     size = file.length();
-                    bean = new MediaBean(name,ID_LOCAL,type,SOURCE_CLOUD_FREE,path,duration,size);
+                    int source = SOURCE_CLOUD_FREE;
+                    if (cloudStorageFolder.getAbsolutePath().contains(CLOUD_MEDIA_FREE_FOLDER)) {
+                        source = SOURCE_CLOUD_FREE;
+                    } else if (cloudStorageFolder.getAbsolutePath().contains(CLOUD_MEDIA_PRIVATE_FOLDER)) {
+                        source = SOURCE_CLOUD_PRIVATE;
+                    } else if (cloudStorageFolder.getAbsolutePath().contains(CLOUD_MEDIA_PUBLIC_FOLDER)) {
+                        source = SOURCE_CLOUD_PUBLIC;
+                    }
+
+                    bean = new MediaBean(name,ID_LOCAL,type,source, path,duration,size);
                     bean.setDownloadState(STATE_DOWNLOAD_DOWNLOADED);
                     bean.setUrl("");
                 }
@@ -1692,7 +1718,13 @@ public class MediaActivity extends Activity
         if (Arrays.asList(mountList).contains(MASS_STORAGE_PATH)) {
             return true;
         } else {
-            return false;
+            // 自己挂载的硬盘在java层mountService无法得知,所以此处再使用shell判断一次
+            ShellUtil.CommandResult result = ShellUtil.execCommand("mount |busybox sed 's/ /\\n/g'| grep \"/mnt/sata/\"",false,true);
+            if (result.successMsg.contains(MASS_STORAGE_PATH)) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -1866,13 +1898,25 @@ public class MediaActivity extends Activity
     private void checkCapacityAndCopy(CopyTask.CopyTaskParam param, Deque<String> waitCopyDeque) {
         Deque<String> sameMediaDeque = new ArrayDeque<String>();
         sameMediaDeque.clear();
+
+        // for循环里面desFolderFile.listFiles()为null会导致crash
+        // 而如果local目录不存在会导致listFiles为null,所以这边检查不存在则建立
+        File desFolderFile = new File(param.desFolder);
+        if (desFolderFile.listFiles()==null) {
+            if (!desFolderFile.exists()) {
+                desFolderFile.mkdir();
+            } else {
+                desFolderFile.delete();
+                desFolderFile.mkdir();
+            }
+        }
+
         synchronized (waitCopyDeque) {
             while (!waitCopyDeque.isEmpty()) {
                 String path = waitCopyDeque.pop();
 
                 // 重复文件检测
                 String toPath = PathUtil.pathGenerate(path, param.desFolder);
-                File desFolderFile = new File(param.desFolder);
                 for (File file : desFolderFile.listFiles()) {
                     if (file.getAbsolutePath().equals(toPath)) {
                         Log.i(TAG, "found same media file! " + file.getAbsolutePath());

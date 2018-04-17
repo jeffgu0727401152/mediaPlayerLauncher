@@ -14,8 +14,6 @@ public class Result implements Parcelable
     private String url;
     private int source;
 
-    // todo talk about what is category?
-
     protected Result(Parcel in)
     {
         id = in.readInt();

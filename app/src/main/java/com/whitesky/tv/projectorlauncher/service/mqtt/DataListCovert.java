@@ -18,9 +18,14 @@ import java.util.List;
 
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PRIVATE;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PUBLIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_FREE;
+import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_PRIVATE;
+import static com.whitesky.tv.projectorlauncher.utils.PathUtil.PATH_FILE_FROM_CLOUD_PUBLIC;
 
 /**
  * Created by jeff on 18-3-9.
@@ -114,7 +119,23 @@ public class DataListCovert {
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
             Result srcItem = srcList.get(i);
-            String localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_FREE, srcItem.getName());
+
+            String localStoreLocation = "";
+
+            switch (srcItem.getSource()) {
+                case SOURCE_CLOUD_FREE:
+                    localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_FREE, srcItem.getName());
+                    break;
+                case SOURCE_CLOUD_PRIVATE:
+                    localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_PRIVATE, srcItem.getName());
+                    break;
+                case SOURCE_CLOUD_PUBLIC:
+                    localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_PUBLIC, srcItem.getName());
+                    break;
+                default:
+                    localStoreLocation = PathUtil.pathGenerate(PATH_FILE_FROM_CLOUD_PRIVATE, srcItem.getName());
+                    break;
+            }
 
             MediaBean desItem = new MediaBean(srcItem.getName(),
                     srcItem.getId(),

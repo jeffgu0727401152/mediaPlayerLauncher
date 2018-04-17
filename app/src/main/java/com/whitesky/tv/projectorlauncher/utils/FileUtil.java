@@ -382,6 +382,11 @@ public class FileUtil
 
         flag = true;
         File[] files = dirFile.listFiles();
+
+        if (files==null) {
+            return false;
+        }
+
         // 遍历删除文件夹下的所有文件(包括子目录)
         for (int i = 0; i < files.length; i++) {
             if (files[i].isFile()) {
