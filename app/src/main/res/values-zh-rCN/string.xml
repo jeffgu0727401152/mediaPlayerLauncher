@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 公共标签 -->
     <string name="app_name">whiteskyUI</string>
@@ -17,12 +18,13 @@
     <string name="str_admin_device_terminal_model">终端型号</string>
     <string name="str_admin_device_sys_version_date">版本日期</string>
     <string name="str_admin_device_sys_version">系统版本</string>
-    <string name="str_admin_device_sys_sn">SN号</string>
+    <string name="str_admin_device_sys_sn">SN</string>
     <string name="str_admin_device_ui_version">UI版本</string>
     <string name="str_admin_device_ram_info">内存信息</string>
     <string name="str_admin_device_rom_info">存储空间</string>
-    <string name="str_admin_device_mac_adr">有线 MAC地址</string>
+    <string name="str_admin_device_mac_adr">MAC地址</string>
     <string name="str_admin_device_default">PS500</string>
+    <string name="str_admin_account_name">账号:</string>
 
     <!-- 系统设置之设置引导页 -->
     <string name="setup_title_language">语言设置</string>
@@ -45,9 +47,13 @@
     <string name="str_update_found">有可升级的升级包</string>
     <string name="str_update_btn">点击安装</string>
     <string name="str_ota_download_btn">点击下载并自动安装</string>
+    <string name="str_ota_local_update">本地升级</string>
+    <string name="str_ota_net_update">网络升级</string>
 
     <string name="str_install_found">有可安装的安装包</string>
 
+    <string name="title_hidden_menu_local_app">本地应用</string>
+    <string name="title_admin_account_list">历史记录</string>
     <string name="title_check_update">点击按钮检查更新</string>
     <string name="title_net_update">正在下载，请稍后…</string>
     <string name="title_net_update_not_found">没有找到更新的版本！</string>
@@ -63,6 +69,17 @@
     <!--系统设置之内存优化页-->
     <string name="title_memory_footprint">内存占用:</string>
     <string name="title_already_cleanup">已清理</string>
+    <string name="title_quicken_clean">一键优化</string>
+
+    <!--网络测速-->
+    <string name="title_center_net_speed_test">网络测速 为您检测最佳网速</string>
+    <string name="str_btn_net_speed_test">开始测速</string>
+    <string name="str_in_net_speed_test">正在进行网络测速,请稍后...</string>
+    <string name="str_stop_net_speed_test">停止测速</string>
+    <string name="str_restart_net_speed_test">再次测速</string>
+    <string name="str_text_net_speed_test_res">本次测速结果:  网速</string>
+    <string name="title_top_net_speed_test">网络测速</string>
+
 
     <!--多媒体页-->
     <string name="str_media_file_title">文件名</string>
@@ -71,6 +88,9 @@
     <string name="str_media_file_state">状态</string>
     <string name="str_media_list_all">媒体库</string>
     <string name="str_media_list_usb">移动盘</string>
+
+    <!--下载-->
+    <string name="str_downloading">下载中</string>
 
     <string name="str_media_play_pause">暂停播放</string>
     <string name="str_media_play_resume">继续播放</string>
@@ -107,7 +127,7 @@
     <string name="str_media_dialog_copy_cancel">取消</string>
     <string name="str_media_dialog_copy_skip">跳过</string>
 
-    <string name="str_media_mask_paint_begin">鼠标左键点出多边形</string>
+    <string name="str_media_mask_paint_begin">点击鼠标左键唤出多边形</string>
     <string name="str_media_dialog_mask_generate_title">窗口生成</string>
     <string name="str_media_dialog_mask_generate_message">多边形窗口生成中…</string>
 
@@ -121,5 +141,4 @@
     <string name="str_media_info_bps">码率:</string>
 
     <!--网络配置页-->
-
 </resources>

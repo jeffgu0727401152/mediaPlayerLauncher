@@ -8,8 +8,8 @@
     android:orientation="vertical">
 
     <ImageView
-        android:layout_width="@dimen/x180"
-        android:layout_height="@dimen/x100"
+        android:layout_width="@dimen/x300"
+        android:layout_height="@dimen/x80"
         android:layout_margin="@dimen/x25"
         android:focusable="false"
         android:src="@drawable/img_logo_sm" />

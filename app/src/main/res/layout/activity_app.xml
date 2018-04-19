@@ -26,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/x60"
                 android:layout_marginLeft="@dimen/x20"
-                android:text="本地应用"
+                android:text="@string/title_hidden_menu_local_app"
                 android:textColor="@color/white"
                 android:textSize="30sp" />
 

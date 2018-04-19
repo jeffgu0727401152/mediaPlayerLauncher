@@ -7,8 +7,8 @@
 
     <ImageView
         android:id="@+id/iv_ota_net"
-        android:layout_width="@dimen/x180"
-        android:layout_height="@dimen/x100"
+        android:layout_width="@dimen/x300"
+        android:layout_height="@dimen/x80"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_margin="@dimen/x25"
@@ -16,11 +16,12 @@
 
     <ImageView
         android:id="@+id/iv_ota_net_logo"
-        android:layout_width="@dimen/x380"
-        android:layout_height="@dimen/x220"
+        android:layout_width="@dimen/x600"
+        android:layout_height="@dimen/x100"
         android:layout_below="@+id/iv_ota_net"
-        android:layout_marginLeft="@dimen/x770"
+        android:layout_marginLeft="@dimen/x670"
         android:layout_marginTop="@dimen/x240"
+        android:layout_centerHorizontal="true"
         android:src="@drawable/img_logo_big" />
 
     <ProgressBar
@@ -50,8 +51,8 @@
         android:id="@+id/bt_ota_net_update"
         android:layout_width="@dimen/x380"
         android:layout_height="@dimen/x120"
-        android:layout_alignStart="@+id/iv_ota_net_logo"
         android:layout_below="@+id/tv_ota_net_info"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
         android:background="@drawable/button_selector_ota"
         android:text="@string/title_check_update"

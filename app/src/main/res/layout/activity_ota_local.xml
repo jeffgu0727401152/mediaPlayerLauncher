@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/iv_ota_local_logo"
-        android:layout_width="@dimen/x180"
-        android:layout_height="@dimen/x100"
+        android:layout_width="@dimen/x300"
+        android:layout_height="@dimen/x80"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_margin="@dimen/x25"
@@ -17,10 +17,11 @@
 
     <ImageView
         android:id="@+id/iv_ota_local_logo_big"
-        android:layout_width="@dimen/x380"
-        android:layout_height="@dimen/x220"
+        android:layout_width="@dimen/x600"
+        android:layout_height="@dimen/x100"
         android:layout_below="@+id/iv_ota_local_logo"
-        android:layout_marginLeft="@dimen/x770"
+        android:layout_marginLeft="@dimen/x670"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/x240"
         android:src="@drawable/img_logo_big" />
 

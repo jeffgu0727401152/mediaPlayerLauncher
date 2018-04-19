@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/shape_clean_btn_bg"
         android:padding="@dimen/x8"
-        android:text="一键优化"
+        android:text="@string/title_quicken_clean"
         android:textColor="@color/white"
         android:textSize="@dimen/x40" />
 

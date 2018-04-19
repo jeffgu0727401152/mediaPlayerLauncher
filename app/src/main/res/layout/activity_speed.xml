@@ -3,6 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:layout_width="@dimen/x300"
+        android:layout_height="@dimen/x80"
+        android:layout_margin="@dimen/x25"
+        android:focusable="false"
+        android:src="@drawable/img_logo_sm" />
+
     <LinearLayout
         android:id="@+id/speedtset_didinotlayout"
         android:layout_width="match_parent"
@@ -15,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="网络测速 为您测速最佳网速"
+            android:text="@string/title_center_net_speed_test"
             android:textColor="#AAAAAA"
             android:textSize="35sp" />
 
@@ -26,7 +33,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="50dp"
             android:background="@drawable/btn_finishclear"
-            android:text="开始测速"
+            android:text="@string/str_btn_net_speed_test"
             android:textColor="#FFFFFF"
             android:textSize="25sp" />
     </LinearLayout>
@@ -62,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="15dp"
-            android:text="正在进行网络测速,请稍后..."
+            android:text="@string/str_in_net_speed_test"
             android:textColor="#FFFFFF"
             android:textSize="30sp" />
 
@@ -73,7 +80,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="15dp"
             android:background="@drawable/btn_finishclear"
-            android:text="停止测速"
+            android:text="@string/str_stop_net_speed_test"
             android:textColor="#FFFFFF"
             android:textSize="25sp" />
     </LinearLayout>
@@ -95,7 +102,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="本次测速结果:  网速"
+                android:text="@string/str_text_net_speed_test_res"
                 android:textColor="#FFFFFF"
                 android:textSize="35sp" />
 
@@ -129,17 +136,9 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="20dp"
             android:background="@drawable/btn_finishclear"
-            android:text="再次测速"
+            android:text="@string/str_restart_net_speed_test"
             android:textColor="#FFFFFF"
             android:textSize="25sp" />
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp"
-        android:layout_marginLeft="20dp"
-        android:text="网络测速"
-        android:textColor="@color/white"
-        android:textSize="30sp" />
 </RelativeLayout>

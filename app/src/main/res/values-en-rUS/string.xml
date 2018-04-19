@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 公共标签 -->
+    <string name="app_name">whiteskyUI</string>
+    <string name="title_default">Stay tuned</string>
+
+    <!--Home 页-->
+    <string name="str_home_welcome">Welcome to use WhiteSky miniature screen player.</string>
+    <string name="str_home_peo">User</string>
+    <string name="str_home_media">Media</string>
+    <string name="str_home_sys">Settings</string>
+
+    <!-- Admin页面 -->
+    <string name="title_admin_account">Account</string>
+    <string name="title_admin_device_info">Device</string>
+    <string name="title_admin_account_type_visitor">Guest Mode</string>
+    <string name="title_admin_account_login_btn">Login</string>
+    <string name="str_admin_device_terminal_model">Model</string>
+    <string name="str_admin_device_sys_version_date">Build</string>
+    <string name="str_admin_device_sys_version">System</string>
+    <string name="str_admin_device_sys_sn">SN</string>
+    <string name="str_admin_device_ui_version">UI</string>
+    <string name="str_admin_device_ram_info">Memory</string>
+    <string name="str_admin_device_rom_info">Storage</string>
+    <string name="str_admin_device_mac_adr">MAC</string>
+    <string name="str_admin_device_default">PS500</string>
+    <string name="str_admin_account_name">Account:</string>
+
+    <!-- 系统设置之设置引导页 -->
+    <string name="setup_title_language">Language</string>
+    <string name="setup_title_update">Update</string>
+    <string name="setup_title_net">Internet</string>
+    <string name="setup_title_speed">Speed Test</string>
+    <string name="setup_title_seo">Optimization</string>
+    <string name="setup_title_format">Format</string>
+
+    <!--系统设置之磁盘格式化页-->
+    <string name="str_format_description_default">Format the hard disk on SATA</string>
+    <string name="str_format_description_done">Format complete</string>
+    <string name="str_format_search_sata_disk">Looking for SATA...</string>
+    <string name="str_format_not_found_sata">Can not find SATA device,please confirm that you have already connected to a hard disk(SATA cannot be hot swapped)!</string>
+    <string name="str_format_btn">Start to format</string>
+    <string name="str_format_warning">The data in disk will be lost. Do you want to continue?</string>
+    <string name="str_format_padding">Formatting...  Do not cut off the power!!!</string>
+
+    <!--系统设置之系统升级页-->
+    <string name="str_update_found">New packages are available for upgrading</string>
+    <string name="str_update_btn">Update</string>
+    <string name="str_ota_download_btn">Auto Install</string>
+    <string name="str_ota_local_update">Local</string>
+    <string name="str_ota_net_update">Online</string>
+
+    <string name="str_install_found">New packages are available for install</string>
+
+    <string name="title_hidden_menu_local_app">Local Application</string>
+    <string name="title_admin_account_list">History Record</string>
+    <string name="title_check_update">Check update</string>
+    <string name="title_net_update">Downloading...</string>
+    <string name="title_net_update_not_found">No newer version found!</string>
+    <string name="title_server_connect_error">Connect failed!</string>
+    <string name="title_net_update_too_large">The network upgrade package is too large. Please use local upgrade feature!</string>
+
+    <string name="str_update_local_title">U disk local upgrade </string>
+    <string name="str_update_local_not_found">No upgrade package available</string>
+
+    <string name="str_update_file_download_ready">The upgrade package is downloaded with the correct verification , the installation will be performed now</string>
+    <string name="str_update_file_check_failed">Failed to verify the upgrade package. Please contact the administrator to check the upgrade package on the server!</string>
+
+    <!--系统设置之内存优化页-->
+    <string name="title_memory_footprint">Used:</string>
+    <string name="title_already_cleanup">Cleaned up</string>
+    <string name="title_quicken_clean">Optimization</string>
+
+    <!--网络测速-->
+    <string name="title_center_net_speed_test">Network Speed Test</string>
+    <string name="str_btn_net_speed_test">Start to test</string>
+    <string name="str_in_net_speed_test">Testing... please wait patiently</string>
+    <string name="str_stop_net_speed_test">Stop test</string>
+    <string name="str_restart_net_speed_test">Restart</string>
+    <string name="str_text_net_speed_test_res">Resault:</string>
+    <string name="title_top_net_speed_test">Network Speed Test</string>
+
+
+
+    <!--多媒体页-->
+    <string name="str_media_file_title">File Name</string>
+    <string name="str_media_file_duration">Duration</string>
+    <string name="str_media_display_scale">Scale</string>
+    <string name="str_media_file_state">Status</string>
+    <string name="str_media_list_all">Library</string>
+    <string name="str_media_list_usb">Removable</string>
+
+    <!--下载-->
+    <string name="str_downloading">Downloading...</string>
+
+    <string name="str_media_play_pause">Pause</string>
+    <string name="str_media_play_resume">Resume</string>
+    <string name="str_media_play_path_error">Invalid file path</string>
+    <string name="str_media_play_file_not_found_error">Can't find any Media files</string>
+    <string name="str_media_play_list_empty">Please check the media play list</string>
+
+    <string name="str_media_receive_mqtt_toast">Received a remote control command</string>
+    <string name="str_media_usb_device_plug_in_toast">USB device identified</string>
+    <string name="str_media_usb_device_plug_out_toast">USB device identification</string>
+    <string name="str_media_wait_capacity">--G/--G</string>
+
+    <string name="str_media_download_waiting">queue…</string>
+    <string name="str_media_download_pause">pause:</string>
+    <string name="str_media_download_error">error！</string>
+
+
+    <string name="str_media_cloud_file_need_login_toast">Cloud file list needs to be logged in to the device before viewing</string>
+    <string name="str_media_cloud_file_could_not_export_toast">Cloud files cannot be exported to U disk</string>
+    <string name="str_media_file_copy_toast">Copy files:</string>
+    <string name="str_media_file_delete_toast">Remove files:</string>
+    <string name="str_media_file_copy_process_dialog_title">Copy file</string>
+    <string name="str_media_file_delete_dialog_title">Do you want to delete the file?</string>
+    <string name="str_media_file_copy_same_dialog_title">files are already exists in the target folder.</string>
+    <string name="str_media_file_copy_process_dialog_prompt">Copying files, don't exit or plug usb device until the operation is completed</string>
+    <string name="str_media_file_copy_capacity_prompt">The disk capacity is insufficient. Please delete some contents and try it again!</string>
+
+
+    <string name="str_media_full_screen_quite">Do you want to exit full screen？</string>
+    <string name="str_media_dialog_button_ok">Confirm</string>
+    <string name="str_media_dialog_button_cancel">Cancel</string>
+
+    <string name="str_media_dialog_copy_continue">Cover</string>
+    <string name="str_media_dialog_copy_cancel">Cancel</string>
+    <string name="str_media_dialog_copy_skip">Skip</string>
+
+    <string name="str_media_mask_paint_begin">Click left button to use polygon mask</string>
+    <string name="str_media_dialog_mask_generate_title">Window generation</string>
+    <string name="str_media_dialog_mask_generate_message">Polygon window generation…</string>
+
+    <string name="str_media_scale_fix_xy">Full</string>
+    <string name="str_media_scale_fix_center">Center</string>
+
+    <string name="str_media_info_name">Name:</string>
+    <string name="str_media_info_type">Type:</string>
+    <string name="str_media_info_wh">Layout:</string>
+    <string name="str_media_info_size">Size:</string>
+    <string name="str_media_info_bps">Rate:</string>
+
+    <!--网络配置页-->
+</resources>

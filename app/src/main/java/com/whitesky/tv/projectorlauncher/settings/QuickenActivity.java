@@ -75,7 +75,7 @@ public class QuickenActivity extends Activity implements View.OnClickListener
                     mWlvLoading.setProgressValue(mUsedMemoryPercent);
                     mWlvLoading.setTopTitle(getString(R.string.title_memory_footprint) + mUsedMemoryPercent + "%");
                     ToastUtil.showToast(getApplication(),
-                            getString(R.string.title_already_cleanup) + mMemoryClean.intValue() + "M 空间");
+                            getString(R.string.title_already_cleanup) + mMemoryClean.intValue() + "M");
                     break;
 
                 default:
