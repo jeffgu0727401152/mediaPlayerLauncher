@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemProperties;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -774,6 +775,14 @@ public class MediaActivity extends Activity
 
                     if  (cloudList != null) {
                         if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
+
+                            // 获取用户oemID,用于系统底层播放读取,解密播放文件
+                            String userAccount = cloudList.getAccount();
+                            if (userAccount!=null && !userAccount.isEmpty()) {
+                                Log.d(TAG,"user account = " + userAccount);
+                                SystemProperties.set("oemdata.whitesky.account", userAccount);
+                            }
+
                             Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
                             new MediaBeanDao(context).deleteItemsFromCloud();
 

@@ -7,13 +7,16 @@ package com.whitesky.tv.projectorlauncher.utils;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 
+import com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PICTURE_DEFAULT_PLAY_DURATION_MS;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PRIVATE_PROTOCOL_PREFIX;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
@@ -270,7 +273,7 @@ public class MediaScanUtil {
             case MediaBean.MEDIA_VIDEO:
             case MediaBean.MEDIA_MUSIC:
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                mmr.setDataSource(path);
+                mmr.setDataSource(PRIVATE_PROTOCOL_PREFIX+path, new HashMap<String, String>());
                 String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                 mmr.release();
                 return Integer.parseInt(duration);

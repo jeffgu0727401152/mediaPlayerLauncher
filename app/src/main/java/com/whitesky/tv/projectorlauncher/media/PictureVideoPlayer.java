@@ -38,6 +38,7 @@ import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
@@ -63,6 +64,10 @@ import static com.whitesky.tv.projectorlauncher.service.download.DownloadService
 
 public class PictureVideoPlayer extends FrameLayout implements View.OnClickListener{
     private final String TAG = this.getClass().getSimpleName();
+
+    // 路径加上此头后setDataSource会调用底层插件播放
+    public static final String PRIVATE_PROTOCOL_PREFIX = "privprotocol:";
+    //public static final String PRIVATE_PROTOCOL_PREFIX = "";
 
     // 重放模式
     public static final int  MEDIA_REPLAY_ONE = 0;
@@ -808,7 +813,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setDisplay(mSurfaceView.getHolder());
-            mMediaPlayer.setDataSource(file.getAbsolutePath());
+            mMediaPlayer.setDataSource(PRIVATE_PROTOCOL_PREFIX + file.getAbsolutePath());
 
             switch (scale) {
                 case MEDIA_SCALE_FIT_XY:
@@ -825,7 +830,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             Log.i(TAG,"media file prepare...");
             //准备文件信息
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            mmr.setDataSource(file.getAbsolutePath());
+            mmr.setDataSource(PRIVATE_PROTOCOL_PREFIX + file.getAbsolutePath(),new HashMap<String, String>());
             String width = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
             String height = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
             String bitRate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
@@ -935,7 +940,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "Exception in video prepare!" + e);
+            Log.e(TAG, "Exception in video prepare!");
+            e.printStackTrace();
         }
     }
 

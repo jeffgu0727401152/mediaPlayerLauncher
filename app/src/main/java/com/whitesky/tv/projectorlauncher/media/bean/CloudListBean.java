@@ -30,12 +30,15 @@ public class CloudListBean implements Parcelable
     
     private String message;
 
+    private String account;
+
     private List<Result> result ;
 
     protected CloudListBean(Parcel in)
     {
         status = in.readString();
         message = in.readString();
+        account = in.readString();
         result = in.readArrayList(Result.class.getClassLoader());
     }
 
@@ -44,6 +47,7 @@ public class CloudListBean implements Parcelable
     {
         dest.writeString(status);
         dest.writeString(message);
+        dest.writeString(account);
         dest.writeList(result);
     }
 
@@ -71,6 +75,14 @@ public class CloudListBean implements Parcelable
     public void setMessage(String message)
     {
         this.message = message;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     public void setResult(List<Result> result){
