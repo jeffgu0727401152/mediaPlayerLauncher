@@ -45,6 +45,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public static final int CHANGE_EVENT_EXCHANGE = 2;
     public static final int CHANGE_EVENT_SCALE = 3;
     public static final int CHANGE_EVENT_TIME = 4;
+    public static final int CHANGE_EVENT_UPDATE = 5;
 
     private OnPlaylistItemEventListener mOnPlaylistItemEventListener = null;
 
@@ -173,6 +174,13 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             }
         }
 
+        if (item.getMediaData().getType() == MEDIA_VIDEO
+                &&item.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
+                &&item.getMediaData().getDuration()==0) {
+            holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+            holder.setText(R.id.tv_media_state, "error format");
+        }
+
     }
 
 
@@ -264,8 +272,12 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         for (PlayListBean it:listDatas) {
             if (it.getMediaData().getPath().equals(data.getPath())) {
                 it.setMediaData(data);
-                return;
             }
+        }
+
+        if (mOnPlaylistItemEventListener != null) {
+            listDatas.toString();
+            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_UPDATE,null);
         }
     }
 

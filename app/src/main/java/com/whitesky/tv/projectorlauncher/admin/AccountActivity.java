@@ -26,6 +26,7 @@ import com.whitesky.tv.projectorlauncher.admin.bean.LoginBean;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.common.bean.ListViewBean;
+import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.utils.SharedPreferencesUtil;
 
 import java.io.IOException;
@@ -54,7 +55,8 @@ public class AccountActivity extends Activity implements View.OnClickListener
     private final String TAG = this.getClass().getSimpleName();
 
     private final static int MSG_UPDATE_ACCOUNT_INFO = 1;
-    
+    private final static int MSG_SYNC_CLOUD_MEDIA_LIST = 2;
+
     private final AccountInfoHandler mHandler = new AccountInfoHandler(this);
     
     private List<ListViewBean> mLoginHistoryDatas = new ArrayList<ListViewBean>();
@@ -288,6 +290,7 @@ public class AccountActivity extends Activity implements View.OnClickListener
                     if (mLoginBean != null && mLoginBean.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
                         SharedPreferencesUtil shared = new SharedPreferencesUtil(getApplicationContext(), Contants.PREF_CONFIG);
                         shared.putBoolean(Contants.IS_ACTIVATE, false);
+                        mHandler.sendEmptyMessage(MSG_SYNC_CLOUD_MEDIA_LIST);
                         getAccountInfo();
                     }
                 } else {
@@ -318,6 +321,14 @@ public class AccountActivity extends Activity implements View.OnClickListener
                         activity.updateAccountInfo();
                     }
                     break;
+
+                case MSG_SYNC_CLOUD_MEDIA_LIST:
+                    MediaActivity.loadMediaListFromCloud(mActivity.get(), new MediaActivity.cloudListGetCallback() {
+                        @Override
+                        public void cloudSyncDone(boolean result) {
+                            // do nothing
+                        }
+                    });
 
                 default:
                     break;

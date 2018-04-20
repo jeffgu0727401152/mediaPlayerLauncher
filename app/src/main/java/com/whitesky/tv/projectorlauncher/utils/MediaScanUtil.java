@@ -272,11 +272,19 @@ public class MediaScanUtil {
 
             case MediaBean.MEDIA_VIDEO:
             case MediaBean.MEDIA_MUSIC:
+                int mediaDuration = 0;
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                mmr.setDataSource(PRIVATE_PROTOCOL_PREFIX+path, new HashMap<String, String>());
-                String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                mmr.release();
-                return Integer.parseInt(duration);
+                try {
+                    mmr.setDataSource(PRIVATE_PROTOCOL_PREFIX+path, new HashMap<String, String>());
+                    String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    mediaDuration = Integer.parseInt(duration);
+                    mmr.release();
+                } catch (Exception e) {
+                    Log.e(TAG,"media file parser exception!!!");
+                    e.printStackTrace();
+                    mmr.release();
+                }
+                return mediaDuration;
 
             default:
                 break;

@@ -51,7 +51,7 @@ public class DownloadService extends Service {
     public static final String ACTION_MEDIA_DOWNLOAD_START = "com.whitesky.tv.MEDIA_DOWNLOAD_START";
     public static final String ACTION_MEDIA_DOWNLOAD_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_PAUSE";
     public static final String ACTION_MEDIA_DOWNLOAD_CANCEL = "com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL";
-    public static final String ACTION_MEDIA_DOWNLOAD_START_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE";
+    public static final String ACTION_MEDIA_DOWNLOAD_START_OR_PAUSE = "com.whitesky.tv.MEDIA_DOWNLOAD_START_PAUSE";
     public static final String ACTION_MEDIA_DOWNLOAD_CANCEL_ALL = "com.whitesky.tv.MEDIA_DOWNLOAD_CANCEL_ALL";
 
     public static final String ACTION_APK_DOWNLOAD_START = "com.whitesky.tv.APK_DOWNLOAD_START";
@@ -117,22 +117,37 @@ public class DownloadService extends Service {
             }
 
             MediaBean bean = queryMediaBeanByUrl(url);
+            if (bean==null) {
+                Log.d(TAG,"could not get bean by url");
+                return super.onStartCommand(intent, flags, startId);
+            }
+
             DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
             Log.d(TAG,"download:"+bean.toString());
 
         } else if (ACTION_MEDIA_DOWNLOAD_PAUSE.equals(intent.getAction())) {
 
             MediaBean bean = queryMediaBeanByUrl(url);
+            if (bean==null) {
+                Log.d(TAG,"could not get bean by url");
+                return super.onStartCommand(intent, flags, startId);
+            }
+
             DownloadManager.getInstance().pause(bean);
             Log.d(TAG,"pause:"+bean.toString());
 
-        } else if (ACTION_MEDIA_DOWNLOAD_START_PAUSE.equals(intent.getAction())) {
+        } else if (ACTION_MEDIA_DOWNLOAD_START_OR_PAUSE.equals(intent.getAction())) {
 
             if (!MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
                 return super.onStartCommand(intent, flags, startId);
             }
 
             MediaBean bean = queryMediaBeanByUrl(url);
+            if (bean==null) {
+                Log.d(TAG,"could not get bean by url");
+                return super.onStartCommand(intent, flags, startId);
+            }
+
             if (bean.getDownloadState()==MediaBean.STATE_DOWNLOAD_NONE
                     || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_PAUSED
                     || bean.getDownloadState() == MediaBean.STATE_DOWNLOAD_ERROR) {
@@ -146,6 +161,11 @@ public class DownloadService extends Service {
         } else if (ACTION_MEDIA_DOWNLOAD_CANCEL.equals(intent.getAction())) {
 
             MediaBean bean = queryMediaBeanByUrl(url);
+            if (bean==null) {
+                Log.d(TAG,"could not get bean by url");
+                return super.onStartCommand(intent, flags, startId);
+            }
+
             DownloadManager.getInstance().cancel(bean);
             Log.d(TAG,"cancel:"+bean.toString());
         }
@@ -171,17 +191,22 @@ public class DownloadService extends Service {
     }
 
     private MediaBean queryMediaBeanByUrl(String url) {
+        if (url==null || url.isEmpty()) {
+            Log.w(TAG,"url is empty!");
+            return null;
+        }
+
         List<MediaBean> beans = new MediaBeanDao(getApplicationContext()).queryByUrl(url);
         if (beans==null || beans.isEmpty()) {
+            Log.w(TAG,"no url in db!");
             return null;
         }
 
         if (beans.size()>1) {
             Log.w(TAG,"has the same url!");
             for (MediaBean bean:beans) {
-                Log.w(TAG,bean.toString());
+                Log.w(TAG, bean.toString());
             }
-            Log.w(TAG,"has the same url!");
         }
 
         return beans.get(0);

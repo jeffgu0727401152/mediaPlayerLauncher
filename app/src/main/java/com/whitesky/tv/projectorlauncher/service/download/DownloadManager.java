@@ -101,12 +101,12 @@ public class DownloadManager {
         }
 
         // 防止runnable下载完成或发生错误，但是还没来得通知manager从mTaskMap中移出，这个时候又处理download这个url的请求
-        // 所以这边需要强制只有已经在Task中为none/pause的状态给下载
+        // 所以这边需要强制只有已经在Task中为none/pause/error的状态给下载
         if (task.getEntity().getDownloadState()!= MediaBean.STATE_DOWNLOAD_NONE
                     && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_PAUSED
                     && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_ERROR)
         {
-            Log.w(TAG,"do nothing because bean is already in downloading");
+            Log.w(TAG,"do nothing because bean is already in downloading: " + task.getEntity().toString());
             return;
         }
 
@@ -142,7 +142,7 @@ public class DownloadManager {
                     && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_START
                     && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_DOWNLOADING)
             {
-                Log.w(TAG,"do nothing because bean is already in pause");
+                Log.w(TAG,"do nothing because bean is already in pause: " + task.getEntity().toString());
                 return;
             }
 

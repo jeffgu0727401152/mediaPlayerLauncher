@@ -55,7 +55,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
         android:background="@drawable/button_selector_ota"
-        android:text="@string/title_check_update"
+        android:text="@string/btn_check_update"
         android:textColor="@color/white" />
 
 </RelativeLayout>

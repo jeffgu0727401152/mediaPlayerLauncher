@@ -89,8 +89,9 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int ERROR_FILE_NOT_EXIST = -2;
     public static final int ERROR_PLAYLIST_INVALIDED_POSITION = -3;
     public static final int ERROR_PLAYLIST_FOUND_NONE = -4;
-    public static final int ERROR_VIDEO_PLAY_ERROR = -5;
-    public static final int ERROR_IMAGE_PLAY_ERROR = -6;
+    public static final int ERROR_VIDEO_PREPARE_ERROR = -5;
+    public static final int ERROR_VIDEO_PLAY_ERROR = -6;
+    public static final int ERROR_IMAGE_PLAY_ERROR = -7;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
@@ -565,7 +566,11 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     // 寻找播放列表中上一次记录的播放的位置开始播放
     public void mediaPlay() {
         if (mPlayList==null || mPlayList.isEmpty()) {
-            Log.w(TAG, "play list is empty");
+            mPlayState = PLAYER_STATE_PLAY_STOP;
+            if (mOnMediaEventListener!=null)
+            {
+                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
+            }
             return;
         }
 
@@ -679,6 +684,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         switch(mPlayState)
         {
             case PLAYER_STATE_IDLE:
+            case PLAYER_STATE_PLAY_STOP:
                 mediaPlay();
                 break;
             case PLAYER_STATE_PLAY_PICTURE:
@@ -697,7 +703,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
                 pictureResume();
                 break;
-            case PLAYER_STATE_PLAY_STOP:
             case PLAYER_STATE_PLAY_COMPLETE:
             default:
                 // do nothing
@@ -942,6 +947,12 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         } catch (Exception e) {
             Log.e(TAG, "Exception in video prepare!");
             e.printStackTrace();
+
+            mPlayState = PLAYER_STATE_PLAY_STOP;
+            if (mOnMediaEventListener!=null)
+            {
+                mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PREPARE_ERROR,curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+            }
         }
     }
 

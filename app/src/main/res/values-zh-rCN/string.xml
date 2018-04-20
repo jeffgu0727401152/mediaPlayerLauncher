@@ -55,6 +55,7 @@
     <string name="title_hidden_menu_local_app">本地应用</string>
     <string name="title_admin_account_list">历史记录</string>
     <string name="title_check_update">点击按钮检查更新</string>
+    <string name="btn_check_update">检查更新</string>
     <string name="title_net_update">正在下载，请稍后…</string>
     <string name="title_net_update_not_found">没有找到更新的版本！</string>
     <string name="title_server_connect_error">服务器连接失败！</string>
@@ -94,11 +95,13 @@
 
     <string name="str_media_play_pause">暂停播放</string>
     <string name="str_media_play_resume">继续播放</string>
-    <string name="str_media_play_path_error">空的文件路径</string>
-    <string name="str_media_play_file_not_found_error">找不到媒体文件</string>
+    <string name="str_media_play_path_error">空的文件路径!</string>
+    <string name="str_media_play_file_not_found_error">找不到媒体文件!</string>
+    <string name="str_media_play_error_file_format">媒体文件编码可能有问题!</string>
+    <string name="str_media_play_video_error">视频播放错误!</string>
     <string name="str_media_play_list_empty">请检查播放列表</string>
 
-    <string name="str_media_receive_mqtt_toast">收到远程控制命令</string>
+    <string name="str_media_receive_mqtt_toast">远程控制</string>
     <string name="str_media_usb_device_plug_in_toast">usb设备插入:</string>
     <string name="str_media_usb_device_plug_out_toast">usb设备拔出:</string>
     <string name="str_media_wait_capacity">--G/--G</string>
@@ -106,6 +109,7 @@
     <string name="str_media_download_waiting">排队…</string>
     <string name="str_media_download_pause">暂停:</string>
     <string name="str_media_download_error">错误！</string>
+    <string name="str_media_format_error">编码错误!</string>
 
 
     <string name="str_media_cloud_file_need_login_toast">云端文件列表需要登录本设备后才能查看</string>

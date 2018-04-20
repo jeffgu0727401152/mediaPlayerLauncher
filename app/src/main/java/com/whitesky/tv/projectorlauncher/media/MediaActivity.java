@@ -103,6 +103,8 @@ import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATU
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_NOT_EXIST;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_PATH_NONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_INVALIDED_POSITION;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PLAY_ERROR;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PREPARE_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
@@ -114,7 +116,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PRIVATE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PUBLIC;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
@@ -397,7 +398,9 @@ public class MediaActivity extends Activity
                 MediaBean bean = intent.getParcelableExtra(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT);
 
                 if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
+
                     updateCapacityUi(MASS_STORAGE_PATH);
+
                 } else if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
 
                     updateCapacityUi(MASS_STORAGE_PATH);
@@ -489,7 +492,7 @@ public class MediaActivity extends Activity
         // 如果这边获得状态为IDLE,则表示是文件没有下载直接当作播放完成
         // 防止在播放列表文件全部没有下载的情况下,过于频繁的的下一首
         if (mPlayer.getPlayState() == PLAYER_STATE_PLAY_STOP) {
-            mHandler.sendMessageDelayed(msg, 1000);
+            mHandler.sendMessageDelayed(msg, 2000);
         } else {
             mHandler.sendMessage(msg);
         }
@@ -508,6 +511,9 @@ public class MediaActivity extends Activity
     public void onMediaPlayError(int error, MediaBean errorBean) {
         // 播放错误
         Log.d(TAG,"media Play error! ERR_NO:" + error);
+        if (errorBean!=null) {
+            Log.d(TAG, "error bean is " + errorBean.toString());
+        }
 
         // 需要使用toast提示用户的错误
         switch (error) {
@@ -520,13 +526,19 @@ public class MediaActivity extends Activity
             case ERROR_FILE_NOT_EXIST:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_file_not_found_error);
                 break;
+            case ERROR_VIDEO_PREPARE_ERROR:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_error_file_format);
+                break;
+            case ERROR_VIDEO_PLAY_ERROR:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_video_error);
+                break;
             default:
                 break;
         }
 
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
-        mHandler.sendMessage(msg);
+        mHandler.sendMessageDelayed(msg,4000);
     }
     // 媒体播放的回调函数=============结束
 
@@ -719,7 +731,7 @@ public class MediaActivity extends Activity
 
     // 从云端同步数据库，然后与本地端磁盘的数据进行比对，比对完成后调callback函数
     public static void loadMediaListFromCloud(final Context context, final cloudListGetCallback callback) {
-        Log.i(TAG, "load Media List From Cloud in");
+        Log.i(TAG, "call load Media List From Cloud in");
         // 初始化云端媒体列表
         OkHttpClient mClient = new OkHttpClient();
         if (HttpConstants.URL_GET_SHARE_LIST.contains("https")) {
@@ -773,6 +785,8 @@ public class MediaActivity extends Activity
                         Log.e(TAG, "except in json parse!" + e.toString());
                     }
 
+                    new MediaBeanDao(context).deleteItemsFromCloud();
+
                     if  (cloudList != null) {
                         if (cloudList.getStatus().equals(LOGIN_STATUS_SUCCESS)) {
 
@@ -784,7 +798,6 @@ public class MediaActivity extends Activity
                             }
 
                             Log.d(TAG,"onResponse get "+cloudList.getResult().size() + " media info(s) from cloud");
-                            new MediaBeanDao(context).deleteItemsFromCloud();
 
                             if (!cloudList.getResult().isEmpty()) {
                                 List<MediaBean> listCloud = new ArrayList<>();
@@ -1672,7 +1685,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_ITEM_DOWNLOAD_OR_PAUSE:
-                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START_PAUSE);
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START_OR_PAUSE);
                     intent.putExtra(EXTRA_KEY_URL, ((MediaBean)msg.obj).getUrl());
                     Log.i(TAG,"call download:" + msg.obj.toString());
                     startService(intent);
