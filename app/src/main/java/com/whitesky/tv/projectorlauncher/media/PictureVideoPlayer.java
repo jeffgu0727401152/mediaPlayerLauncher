@@ -92,6 +92,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int ERROR_VIDEO_PREPARE_ERROR = -5;
     public static final int ERROR_VIDEO_PLAY_ERROR = -6;
     public static final int ERROR_IMAGE_PLAY_ERROR = -7;
+    public static final int ERROR_FILE_NEED_DOWNLOAD_ERROR = -8;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
@@ -635,7 +636,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayCompletion();
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_NEED_DOWNLOAD_ERROR, fileBean);
             }
             return;
         }

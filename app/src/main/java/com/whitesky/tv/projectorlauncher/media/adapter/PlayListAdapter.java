@@ -58,9 +58,12 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     public void convert(ViewHolder holder, final int position, PlayListBean item) {
         holder.setText(R.id.tv_media_title, item.getMediaData().getTitle());
 
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-        formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-        String hms = formatter.format(item.getMediaData().getDuration());
+        String hms = " -- : -- : -- ";
+        if (item.getMediaData().getDuration()!=0) {
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
+            hms = formatter.format(item.getMediaData().getDuration());
+        }
         holder.setText(R.id.tv_media_duration, hms);
 
         switch (item.getMediaData().getType())
@@ -180,7 +183,6 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
             holder.setText(R.id.tv_media_state, "error format");
         }
-
     }
 
 

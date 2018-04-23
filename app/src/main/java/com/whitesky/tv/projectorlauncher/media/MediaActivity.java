@@ -489,13 +489,7 @@ public class MediaActivity extends Activity
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
 
         // 正常播放完成的状态是COMPLETE
-        // 如果这边获得状态为IDLE,则表示是文件没有下载直接当作播放完成
-        // 防止在播放列表文件全部没有下载的情况下,过于频繁的的下一首
-        if (mPlayer.getPlayState() == PLAYER_STATE_PLAY_STOP) {
-            mHandler.sendMessageDelayed(msg, 2000);
-        } else {
-            mHandler.sendMessage(msg);
-        }
+        mHandler.sendMessage(msg);
     }
 
     @Override
@@ -538,7 +532,7 @@ public class MediaActivity extends Activity
 
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_MEDIA_PLAY_COMPLETE;
-        mHandler.sendMessageDelayed(msg,4000);
+        mHandler.sendMessageDelayed(msg,2000);
     }
     // 媒体播放的回调函数=============结束
 
@@ -1358,6 +1352,8 @@ public class MediaActivity extends Activity
 
         unregisterReceiver(usbMountEventReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceEventReceiver);
+
+        mHandler.removeCallbacksAndMessages(null);
 
         super.onPause();
 
