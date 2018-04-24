@@ -81,8 +81,6 @@
     <string name="str_text_net_speed_test_res">Result:</string>
     <string name="title_top_net_speed_test">Network Speed Test</string>
 
-
-
     <!--多媒体页-->
     <string name="str_media_file_title">Name</string>
     <string name="str_media_file_duration">Duration</string>
