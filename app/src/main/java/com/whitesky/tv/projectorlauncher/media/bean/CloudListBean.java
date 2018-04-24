@@ -32,14 +32,14 @@ public class CloudListBean implements Parcelable
 
     private String account;
 
-    private List<Result> result ;
+    private List<CloudListResult> result ;
 
     protected CloudListBean(Parcel in)
     {
         status = in.readString();
         message = in.readString();
         account = in.readString();
-        result = in.readArrayList(Result.class.getClassLoader());
+        result = in.readArrayList(CloudListResult.class.getClassLoader());
     }
 
     @Override
@@ -85,10 +85,10 @@ public class CloudListBean implements Parcelable
         this.account = account;
     }
 
-    public void setResult(List<Result> result){
+    public void setResult(List<CloudListResult> result){
         this.result = result;
     }
-    public List<Result> getResult(){
+    public List<CloudListResult> getResult(){
         return this.result;
     }
     

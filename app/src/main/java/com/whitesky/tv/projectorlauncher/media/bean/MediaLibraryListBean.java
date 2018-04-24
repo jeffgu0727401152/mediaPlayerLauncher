@@ -5,15 +5,15 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
  * Created by jeff on 18-1-16.
  */
 
-public class AllMediaListBean {
+public class MediaLibraryListBean {
 
     private MediaBean mMediaData;
     private boolean isSelected = false;
 
-    public AllMediaListBean() {
+    public MediaLibraryListBean() {
     }
 
-    public AllMediaListBean(MediaBean data) {
+    public MediaLibraryListBean(MediaBean data) {
         mMediaData = data;
         isSelected = false;
     }

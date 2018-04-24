@@ -7,7 +7,7 @@ import android.view.View;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
-import com.whitesky.tv.projectorlauncher.media.bean.AllMediaListBean;
+import com.whitesky.tv.projectorlauncher.media.bean.MediaLibraryListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 import java.text.SimpleDateFormat;
@@ -36,7 +36,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
  * Created by jeff on 18-1-16.
  */
 
-public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
+public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
@@ -44,14 +44,14 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 
     private OnAllMediaListItemEventListener mOnALlMediaListItemEventListener;
 
-    public AllMediaListAdapter(Context context, List<AllMediaListBean> data)
+    public MediaLibraryListAdapter(Context context, List<MediaLibraryListBean> data)
     {
         super(context, data, R.layout.item_all_media_list);
     }
 
     public boolean hasItemSelected()
     {
-        for(AllMediaListBean data: getListDatas())
+        for(MediaLibraryListBean data: getListDatas())
         {
             if (data.isSelected())
             {
@@ -62,7 +62,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, AllMediaListBean item) {
+    public void convert(ViewHolder holder, final int position, MediaLibraryListBean item) {
         // 设置标号
         holder.setText(R.id.tv_media_list_pos, String.valueOf(position + 1) + ".");
 
@@ -242,7 +242,7 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 
     public void update(MediaBean data) {
         synchronized (mListLock) {
-            for (AllMediaListBean it : listDatas) {
+            for (MediaLibraryListBean it : listDatas) {
                 if (it.getMediaData().getPath().equals(data.getPath())) {
                     it.setMediaData(data);
                     return;
@@ -253,8 +253,8 @@ public class AllMediaListAdapter extends CommonAdapter<AllMediaListBean>
 
     public void removeItem(MediaBean data) {
         synchronized (mListLock) {
-            AllMediaListBean found = null;
-            for (AllMediaListBean it : listDatas) {
+            MediaLibraryListBean found = null;
+            for (MediaLibraryListBean it : listDatas) {
                 if (it.getMediaData().getPath().equals(data.getPath())) {
                     found = it;
                     break;

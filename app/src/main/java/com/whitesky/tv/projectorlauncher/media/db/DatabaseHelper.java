@@ -16,24 +16,24 @@ import java.util.Map;
  * Created by jeff on 18-2-4.
  */
 
-public class MediaDatabaseHelper extends OrmLiteSqliteOpenHelper {
+public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     // 数据库名称
     public static final String DATABASE_NAME = "media.db";
 
     public static final int VERSION = 6;
 
     // 本类的单例实例
-    private static MediaDatabaseHelper instance;
+    private static DatabaseHelper instance;
 
     // 存储APP中所有的DAO对象的Map集合
     private Map<String, Dao> daos = new HashMap<>();
 
     // 获取本类单例对象的方法
-    public static synchronized MediaDatabaseHelper getInstance(Context context) {
+    public static synchronized DatabaseHelper getInstance(Context context) {
         if (instance == null) {
-            synchronized (MediaDatabaseHelper.class) {
+            synchronized (DatabaseHelper.class) {
                 if (instance == null) {
-                    instance = new MediaDatabaseHelper(context);
+                    instance = new DatabaseHelper(context);
                 }
             }
         }
@@ -41,7 +41,7 @@ public class MediaDatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     // 私有的构造方法
-    private MediaDatabaseHelper(Context context) {
+    private DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, VERSION);
     }
 

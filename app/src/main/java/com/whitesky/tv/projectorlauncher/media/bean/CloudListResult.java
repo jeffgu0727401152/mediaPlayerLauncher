@@ -7,14 +7,14 @@ import android.os.Parcelable;
  * Created by xiaoxuan on 2017/12/11.
  */
 
-public class Result implements Parcelable
+public class CloudListResult implements Parcelable
 {
     private int id;
     private String name;
     private String url;
     private int source;
 
-    protected Result(Parcel in)
+    protected CloudListResult(Parcel in)
     {
         id = in.readInt();
         name = in.readString();
@@ -37,18 +37,18 @@ public class Result implements Parcelable
         return 0;
     }
 
-    public static final Creator<Result> CREATOR = new Creator<Result>()
+    public static final Creator<CloudListResult> CREATOR = new Creator<CloudListResult>()
     {
         @Override
-        public Result createFromParcel(Parcel in)
+        public CloudListResult createFromParcel(Parcel in)
         {
-            return new Result(in);
+            return new CloudListResult(in);
         }
 
         @Override
-        public Result[] newArray(int size)
+        public CloudListResult[] newArray(int size)
         {
-            return new Result[size];
+            return new CloudListResult[size];
         }
     };
 

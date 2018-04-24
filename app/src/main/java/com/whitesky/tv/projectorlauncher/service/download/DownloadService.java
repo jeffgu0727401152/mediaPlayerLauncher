@@ -112,7 +112,7 @@ public class DownloadService extends Service {
         } else if (ACTION_MEDIA_DOWNLOAD_START.equals(intent.getAction())) {
 
             if (!MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
-                Log.e(TAG,"!!!!!!!!!!!!!!!!!!!!!!!!! local not mount return!");
+                Log.e(TAG,"local mass storage is not mount, just return!");
                 return super.onStartCommand(intent, flags, startId);
             }
 

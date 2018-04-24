@@ -37,10 +37,10 @@ import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
-import com.whitesky.tv.projectorlauncher.media.adapter.AllMediaListAdapter;
+import com.whitesky.tv.projectorlauncher.media.adapter.MediaLibraryListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.UsbMediaListAdapter;
-import com.whitesky.tv.projectorlauncher.media.bean.AllMediaListBean;
+import com.whitesky.tv.projectorlauncher.media.bean.MediaLibraryListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.CloudListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
@@ -207,8 +207,8 @@ public class MediaActivity extends Activity
     private PlayListAdapter mPlayListAdapter;    // 除onCreate与onResume外,其他所有对于playlist数据的操作都通过adapter做,好触发onPlaylistItemEvent
     private DragListView mDragPlayListView;
 
-    private List<AllMediaListBean> mAllMediaListBeans = new ArrayList<AllMediaListBean>();
-    private AllMediaListAdapter mAllMediaListAdapter;
+    private List<MediaLibraryListBean> mMediaLibraryListBeans = new ArrayList<MediaLibraryListBean>();
+    private MediaLibraryListAdapter mMediaLibraryListAdapter;
     private ListView mAllMediaListView;
 
     private List<UsbMediaListBean> mUsbMediaListBeans = new ArrayList<UsbMediaListBean>();
@@ -415,8 +415,8 @@ public class MediaActivity extends Activity
                 mPlayListAdapter.update(bean);
                 mPlayListAdapter.refresh();
 
-                mAllMediaListAdapter.update(bean);
-                mAllMediaListAdapter.refresh();
+                mMediaLibraryListAdapter.update(bean);
+                mMediaLibraryListAdapter.refresh();
             }
         }
     };
@@ -710,11 +710,11 @@ public class MediaActivity extends Activity
             for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
             {
                 Log.i(TAG, "has media database, so get media list from media database");
-                mAllMediaListBeans.add(new AllMediaListBean(m));
+                mMediaLibraryListBeans.add(new MediaLibraryListBean(m));
             }
 
-            if (mAllMediaListAdapter!=null) {
-                mAllMediaListAdapter.refresh();
+            if (mMediaLibraryListAdapter !=null) {
+                mMediaLibraryListAdapter.refresh();
             }
         }
     }
@@ -1006,12 +1006,12 @@ public class MediaActivity extends Activity
         mUsbPartitionSpinner.setAdapter(mUsbPartitionAdapter);
 
         // 云端本地的全媒体列表
-        mAllMediaListAdapter = new AllMediaListAdapter(getApplicationContext(), mAllMediaListBeans);
-        mAllMediaListAdapter.setOnALlMediaListItemListener(new AllMediaListAdapter.OnAllMediaListItemEventListener() {
+        mMediaLibraryListAdapter = new MediaLibraryListAdapter(getApplicationContext(), mMediaLibraryListBeans);
+        mMediaLibraryListAdapter.setOnALlMediaListItemListener(new MediaLibraryListAdapter.OnAllMediaListItemEventListener() {
             @Override
             public void doItemDelete(int position) {
                 mDeleteDeque.clear();
-                mDeleteDeque.push(mAllMediaListAdapter.getItem(position).getMediaData());
+                mDeleteDeque.push(mMediaLibraryListAdapter.getItem(position).getMediaData());
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_LIST_ITEM_DELETE;
                 mHandler.sendMessage(msg);
@@ -1021,7 +1021,7 @@ public class MediaActivity extends Activity
             public void doItemPreview(int position) {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_LIST_ITEM_PREVIEW;
-                msg.obj = mAllMediaListAdapter.getItem(position).getMediaData();
+                msg.obj = mMediaLibraryListAdapter.getItem(position).getMediaData();
                 mHandler.sendMessage(msg);
             }
 
@@ -1029,7 +1029,7 @@ public class MediaActivity extends Activity
             public void doItemDownLoad(int position) {
                 Message msg = mHandler.obtainMessage();
                 msg.what = MSG_MEDIA_LIST_ITEM_DOWNLOAD_OR_PAUSE;
-                msg.obj = mAllMediaListAdapter.getItem(position).getMediaData();
+                msg.obj = mMediaLibraryListAdapter.getItem(position).getMediaData();
                 mHandler.sendMessage(msg);
             }
 
@@ -1040,13 +1040,13 @@ public class MediaActivity extends Activity
                 mHandler.sendMessage(msg);
             }
         });
-        mAllMediaListView.setAdapter(mAllMediaListAdapter);
+        mAllMediaListView.setAdapter(mMediaLibraryListAdapter);
         mAllMediaListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // 如果是双击
                 if (ViewUtil.isFastDoubleClick()) {
-                    MediaBean mediaItem = mAllMediaListBeans.get(position).getMediaData();
+                    MediaBean mediaItem = mMediaLibraryListBeans.get(position).getMediaData();
                     addToPlayList(mediaItem);
                 }
             }
@@ -1436,10 +1436,10 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.cb_media_all_list_check:
-                for (AllMediaListBean data : mAllMediaListBeans) {
+                for (MediaLibraryListBean data : mMediaLibraryListBeans) {
                     data.setSelected(mAllMediaListCheckBox.isChecked());
                 }
-                mAllMediaListAdapter.refresh();
+                mMediaLibraryListAdapter.refresh();
                 updateMultiActionButtonUiState();
                 break;
 
@@ -1467,7 +1467,7 @@ public class MediaActivity extends Activity
 
             case R.id.bt_media_multi_delete:
                 mDeleteDeque.clear();
-                for (AllMediaListBean data : mAllMediaListBeans) {
+                for (MediaLibraryListBean data : mMediaLibraryListBeans) {
                     if (data.isSelected()) {
                         mDeleteDeque.push(data.getMediaData());
                         // 这边只加入等待删除的列表,从播放列表以及数据库删除记录的动作,在处理msg的地方做
@@ -1480,28 +1480,28 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.bt_media_multi_add:
-                for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
+                for (MediaLibraryListBean data : mMediaLibraryListAdapter.getListDatas()) {
                     if (data.isSelected()) {
                         addToPlayList(data.getMediaData());
                         data.setSelected(false);
                     }
                 }
-                mAllMediaListAdapter.refresh();
+                mMediaLibraryListAdapter.refresh();
                 break;
 
             case R.id.bt_media_multi_download:
-                for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
+                for (MediaLibraryListBean data : mMediaLibraryListAdapter.getListDatas()) {
                     if (data.isSelected()) {
                         addToDownload(data.getMediaData());
                         data.setSelected(false);
                     }
                 }
-                mAllMediaListAdapter.refresh();
+                mMediaLibraryListAdapter.refresh();
                 break;
 
             case R.id.bt_media_multi_copy_to_right:
                 mCopyDeque.clear();
-                for (AllMediaListBean data : mAllMediaListAdapter.getListDatas()) {
+                for (MediaLibraryListBean data : mMediaLibraryListAdapter.getListDatas()) {
                     if (data.isSelected()) {
                         if (data.getMediaData().getSource()==MediaBean.SOURCE_LOCAL) {
                             mCopyDeque.add(data.getMediaData().getPath());
@@ -1519,6 +1519,11 @@ public class MediaActivity extends Activity
     }
 
     private void addToDownload(MediaBean addItem) {
+        if (addItem.getSource()==SOURCE_LOCAL || addItem.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+            Log.i(TAG, "call download do nothing, item is local/downloaded:" + addItem.toString());
+            return;
+        }
+
         Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
         intent.putExtra(EXTRA_KEY_URL, addItem.getUrl());
         Log.i(TAG, "call download:" + addItem.toString());
@@ -1533,7 +1538,7 @@ public class MediaActivity extends Activity
     }
 
     private void updateMultiActionButtonUiState() {
-        if (mAllMediaListAdapter.hasItemSelected()) {
+        if (mMediaLibraryListAdapter.hasItemSelected()) {
             // 额外需要检查是否存在usb设备
             if (mUsbPartitionSpinner.getSelectedItemPosition()!=AdapterView.INVALID_POSITION) {
                 mMultiCopyToUsbBtn.setEnabled(true);
@@ -1659,8 +1664,8 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_LOCAL_MEDIA_LIST_UI_CLEAN:
-                    mAllMediaListAdapter.clear();
-                    mAllMediaListAdapter.refresh();
+                    mMediaLibraryListAdapter.clear();
+                    mMediaLibraryListAdapter.refresh();
                     new MediaBeanDao(MediaActivity.this).deleteItemsLocalImport();
                     break;
 
@@ -1694,7 +1699,7 @@ public class MediaActivity extends Activity
                     break;
 
                 case MSG_MEDIA_LIST_UI_SYNC_WITH_DATABASE:
-                    mAllMediaListAdapter.clear();
+                    mMediaLibraryListAdapter.clear();
 
                     int orderMode = loadMediaOrderModeFromConfig(getApplicationContext());
 
@@ -1709,9 +1714,9 @@ public class MediaActivity extends Activity
 
                     for (MediaBean m:allDataItems)
                     {
-                        mAllMediaListAdapter.addItem(new AllMediaListBean(m));
+                        mMediaLibraryListAdapter.addItem(new MediaLibraryListBean(m));
                     }
-                    mAllMediaListAdapter.refresh();
+                    mMediaLibraryListAdapter.refresh();
                     updateMultiActionButtonUiState();
                     break;
 
@@ -1862,12 +1867,12 @@ public class MediaActivity extends Activity
 
             if (!copyDoneItem.isEmpty()) {
                 // 复制完成后取消多选框的状态
-                for (AllMediaListBean tmp : mAllMediaListAdapter.getListDatas()) {
+                for (MediaLibraryListBean tmp : mMediaLibraryListAdapter.getListDatas()) {
                     tmp.setSelected(false);
                 }
                 mAllMediaListCheckBox.setChecked(false);
 
-                mAllMediaListAdapter.refresh();
+                mMediaLibraryListAdapter.refresh();
             }
 
             // 由于拷贝到usb的目录是export目录,不是media目录,不会被扫描出来,所以不用再刷新usb列表
@@ -2110,7 +2115,7 @@ public class MediaActivity extends Activity
             if (needDeleteDiskData.getSource()==SOURCE_LOCAL) { // 本地文件
 
                 // 从界面中删除
-                mAllMediaListAdapter.removeItem(needDeleteDiskData);
+                mMediaLibraryListAdapter.removeItem(needDeleteDiskData);
                 // 从数据库删除
                 new MediaBeanDao(MediaActivity.this).delete(needDeleteDiskData);
                 //从磁盘删除
@@ -2126,7 +2131,7 @@ public class MediaActivity extends Activity
                     needDeleteDiskData.setDuration(0);
 
                     // 更新界面
-                    mAllMediaListAdapter.update(needDeleteDiskData);
+                    mMediaLibraryListAdapter.update(needDeleteDiskData);
                     // 更新数据库
                     new MediaBeanDao(MediaActivity.this).update(needDeleteDiskData);
                     // 从磁盘删除
@@ -2150,7 +2155,7 @@ public class MediaActivity extends Activity
             mPlayer.mediaPlayNext();
         }
 
-        mAllMediaListAdapter.refresh();
+        mMediaLibraryListAdapter.refresh();
         updateCapacityUi(MASS_STORAGE_PATH);
         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
     }

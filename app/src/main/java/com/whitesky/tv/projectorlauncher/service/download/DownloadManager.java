@@ -107,6 +107,10 @@ public class DownloadManager {
                     && task.getEntity().getDownloadState() != MediaBean.STATE_DOWNLOAD_ERROR)
         {
             Log.w(TAG,"do nothing because bean is already in downloading: " + task.getEntity().toString());
+            if (task.getEntity().getDownloadState()== MediaBean.STATE_DOWNLOAD_DOWNLOADED) {
+                Log.w(TAG,"force remove downloaded item in taskMap!");
+                mTaskMap.remove(task.getEntity().getUrl());
+            }
             return;
         }
 

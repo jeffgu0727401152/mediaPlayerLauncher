@@ -22,7 +22,7 @@ public class MediaBeanDao {
     public MediaBeanDao(Context context) {
         this.context = context;
         try {
-            this.dao = MediaDatabaseHelper.getInstance(context).getDao(MediaBean.class);
+            this.dao = DatabaseHelper.getInstance(context).getDao(MediaBean.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }

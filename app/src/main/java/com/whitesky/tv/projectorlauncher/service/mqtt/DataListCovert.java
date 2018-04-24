@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
-import com.whitesky.tv.projectorlauncher.media.bean.Result;
+import com.whitesky.tv.projectorlauncher.media.bean.CloudListResult;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
@@ -111,14 +111,14 @@ public class DataListCovert {
     }
 
     // 将云端获取的文件列表,转换为本地数据库列表格式
-    public static void covertCloudResultToMediaList(Context context, List<MediaBean> desList, List<Result> srcList) {
+    public static void covertCloudResultToMediaList(Context context, List<MediaBean> desList, List<CloudListResult> srcList) {
         if (desList==null || srcList==null) {
             return;
         }
 
         desList.clear();
         for (int i = 0; i < srcList.size(); i++) {
-            Result srcItem = srcList.get(i);
+            CloudListResult srcItem = srcList.get(i);
 
             String localStoreLocation = "";
 
