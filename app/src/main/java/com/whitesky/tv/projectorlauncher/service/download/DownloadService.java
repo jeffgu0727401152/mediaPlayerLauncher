@@ -264,6 +264,24 @@ public class DownloadService extends Service {
         }
     };
 
+    private void handleDownloadError(final MediaBean bean, final DownloadCallback callback) {
+        downloadServiceHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+                if(info != null && info.isAvailable()) {
+                    String name = info.getTypeName();
+                    Log.d(TAG, bean.getUrl() + " network is ok, retry download!");
+
+                    // 发生错误自动重新下载
+                    bean.setDownloadState(STATE_DOWNLOAD_NONE);
+                    DownloadManager.getInstance().download(bean, callback);
+                }
+            }
+        }, 4000);
+    }
+
     private ApkDownloadObserver mApkDownloadCallback = new ApkDownloadObserver();
 
     private class ApkDownloadObserver implements DownloadCallback {
@@ -313,17 +331,7 @@ public class DownloadService extends Service {
         @Override
         public void onError(MediaBean bean) {
             Log.d(TAG,bean.getUrl() + " onError");
-
-            ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-            if(info != null && info.isAvailable()) {
-                String name = info.getTypeName();
-                Log.d(TAG, bean.getUrl() + " network is ok, retry download now!");
-
-                // 发生错误自动重新下载
-                bean.setDownloadState(STATE_DOWNLOAD_NONE);
-                DownloadManager.getInstance().download(bean, mApkDownloadCallback);
-            }
+            handleDownloadError(bean, mApkDownloadCallback);
         }
     }
 
@@ -355,12 +363,8 @@ public class DownloadService extends Service {
             Log.d(TAG,bean.getUrl() + " onError");
             sendResultToMediaActivity(bean);
 
-            ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-            if(info != null && info.isAvailable()  && MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
-                String name = info.getTypeName();
-                Log.d(TAG, bean.getUrl() + " network is ok, retry download now!");
-                DownloadManager.getInstance().download(bean, mMediaDownloadCallback);
+            if (MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
+                handleDownloadError(bean, mMediaDownloadCallback);
             }
         }
     }
