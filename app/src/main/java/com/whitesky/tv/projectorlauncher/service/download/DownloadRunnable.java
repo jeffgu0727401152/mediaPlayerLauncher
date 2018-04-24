@@ -67,7 +67,7 @@ public class DownloadRunnable implements Runnable {
         return mEntity;
     }
 
-    private void runnableErrorReturn() {
+    private void runnableErrorNotify() {
         mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
         if (mManagerNotify!=null) mManagerNotify.notifyReturn(mEntity.getUrl());
         if(mCallback!=null) mCallback.onError(mEntity);
@@ -76,7 +76,6 @@ public class DownloadRunnable implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return;
     }
 
     @Override
@@ -119,11 +118,13 @@ public class DownloadRunnable implements Runnable {
                 // 因为每次下载都是从网络获取长度,所以这边就不记到数据库了,下载完成后刷新列表,这个时候由磁盘内容更新数据库
             } else {
                 Log.e(TAG, "get file length  Response failed!");
-                runnableErrorReturn();
+                runnableErrorNotify();
+                return;
             }
         } catch (IOException e) {
             Log.e(TAG,"IOException in get file length" + e.toString());
-            runnableErrorReturn();
+            runnableErrorNotify();
+            return;
         }
 
         mEntity.setDownloadState(STATE_DOWNLOAD_START);
@@ -147,7 +148,8 @@ public class DownloadRunnable implements Runnable {
                 tempFile.createNewFile();
             } catch (IOException e) {
                 Log.e(TAG,"IOException in create file" + e.toString());
-                runnableErrorReturn();
+                runnableErrorNotify();
+                return;
             }
 
         } else {
@@ -161,7 +163,8 @@ public class DownloadRunnable implements Runnable {
             mEntity.setDownloadState(STATE_DOWNLOAD_ERROR);
             mEntity.setDownloadProgress(0);
             tempFile.delete();
-            runnableErrorReturn();
+            runnableErrorNotify();
+            return;
         }
 
         lastUpdateProgress = completeSize;
@@ -175,7 +178,8 @@ public class DownloadRunnable implements Runnable {
             Response response = mClient.newCall(request).execute();
             if (response == null || !response.isSuccessful()) {
                 Log.e(TAG, "response fail in downloading! ret code = " + response.code());
-                runnableErrorReturn();
+                runnableErrorNotify();
+                return;
             }
 
             OutputStream os = new FileOutputStream(tempFile, true);
@@ -243,7 +247,7 @@ public class DownloadRunnable implements Runnable {
             }
         } catch (IOException e) {
             Log.e(TAG, "IOException in downloading " + e.toString());
-            runnableErrorReturn();
+            runnableErrorNotify();
         } finally {
             try {
                 if (fileLock != null) fileLock.release();
