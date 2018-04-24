@@ -10,8 +10,8 @@
         android:layout_height="@dimen/x30"
         android:layout_marginLeft="@dimen/x10"
         android:layout_gravity="center"
-        android:background="@drawable/img_media_playlist_move"
-        android:scaleType="fitXY" />
+        android:src="@drawable/img_media_playlist_move"
+        android:scaleType="fitCenter" />
 
     <ImageView
         android:id="@+id/iv_media_play_indicator"

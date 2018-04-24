@@ -7,7 +7,7 @@
 
 
     <ImageView
-        android:id="@+id/iv_home2_1"
+        android:id="@+id/iv_disk_format_logo"
         android:layout_width="@dimen/x300"
         android:layout_height="@dimen/x80"
         android:layout_alignParentLeft="true"
@@ -17,10 +17,10 @@
 
     <ImageView
         android:id="@+id/iv_disk_format_logo_big"
-        android:layout_width="@dimen/x380"
+        android:layout_width="@dimen/x600"
         android:layout_height="@dimen/x220"
         android:layout_below="@+id/iv_disk_format_logo"
-        android:layout_marginLeft="@dimen/x770"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/x240"
         android:src="@drawable/img_logo_big" />
 
@@ -29,7 +29,7 @@
         android:layout_width="@dimen/x380"
         android:layout_height="@dimen/x220"
         android:layout_below="@+id/iv_disk_format_logo"
-        android:layout_marginLeft="@dimen/x770"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/x240"
         android:visibility="invisible"
         app:blockColor="#ffffff"
@@ -57,7 +57,7 @@
         android:id="@+id/bt_format_disk"
         android:layout_width="@dimen/x380"
         android:layout_height="@dimen/x120"
-        android:layout_alignStart="@+id/iv_disk_format_logo_big"
+        android:layout_centerHorizontal="true"
         android:layout_below="@+id/tv_disk_format_info"
         android:layout_marginTop="13dp"
         android:background="@drawable/button_selector_ota"

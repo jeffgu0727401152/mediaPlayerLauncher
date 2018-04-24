@@ -18,7 +18,7 @@
     <string name="str_admin_device_terminal_model">终端型号</string>
     <string name="str_admin_device_sys_version_date">版本日期</string>
     <string name="str_admin_device_sys_version">系统版本</string>
-    <string name="str_admin_device_sys_sn">SN</string>
+    <string name="str_admin_device_sys_sn">SN串号</string>
     <string name="str_admin_device_ui_version">UI版本</string>
     <string name="str_admin_device_ram_info">内存信息</string>
     <string name="str_admin_device_rom_info">存储空间</string>
@@ -35,7 +35,7 @@
     <string name="setup_title_format">格式化硬盘</string>
 
     <!--系统设置之磁盘格式化页-->
-    <string name="str_format_description_default">格式化设备SATA口上的硬盘</string>
+    <string name="str_format_description_default">格式化设备SATA接口上的硬盘</string>
     <string name="str_format_description_done">硬盘格式化已经完成</string>
     <string name="str_format_search_sata_disk">寻找SATA硬盘中…</string>
     <string name="str_format_not_found_sata">找不到SATA硬盘,请确认SATA硬盘的存在(SATA硬盘不能带电插拔)!</string>
@@ -73,12 +73,12 @@
     <string name="title_quicken_clean">一键优化</string>
 
     <!--网络测速-->
-    <string name="title_center_net_speed_test">网络测速 为您检测最佳网速</string>
+    <string name="title_center_net_speed_test">网络测速 检测您的网络速度</string>
     <string name="str_btn_net_speed_test">开始测速</string>
     <string name="str_in_net_speed_test">正在进行网络测速,请稍后...</string>
     <string name="str_stop_net_speed_test">停止测速</string>
     <string name="str_restart_net_speed_test">再次测速</string>
-    <string name="str_text_net_speed_test_res">本次测速结果:  网速</string>
+    <string name="str_text_net_speed_test_res">本次测速结果: </string>
     <string name="title_top_net_speed_test">网络测速</string>
 
 
@@ -88,7 +88,7 @@
     <string name="str_media_display_scale">比例</string>
     <string name="str_media_file_state">状态</string>
     <string name="str_media_list_all">媒体库</string>
-    <string name="str_media_list_usb">移动盘</string>
+    <string name="str_media_list_usb">移动设备</string>
 
     <!--下载-->
     <string name="str_downloading">下载中</string>

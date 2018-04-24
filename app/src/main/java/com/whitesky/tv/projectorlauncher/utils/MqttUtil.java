@@ -49,7 +49,7 @@ public class MqttUtil {
     private int mMqttTimeout_s = 10;
     private int mMqttHeartBeat_s = 60;
     private int mMqttRetryDelay_ms = 20*1000;
-    private int mMqttMsgQos = 1;
+    private int mMqttMsgQos = 0;
 
     public interface MqttMessageCallback
     {

@@ -5,7 +5,7 @@
     <string name="title_default">Stay tuned</string>
 
     <!--Home 页-->
-    <string name="str_home_welcome">Welcome to use WhiteSky screen player.</string>
+    <string name="str_home_welcome">Welcome to use WhiteSky player.</string>
     <string name="str_home_peo">User</string>
     <string name="str_home_media">Media</string>
     <string name="str_home_sys">Settings</string>
@@ -40,7 +40,7 @@
     <string name="str_format_search_sata_disk">Looking for SATA...</string>
     <string name="str_format_not_found_sata">Can not find SATA device,please confirm that you have already connected to a hard disk(SATA cannot be hot swapped)!</string>
     <string name="str_format_btn">Start to format</string>
-    <string name="str_format_warning">The data in HardDisk will be lost. Do you want to continue?</string>
+    <string name="str_format_warning">The data in HardDisk will lost. Do you want to continue?</string>
     <string name="str_format_padding">Formatting...  Do not cut off the power!!!</string>
 
     <!--系统设置之系统升级页-->
@@ -111,14 +111,14 @@
     <string name="str_media_format_error">uncoded!</string>
 
 
-    <string name="str_media_cloud_file_need_login_toast">Device need to be login to get cloud media list</string>
+    <string name="str_media_cloud_file_need_login_toast">Device needs login to get cloud media list</string>
     <string name="str_media_cloud_file_could_not_export_toast">Cloud media file(s) cannot be exported to U disk</string>
     <string name="str_media_file_copy_toast">Copy files:</string>
     <string name="str_media_file_delete_toast">Delete files:</string>
     <string name="str_media_file_copy_process_dialog_title">Copying...</string>
     <string name="str_media_file_delete_dialog_title">Do you want to delete file(s)?</string>
     <string name="str_media_file_copy_same_dialog_title"> File(s) are already exists in the target folder</string>
-    <string name="str_media_file_copy_process_dialog_prompt">Do not exit or unplug the U disk before copying is complete</string>
+    <string name="str_media_file_copy_process_dialog_prompt">Do not exit or unplug the U disk before copy complete</string>
     <string name="str_media_file_copy_capacity_prompt">Insufficient HardDisk capacity! Please delete some media file and try it again!</string>
 
 
@@ -140,7 +140,7 @@
     <string name="str_media_info_name">Name:</string>
     <string name="str_media_info_type">Type:</string>
     <string name="str_media_info_wh">Width*Height:</string>
-    <string name="str_media_info_size">Size:</string>
+    <string name="str_media_info_size">FileSize:</string>
     <string name="str_media_info_bps">BitRate:</string>
 
     <!--网络配置页-->

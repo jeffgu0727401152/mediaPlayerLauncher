@@ -58,7 +58,7 @@
         android:id="@+id/bt_local_update"
         android:layout_width="@dimen/x380"
         android:layout_height="@dimen/x120"
-        android:layout_alignStart="@+id/iv_ota_local_logo_big"
+        android:layout_centerHorizontal="true"
         android:layout_below="@+id/tv_ota_update_info"
         android:layout_marginTop="13dp"
         android:background="@drawable/button_selector_ota"

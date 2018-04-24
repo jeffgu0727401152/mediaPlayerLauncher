@@ -48,6 +48,9 @@
         <activity
             android:name="com.whitesky.tv.projectorlauncher.settings.QuickenActivity"
             android:theme="@style/transcutestyle" />
+        <activity
+            android:name="com.whitesky.tv.projectorlauncher.settings.LanguageActivity"
+            android:theme="@style/transcutestyle" />
         <activity android:name="com.whitesky.tv.projectorlauncher.media.MediaActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.AdminActivity" />
         <activity android:name="com.whitesky.tv.projectorlauncher.admin.AccountActivity" />

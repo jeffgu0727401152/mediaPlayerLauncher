@@ -127,8 +127,10 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
     private final String STR_MQTT_PUSH_ACTION_LOCALDELETE  = "localdelete";   // 设置删除
     private final String STR_MQTT_PUSH_ACTION_WAKEUPGROUP  = "wakeup";   // 网络唤醒局域网其他设备
 
-    private final static int MSG_NONE = 0;
+    private final int MQTT_DEFAULT_PUBLISH_QOS = 0;
 
+
+    private final static int MSG_NONE = 0;
     // command
     private final static int MSG_CMD_LOGIN_DONE = 200;
     private final static int MSG_CMD_REBOOT = 201;
@@ -800,7 +802,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         cmdRet = result.successMsg;
                     }
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
-                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr.substring(0,100) + cmdRet,2);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr.substring(0,100) + cmdRet,MQTT_DEFAULT_PUBLISH_QOS);
                     break;
 
                 case MSG_REQUEST_INFO:
@@ -829,7 +831,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                     jsonStr = gson.toJson(info);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
-                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,MQTT_DEFAULT_PUBLISH_QOS);
                     break;
 
                 case MSG_REQUEST_SHARELIST:
@@ -840,7 +842,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     }
                     jsonStr = gson.toJson(responseDataList);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
-                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,MQTT_DEFAULT_PUBLISH_QOS);
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
@@ -853,7 +855,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     jsonStr = gson.toJson(responseDataList);
 
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
-                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,MQTT_DEFAULT_PUBLISH_QOS);
 
                     break;
 
@@ -865,7 +867,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     }
                     jsonStr = gson.toJson(responseDataList);
                     rawStr = rawStr.replace(STR_MQTT_MSG_TYPE_REQ, STR_MQTT_MSG_TYPE_RET);
-                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,2);
+                    MqttUtil.getInstance(getApplicationContext()).publish(rawStr + jsonStr,MQTT_DEFAULT_PUBLISH_QOS);
                     break;
 
                 case MSG_PUSH_PLAYLIST:

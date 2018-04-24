@@ -104,8 +104,10 @@ public class SysSettingActivity extends Activity implements View.OnClickListener
                 //SysSettingActivity.this.finish();
                 break;
             case R.id.rf_sys_language:
-                startActivity(new Intent(Settings.ACTION_LOCALE_SETTINGS));
+                //startActivity(new Intent(Settings.ACTION_LOCALE_SETTINGS));
                 //SysSettingActivity.this.finish();
+                Intent intentLanguage = new Intent(getApplicationContext(), LanguageActivity.class);
+                startActivity(intentLanguage);
                 break;
             default:
                 break;
