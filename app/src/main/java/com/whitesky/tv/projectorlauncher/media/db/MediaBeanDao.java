@@ -17,7 +17,7 @@ public class MediaBeanDao {
     private Context context;
     // ORMLite提供的DAO类对象，第一个泛型是要操作的数据表映射成的实体类；第二个泛型是这个实体类中ID的数据类型
     private Dao<MediaBean, String> dao;
-    static final Object mediaDbLock = new Object();
+    static final Object mapLock = new Object();
 
     public MediaBeanDao(Context context) {
         this.context = context;
@@ -30,7 +30,7 @@ public class MediaBeanDao {
 
     // 向media表中添加一条数据
     public void createOrUpdate(MediaBean data) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 dao.createOrUpdate(data);
             } catch (SQLException e) {
@@ -41,7 +41,7 @@ public class MediaBeanDao {
 
     // 删除media表中的一条数据
     public void delete(MediaBean data) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 dao.delete(data);
             } catch (SQLException e) {
@@ -52,7 +52,7 @@ public class MediaBeanDao {
 
     // 修改media表中的一条数据
     public void update(MediaBean data) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 dao.update(data);
             } catch (SQLException e) {
@@ -63,7 +63,7 @@ public class MediaBeanDao {
 
     // 向media表中添加多条数据
     public void createOrUpdate(List<MediaBean> datas) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             for (MediaBean itemInsert : datas) {
                 createOrUpdate(itemInsert);
             }
@@ -72,7 +72,7 @@ public class MediaBeanDao {
 
     // 删除media表中的多条数据
     public void delete(List<MediaBean> datas) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 dao.delete(datas);
             } catch (SQLException e) {
@@ -83,7 +83,7 @@ public class MediaBeanDao {
 
     // 查询出表中的所有数据
     public List<MediaBean> selectAll() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> users = null;
             try {
                 users = dao.queryForAll();
@@ -96,7 +96,7 @@ public class MediaBeanDao {
 
     // 按照显示名查询出表中的所有数据
     public List<MediaBean> selectAllByNameOrder(boolean ascending) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> items = null;
             try {
                 items = dao.queryBuilder().orderBy(MediaBean.COLUMNNAME_ORDER_DESCRIPTION, ascending).query();
@@ -109,7 +109,7 @@ public class MediaBeanDao {
 
     // 按照播放时长查询出表中的所有数据
     public List<MediaBean> selectAllByDurationOrder(boolean ascending) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> items = null;
             try {
                 items = dao.queryBuilder().orderBy(MediaBean.COLUMNNAME_DURATION, ascending).query();
@@ -135,14 +135,14 @@ public class MediaBeanDao {
 
     // 删除media表中的所有数据
     public void deleteAll() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             delete(selectAll());
         }
     }
 
     // 查询出表中的所有需要继续下载的媒体记录
     public List<MediaBean> selectItemsDownloading() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> retList = null;
             try {
                 retList = dao.queryBuilder().where()
@@ -161,7 +161,7 @@ public class MediaBeanDao {
 
     // 查询出表中的所有通过U盘导入到本地的媒体记录
     public List<MediaBean> selectItemsLocalImport() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> retList = null;
             try {
                 retList = dao.queryBuilder().where()
@@ -176,7 +176,7 @@ public class MediaBeanDao {
 
     // 查询出所有云端下载到本地的文件
     public List<MediaBean> selectDownloadedItemsFromCloud() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> retList = null;
             try {
                 retList = dao.queryBuilder().where()
@@ -193,7 +193,7 @@ public class MediaBeanDao {
 
     // 删除media表中本地USB导入的数据
     public void deleteItemsLocalImport() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 List<MediaBean> delList = dao.queryBuilder().where()
                         .eq(MediaBean.COLUMNNAME_SOURCE, MediaBean.SOURCE_LOCAL)
@@ -207,7 +207,7 @@ public class MediaBeanDao {
 
     // 删除media表中所有云端的数据
     public void deleteItemsFromCloud() {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             try {
                 List<MediaBean> delList = dao.queryBuilder().where()
                         .gt(MediaBean.COLUMNNAME_SOURCE, MediaBean.SOURCE_LOCAL)
@@ -221,7 +221,7 @@ public class MediaBeanDao {
 
     // 根据主键取出用户信息,这里的主键是path
     public MediaBean queryByPath(String path) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             if (path == null) {
                 return null;
             }
@@ -238,7 +238,7 @@ public class MediaBeanDao {
 
     // 根据ID取出用户信息,非主键可能取出多个
     public List<MediaBean> queryById(int id) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> retList = null;
             try {
                 retList = dao.queryBuilder().where()
@@ -251,7 +251,7 @@ public class MediaBeanDao {
     }
 
     public List<MediaBean> queryByUrl(String url) {
-        synchronized (mediaDbLock) {
+        synchronized (mapLock) {
             List<MediaBean> retList = null;
             try {
                 retList = dao.queryBuilder().where()

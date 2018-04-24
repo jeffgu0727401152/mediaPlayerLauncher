@@ -39,6 +39,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 public class PlayListAdapter extends CommonAdapter<PlayListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
+    static final Object listLock = new Object();
 
     public static final int CHANGE_EVENT_ADD = 0;
     public static final int CHANGE_EVENT_REMOVE = 1;
@@ -98,13 +99,24 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         ((Spinner) holder.getView(R.id.sp_media_scale)).setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
-                if (getItem(position).getPlayScale() == pos) {
+                PlayListBean bean = null;
+                synchronized (listLock) {
+                    if (position>=getListDatas().size()) {
+                        Log.w(TAG, "delete play list too quick!");
+                        return;
+                    } else {
+                        bean = getItem(position);
+                    }
+                }
+
+
+                if (bean == null || bean.getPlayScale() == pos) {
                     return;
                 }
 
-                getItem(position).setPlayScale(pos);
+                bean.setPlayScale(pos);
                 if (mOnPlaylistItemEventListener != null) {
-                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_SCALE,getItem(position));
+                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_SCALE, bean);
                     mOnPlaylistItemEventListener.onScaleChange(position, pos);
                 }
             }
@@ -181,14 +193,16 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 &&item.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
                 &&item.getMediaData().getDuration()==0) {
             holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-            holder.setText(R.id.tv_media_state, "error format");
+            holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_format_error));
         }
     }
 
 
     public boolean exchange(int src, int dst) {
         if (src != INVALID_POSITION && dst != INVALID_POSITION) {
-            Collections.swap(getListDatas(), src, dst);
+            synchronized (listLock) {
+                Collections.swap(getListDatas(), src, dst);
+            }
 
             if (mOnPlaylistItemEventListener != null) {
                 mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_EXCHANGE,null);
@@ -202,7 +216,9 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
     @Override
     public void clear() {
-        super.clear();
+        synchronized (listLock) {
+            super.clear();
+        }
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,null);
         }
@@ -211,7 +227,10 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
     @Override
     public void addItem(PlayListBean item) {
-        super.addItem(item);
+        synchronized (listLock) {
+            super.addItem(item);
+        }
+
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_ADD,item);
         }
@@ -220,7 +239,10 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
     @Override
     public void removeItem(PlayListBean item) {
-        super.removeItem(item);
+        synchronized (listLock) {
+            super.removeItem(item);
+        }
+
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,item);
         }
@@ -230,18 +252,28 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     @Override
     // 重写方法不改变内部数据对象的指向
     public void setListDatas(List<PlayListBean> items){
-        listDatas.clear();
+        synchronized (listLock) {
+            listDatas.clear();
+        }
+
         if (items == null) {
             return;
         }
-        for (int i = 0; i < items.size(); i++) {
-            listDatas.add(items.get(i));
+
+        synchronized (listLock) {
+            for (int i = 0; i < items.size(); i++) {
+                listDatas.add(items.get(i));
+            }
         }
     }
 
     public void removeItem(int position) {
         PlayListBean removeBean = getItem(position);
-        super.removeItem(removeBean);
+
+        synchronized (listLock) {
+            super.removeItem(removeBean);
+        }
+
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,removeBean);
         }
@@ -249,7 +281,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     public boolean isAllItemsFromCloud() {
-        synchronized (getListDatas()) {
+        synchronized (listLock) {
             for (PlayListBean bean:getListDatas()) {
                 if (bean.getMediaData().getSource()==SOURCE_LOCAL) {
                     return false;
@@ -260,7 +292,7 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     public boolean hasPlayableItem() {
-        synchronized (getListDatas()) {
+        synchronized (listLock) {
             for (PlayListBean bean:getListDatas()) {
                 if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
                     return true;
@@ -270,15 +302,16 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
         }
     }
 
-    public synchronized void update(MediaBean data) {
-        for (PlayListBean it:listDatas) {
-            if (it.getMediaData().getPath().equals(data.getPath())) {
-                it.setMediaData(data);
+    public void update(MediaBean data) {
+        synchronized (listLock) {
+            for (PlayListBean it : listDatas) {
+                if (it.getMediaData().getPath().equals(data.getPath())) {
+                    it.setMediaData(data);
+                }
             }
         }
 
         if (mOnPlaylistItemEventListener != null) {
-            listDatas.toString();
             mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_UPDATE,null);
         }
     }

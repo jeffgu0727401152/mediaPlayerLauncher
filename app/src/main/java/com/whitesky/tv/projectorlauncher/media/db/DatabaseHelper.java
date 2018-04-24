@@ -64,6 +64,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
         try {
             TableUtils.createTable(connectionSource, MediaBean.class);
+            //TableUtils.createTable(connectionSource, PlayBean.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -73,6 +74,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
         try {
             TableUtils.dropTable(connectionSource, MediaBean.class, true);
+            //TableUtils.dropTable(connectionSource, PlayBean.class, true);
             onCreate(database, connectionSource);
         } catch (SQLException e) {
             e.printStackTrace();

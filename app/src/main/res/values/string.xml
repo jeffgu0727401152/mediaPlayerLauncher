@@ -105,10 +105,10 @@
     <string name="str_media_usb_device_plug_out_toast">USB device plugout</string>
     <string name="str_media_wait_capacity">--G/--G</string>
 
-    <string name="str_media_download_waiting">Queue…</string>
+    <string name="str_media_download_waiting">Waiting…</string>
     <string name="str_media_download_pause">Pause:</string>
     <string name="str_media_download_error">Error!</string>
-    <string name="str_media_format_error">Uncoded!</string>
+    <string name="str_media_format_error">uncoded!</string>
 
 
     <string name="str_media_cloud_file_need_login_toast">Device need to be login to get cloud media list</string>
