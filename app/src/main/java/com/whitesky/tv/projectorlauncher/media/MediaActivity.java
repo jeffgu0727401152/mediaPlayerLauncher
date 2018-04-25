@@ -121,6 +121,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 import static com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService.MSG_CMD_NEXT;
@@ -229,6 +230,8 @@ public class MediaActivity extends Activity
 
     private Spinner mUsbPartitionSpinner;
     private ArrayAdapter<String> mUsbPartitionAdapter;
+
+    private long mLastDownloadUpdateUiTime = 0;
 
     private void changeWholePlayList(List<PlayListBean> target) {
         mPlayListAdapter.setListDatas(target);
@@ -413,10 +416,20 @@ public class MediaActivity extends Activity
                 }
 
                 mPlayListAdapter.update(bean);
-                mPlayListAdapter.refresh();
-
                 mMediaLibraryListAdapter.update(bean);
-                mMediaLibraryListAdapter.refresh();
+
+                // 调用refresh刷新list会导致UI无法,目前是每下载2M就会汇报一次进度,如果网速非常快,更新频繁可能导致ANR
+                // 所以此处实时更新变量的内容,但是刷新限定一秒更新一次,除非需要更新的内容是 下载完毕/下载错误
+                long timeNow = System.currentTimeMillis();
+                if (timeNow - mLastDownloadUpdateUiTime > 1000
+                        || bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
+                        || bean.getDownloadState()==STATE_DOWNLOAD_ERROR) {
+                    Log.i(TAG,"download update refresh list");
+                    mMediaLibraryListAdapter.refresh();
+                    mPlayListAdapter.refresh();
+                    mLastDownloadUpdateUiTime = timeNow;
+                }
+
             }
         }
     };
