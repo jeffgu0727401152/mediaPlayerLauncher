@@ -178,8 +178,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     private int mReplayMode = MEDIA_REPLAY_ALL;
 
     //播放完成回调
-    public interface OnMediaEventListener
-    {
+    public interface OnMediaEventListener {
         void onMediaPlayFullScreenSwitch(boolean fullScreen);
         void onMediaPlayStop();
         void onMediaPlayCompletion();
@@ -187,13 +186,11 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps);
     }
 
-    public void setOnMediaEventListener(OnMediaEventListener listener)
-    {
+    public void setOnMediaEventListener(OnMediaEventListener listener) {
         mOnMediaEventListener = listener;
     }
 
     private OnMediaEventListener mOnMediaEventListener;
-
 
     public PictureVideoPlayer(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -547,11 +544,9 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public void mediaStop()
     {
         mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
-        if (mPlayState == PLAYER_STATE_PLAY_PICTURE) {
-            pictureStop();
-        } else if (mPlayState == PLAYER_STATE_PLAY_VIDEO) {
-            videoStop();
-        }
+
+        pictureStop();
+        videoStop();
 
         mMediaStop = true;    //保证上一个mSeekBarUpdateService一定可以被结束
 
@@ -772,6 +767,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mPlayList = null;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
+            mMediaPlayer.reset();
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
@@ -796,6 +792,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mPlayState = PLAYER_STATE_PLAY_STOP;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
+            mMediaPlayer.reset();
         }
     }
 

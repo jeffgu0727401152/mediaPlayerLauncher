@@ -1190,6 +1190,8 @@ public class MediaActivity extends Activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG,"onCreate");
+
         super.onCreate(savedInstanceState);
 
         initView();
@@ -1310,6 +1312,8 @@ public class MediaActivity extends Activity
 
     @Override
     protected void onResume() {
+        Log.d(TAG,"onResume");
+
         super.onResume();
         LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
@@ -1359,6 +1363,8 @@ public class MediaActivity extends Activity
 
     @Override
     protected void onPause() {
+        Log.d(TAG,"onPause");
+
         if (mPlayer != null) {
             mPlayer.mediaStop();
         }
@@ -1376,6 +1382,7 @@ public class MediaActivity extends Activity
 
     @Override
     protected void onDestroy() {
+        Log.d(TAG,"onDestroy");
         if (mPlayer != null) {
             mPlayer.release();
             mPlayer = null;
