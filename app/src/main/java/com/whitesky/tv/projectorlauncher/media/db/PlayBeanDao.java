@@ -1,13 +1,14 @@
 package com.whitesky.tv.projectorlauncher.media.db;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
-
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 
 /**
  * Created by jeff on 18-2-4.
@@ -38,12 +39,48 @@ public class PlayBeanDao {
         }
     }
 
+    // 使用一个list循环删除,需要注意每删除一个就会改变数据库中下一个的idx,而与list中的不匹配
     public void delete(PlayBean data) {
+        delete(data.getIdx());
+    }
+
+    // 使用一个list循环删除,需要注意每删除一个就会改变数据库中下一个的idx,而与list中的不匹配
+    public void delete(int idx) {
         synchronized (mapLock) {
             try {
-                dao.delete(data);
+                dao.deleteById(idx);
+
+                // 后面条目的idx顺次减1
+                List<PlayBean> needUpdateBeans = selectIdxLargerAll(idx);
+                if (needUpdateBeans!=null) {
+                    for (PlayBean bean:needUpdateBeans) {
+                        dao.updateId(bean,bean.getIdx()-1);
+                    }
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    // 删除media表中的所有数据
+    public void deleteAll() {
+        synchronized (mapLock) {
+            delete(selectAll());
+        }
+    }
+
+    public void delete(List<PlayBean> datas) {
+        if (datas==null | datas.isEmpty()) {
+            return;
+        }
+
+        synchronized (mapLock) {
+            Collections.sort(datas);
+            int deleteCount = 0;
+            for (PlayBean bean:datas) {
+                delete(bean.getIdx() - deleteCount);
+                deleteCount++;
             }
         }
     }
@@ -66,17 +103,6 @@ public class PlayBeanDao {
         }
     }
 
-    public void delete(List<PlayBean> datas) {
-        synchronized (mapLock) {
-            try {
-                dao.delete(datas);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
     public List<PlayBean> selectAll() {
         synchronized (mapLock) {
             List<PlayBean> users = null;
@@ -89,14 +115,6 @@ public class PlayBeanDao {
         }
     }
 
-    // 删除media表中的所有数据
-    public void deleteAll() {
-        synchronized (mapLock) {
-            delete(selectAll());
-        }
-    }
-
-    // 根据主键取出用户信息,这里的主键是path
     public PlayBean queryByIdx(int idx) {
         synchronized (mapLock) {
             PlayBean user = null;
@@ -106,6 +124,20 @@ public class PlayBeanDao {
                 e.printStackTrace();
             }
             return user;
+        }
+    }
+
+    private List<PlayBean> selectIdxLargerAll(int idx) {
+        synchronized (mapLock) {
+            List<PlayBean> items = null;
+            try {
+                items = dao.queryBuilder().where()
+                        .gt(PlayBean.COLUMNNAME_IDX, idx)
+                        .query();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return items;
         }
     }
 }

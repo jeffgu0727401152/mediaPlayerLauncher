@@ -3,10 +3,10 @@ package com.whitesky.tv.projectorlauncher.service.mqtt;
 import android.content.Context;
 import android.util.Log;
 
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.CloudListResult;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
@@ -36,7 +36,7 @@ public class DataListCovert {
 
     // 将云端推送过来的播放列表,转换为本地播放列表格式
     // 返回值表示是否有数据库中没有的项目被云端送了过来，true说明你需要更新数据库了
-    public static boolean covertCloudPushToPlayList(Context context, List<PlayListBean> desList, List<MediaListPushBean> srcList) {
+    public static boolean covertCloudPushToPlayList(Context context, List<PlayBean> desList, List<MediaListPushBean> srcList) {
         if (desList==null || srcList==null) {
             return false;
         }
@@ -47,21 +47,27 @@ public class DataListCovert {
             if (srcList.get(i).getId()==ID_LOCAL) {
                 MediaBean media =  new MediaBeanDao(context).queryByPath(srcList.get(i).getName());
                 if (media != null) {
+
+                    PlayBean pListItem = new PlayBean(media);
+                    pListItem.setScale(srcList.get(i).getScale());
                     if (media.getType() == MediaBean.MEDIA_PICTURE) {
                         // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
-                        media.setDuration(srcList.get(i).getDuration()>=5000 ? srcList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
+                        pListItem.setTime(srcList.get(i).getDuration() >= 5000 ? srcList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
                     }
-
-                    PlayListBean pListItem = new PlayListBean(media);
-                    pListItem.setPlayScale(srcList.get(i).getScale());
+                    pListItem.setIdx(desList.size());
                     desList.add(pListItem);
                 }
             } else {
                 shareItemFromCloudPush ++;
                 List<MediaBean> selected = new MediaBeanDao(context).queryById(srcList.get(i).getId());
                 for (MediaBean it: selected) {
-                    PlayListBean pListItem = new PlayListBean(it);
-                    pListItem.setPlayScale(srcList.get(i).getScale());
+                    PlayBean pListItem = new PlayBean(it);
+                    pListItem.setScale(srcList.get(i).getScale());
+                    if (it.getType() == MediaBean.MEDIA_PICTURE) {
+                        // duration单位,网页操作是s,本机是ms,网络传输使用ms,限定图片最小播放时间是5秒
+                        pListItem.setTime(srcList.get(i).getDuration() >= 5000 ? srcList.get(i).getDuration() : PICTURE_DEFAULT_PLAY_DURATION_MS);
+                    }
+                    pListItem.setIdx(desList.size());
                     desList.add(pListItem);
                     shareItemInLocalDbFound ++;
                 }

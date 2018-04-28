@@ -3,9 +3,13 @@ package com.whitesky.tv.projectorlauncher.media.db;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.whitesky.tv.projectorlauncher.utils.ChineseCharToEnUtil;
+
+import java.util.ArrayList;
 
 /**
  * Created by jeff on 18-2-4.
@@ -155,6 +159,9 @@ public class MediaBean  implements Parcelable {
     @DatabaseField(columnName = COLUMNNAME_URL, useGetSet = true, canBeNull = true, unique = false)
     private String url = "";
 
+    @ForeignCollectionField()
+    private ForeignCollection<PlayBean> playBeans;
+
     public MediaBean() {}
 
     public MediaBean(String name, int id, int type, int source, String path, int duration, long size) {
@@ -256,6 +263,10 @@ public class MediaBean  implements Parcelable {
         this.url = url;
     }
 
+    public ForeignCollection<PlayBean> getPlayBeans() {
+        return playBeans;
+    }
+
     @Override
     public String toString() {
         return "MediaBean{" +
@@ -270,6 +281,7 @@ public class MediaBean  implements Parcelable {
                 ", url=" + url +
                 ", downloadState=" + downloadState +
                 ", downloadProgress=" + downloadProgress +
+                ", playlist refs=" + (playBeans==null?0:playBeans.size()) +
                 '}';
     }
 }

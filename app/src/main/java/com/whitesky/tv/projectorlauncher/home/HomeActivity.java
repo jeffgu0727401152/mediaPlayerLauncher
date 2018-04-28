@@ -132,7 +132,7 @@ public class HomeActivity extends Activity implements View.OnClickListener, View
         mBackClickCount = 0;
 
         // 如果有播放列表,直接跳转去mediaActivity
-        if (MediaActivity.hasPlaylistConfig(this)
+        if (MediaActivity.havePlayList(this)
                 && !((MainApplication)getApplication()).mFirstInitDone) {
             Intent intentMedia = new Intent(getApplicationContext(), MediaActivity.class);
             if (intentMedia.resolveActivity(getPackageManager())!=null) {

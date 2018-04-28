@@ -25,12 +25,12 @@ public class Contants
     public static final String EXTRA_DOWNLOAD_STATE_CONTEXT = "mqtt_push_context";
 
     public static final String PREF_CONFIG = "PREF_CONFIG";             // 存放app的所有配置信息
-    public static final String CONFIG_PLAYLIST = "playList";            // 播放列表
+    public static final String CONFIG_PLAY_INDEX = "playIndex";         // 播放位置
     public static final String CONFIG_REPLAY_MODE = "replayMode";       // 播放下一首的选择顺序
     public static final String CONFIG_SHOW_MASK = "showMask";           // 是否显示polygon mask
     public static final String CONFIG_MEDIA_LIST_ORDER = "mediaOrder";  // 列表的显示排序
     public static final String CONFIG_SHOW_QRCODE = "showQRcode";       // 是否显示控制二维码
-    public static final String CONFIG_QRCODE_URL = "QRcodeURL";       // 储存控制二维码
+    public static final String CONFIG_QRCODE_URL = "QRcodeURL";         // 储存控制二维码
 
     public static final int MEDIA_LIST_ORDER_NAME = 0;  // 列表的显示排序
     public static final int MEDIA_LIST_ORDER_DURATION = 1;  // 列表的显示排序

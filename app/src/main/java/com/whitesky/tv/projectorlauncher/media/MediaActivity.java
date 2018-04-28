@@ -30,7 +30,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
@@ -42,10 +41,11 @@ import com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter;
 import com.whitesky.tv.projectorlauncher.media.adapter.UsbMediaListAdapter;
 import com.whitesky.tv.projectorlauncher.media.bean.MediaLibraryListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.CloudListBean;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.bean.UsbMediaListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.MediaListPushBean;
@@ -61,13 +61,13 @@ import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -79,12 +79,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.widget.AdapterView.INVALID_POSITION;
 import static com.whitesky.tv.projectorlauncher.common.Contants.ACTION_CMD_QRCODE_CONTROL;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_FREE_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PRIVATE_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CLOUD_MEDIA_PUBLIC_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_MEDIA_LIST_ORDER;
-import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAYLIST;
+import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_PLAY_INDEX;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_QRCODE_URL;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_REPLAY_MODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK;
@@ -106,13 +107,16 @@ import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_F
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_INVALIDED_POSITION;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PLAY_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PREPARE_ERROR;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_IDLE;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_COMPLETE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_ADD;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_CLEAR;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_EXCHANGE;
 import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_REMOVE;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_SCALE;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_TIME;
+import static com.whitesky.tv.projectorlauncher.media.adapter.PlayListAdapter.CHANGE_EVENT_UPDATE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_FREE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_CLOUD_PRIVATE;
@@ -122,8 +126,10 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.ID_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
+import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADING;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.PLAY_INDEX_PREVIEW;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 import static com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService.MSG_CMD_NEXT;
 import static com.whitesky.tv.projectorlauncher.service.mqtt.MqttSslService.MSG_CMD_PREVIOUS;
@@ -139,6 +145,17 @@ public class MediaActivity extends Activity
     private static final String TAG = MediaActivity.class.getSimpleName();
 
     private static final long LOCAL_CAPACITY_WARNING_SIZE = 1024l*1024l*1024l*5;     //5G以下容量红色提示
+
+    // 重放模式
+    public static final int MEDIA_REPLAY_ONE = 0;
+    public static final int MEDIA_REPLAY_ALL = 1;
+    public static final int MEDIA_REPLAY_SHUFFLE = 2;
+    public static final int MEDIA_REPLAY_MODE_DEFAULT = MEDIA_REPLAY_ALL;
+
+    // 播放方向
+    public static final int MEDIA_PLAY_DRIECT_FORWARD = 0;
+    public static final int MEDIA_PLAY_DRIECT_BACKWORD = 1;
+    public static final int MEDIA_PLAY_DRIECT_STAY = 2;
 
     private final int MSG_USB_PLUG_IN = 0;
     private final int MSG_USB_PLUG_OUT = 1;
@@ -205,7 +222,7 @@ public class MediaActivity extends Activity
     private int mOriginPlayerMarginTop = 0;
     private int mOriginPlayerMarginLeft = 0;
 
-    private List<PlayListBean> mPlayListBeans = new ArrayList<PlayListBean>();
+    private List<PlayBean> mPlayListBeans = new ArrayList<>();
     private PlayListAdapter mPlayListAdapter;    // 除onCreate与onResume外,其他所有对于playlist数据的操作都通过adapter做,好触发onPlaylistItemEvent
     private DragListView mDragPlayListView;
 
@@ -234,20 +251,20 @@ public class MediaActivity extends Activity
 
     private long mLastDownloadUpdateUiTime = 0;
 
-    private void changeWholePlayList(List<PlayListBean> target) {
+    private void changeWholePlayList(List<PlayBean> target) {
+        // 替换整个列表的这个调用会回调CHANGE_EVENT_CLEAR到MediaActivity,将PlayIndex设置为-1
         mPlayListAdapter.setListDatas(target);
         mPlayListAdapter.refresh();
-        savePlaylistToConfig();
 
-        for (PlayListBean bean : mPlayListAdapter.getListDatas()) {
-            if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_NONE) {
-                addToDownload(bean.getMediaData());
+        for (PlayBean bean : mPlayListAdapter.getListDatas()) {
+            if (bean.getMedia().getDownloadState()==STATE_DOWNLOAD_NONE) {
+                addToDownload(bean.getMedia());
             }
         }
 
         if (mPlayListBeans.size()>0) {
             mPlayer.fullScreenSwitch(true);
-            mPlayer.mediaPlay(0);
+            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_FORWARD,false);
         }
     }
 
@@ -291,7 +308,7 @@ public class MediaActivity extends Activity
 
                 mPlayer.mediaStop();
 
-                List<PlayListBean> pList = new ArrayList<>();
+                List<PlayBean> pList = new ArrayList<>();
                 boolean needSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(),pList,cloudPushPlaylist);
 
                 if (needSync) {
@@ -310,7 +327,7 @@ public class MediaActivity extends Activity
                                 mHandler.sendMessage(msg);
                             }
 
-                            List<PlayListBean> pList = new ArrayList<>();
+                            List<PlayBean> pList = new ArrayList<>();
                             boolean stillNeedSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(),pList,mNeedToPlayList);
                             if (stillNeedSync) {
                                 Log.w(TAG,"we have sync with cloud,but still missing some item!");
@@ -337,7 +354,7 @@ public class MediaActivity extends Activity
                         || pushReq.getPlayMode()==MEDIA_REPLAY_ONE
                         || pushReq.getPlayMode()==MEDIA_REPLAY_ALL) {
                     saveReplayModeToConfig(getApplicationContext(), pushReq.getPlayMode());
-                    loadReplayMode();
+                    loadReplayModeToUi();
                 }
 
                 if (pushReq.getMask()==0 || pushReq.getMask()==1) {
@@ -422,9 +439,8 @@ public class MediaActivity extends Activity
                 // 调用refresh刷新list会导致UI无法,目前是每下载2M就会汇报一次进度,如果网速非常快,更新频繁可能导致ANR
                 // 所以此处实时更新变量的内容,但是刷新限定一秒更新一次,除非需要更新的内容是 下载完毕/下载错误
                 long timeNow = System.currentTimeMillis();
-                if (timeNow - mLastDownloadUpdateUiTime > 1000
-                        || bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
-                        || bean.getDownloadState()==STATE_DOWNLOAD_ERROR) {
+                if (timeNow - mLastDownloadUpdateUiTime > 1500
+                        || bean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADING) {
                     Log.i(TAG,"download update refresh list");
                     mMediaLibraryListAdapter.refresh();
                     mPlayListAdapter.refresh();
@@ -447,7 +463,7 @@ public class MediaActivity extends Activity
                 bundle.putString(BUNDLE_KEY_STORAGE_PATH, intent.getData().getPath());
                 msg.setData(bundle);
                 mHandler.sendMessageDelayed(msg, 500);
-
+                Log.i(TAG,"mount " + intent.getData().getPath());
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_usb_device_plug_in_toast) + intent.getData().getPath());
 
             } else if (action.equals(Intent.ACTION_MEDIA_REMOVED) || action.equals(Intent.ACTION_MEDIA_UNMOUNTED)) {
@@ -458,6 +474,7 @@ public class MediaActivity extends Activity
                 bundle.putString(BUNDLE_KEY_STORAGE_PATH, intent.getData().getPath());
                 msg.setData(bundle);
                 mHandler.sendMessageDelayed(msg, 500);
+                Log.i(TAG,"unmount " + intent.getData().getPath());
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_usb_device_plug_out_toast) + intent.getData().getPath());
             }
         }
@@ -488,6 +505,105 @@ public class MediaActivity extends Activity
     }
 
     @Override
+    public void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps) {
+        // 直接改变UI显示的播放信息
+        Log.d(TAG,"on Play Info Update!");
+        setMediaInfoUi(name, mimeType, width, height, size, bps);
+    }
+
+    // 利用 方向,播放模式,当前播放位置, 是否强制更新位置, 计算出下一个播放位置
+    // 如果播放列表没有内容则返回 INVALID_POSITION
+    private int updatePlayPosition(int direct, int replayMode, int playIndex, boolean force) {
+        List<PlayBean> pList = new PlayBeanDao(this).selectAll();
+        if (pList==null || pList.isEmpty()) {
+            Log.w(TAG,"update position, pList empty!");
+            return INVALID_POSITION;
+        }
+
+        int count = pList.size();
+        Log.i(TAG,"update position, direct = " + direct
+                + ", replayMode = " + replayMode
+                + ", playIndex = " + playIndex
+                + ", force = " + force
+                +", pList size = " + count);
+
+        // 如果是要求继续播放当前项目,只检查是否越界, 如果越界就拉回
+        if (MEDIA_PLAY_DRIECT_STAY == direct) {
+            if (playIndex<=INVALID_POSITION || playIndex>=count) {
+                playIndex = 0;
+            }
+            Log.d(TAG,"update position (STAY), return " + playIndex);
+            return playIndex;
+        }
+
+        switch(replayMode)
+        {
+            case MEDIA_REPLAY_ONE:
+                if (!force) {
+                    // 如果不强制更新,那么检查是否当前的playIndex是否合法
+                    // 调整为合法后break除去,否则会穿过这个case,根据方向调整
+                    if (playIndex<=INVALID_POSITION || playIndex>=count) {
+                        playIndex = 0;
+                    }
+                    break;
+                }
+            case MEDIA_REPLAY_ALL:
+                if (direct==MEDIA_PLAY_DRIECT_FORWARD)
+                {
+                    playIndex++;
+                    if (playIndex >= count) {
+                        playIndex = 0;
+                    }
+                }
+                else if (direct==MEDIA_PLAY_DRIECT_BACKWORD)
+                {
+                    playIndex--;
+                    if (playIndex<0) {
+                        playIndex = count-1;
+                    }
+                }
+                break;
+
+            case MEDIA_REPLAY_SHUFFLE:
+                playIndex = getRandomNum(count);
+                break;
+        }
+
+        Log.d(TAG,"update position, return " + playIndex);
+        return playIndex;
+    }
+
+    private int getRandomNum(int endNum){
+        if(endNum > 0){
+            Random random = new Random();
+            return random.nextInt(endNum);
+        }
+        return 0;
+    }
+
+    @Override
+    public PlayBean onMediaPlayRequestPlayBean(int direct, boolean force) {
+        Log.d(TAG,"on Media Play Request!");
+
+        int playIndex = getPlayIndexFromConfig();
+        int replayMode = loadReplayModeFromConfig(getApplicationContext());
+
+        playIndex = updatePlayPosition(direct,replayMode, playIndex, force);
+
+        mPlayListAdapter.setPlayIndex(playIndex);
+        savePlayIndexToConfig(this,mPlayListAdapter.getPlayIndex());
+
+        Log.d(TAG,"new playIndex = " + playIndex);
+
+        if (playIndex==INVALID_POSITION) {
+            Log.w(TAG,"playlist is nothing to play!");
+            return null;
+        } else {
+            return new PlayBeanDao(this).queryByIdx(playIndex);
+        }
+    }
+
+    @Override
     public void onMediaPlayStop() {
         // 播放完毕
         Log.d(TAG,"on Play Stop!");
@@ -505,15 +621,6 @@ public class MediaActivity extends Activity
 
         // 正常播放完成的状态是COMPLETE
         mHandler.sendMessage(msg);
-    }
-
-    @Override
-    public void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps) {
-        // 直接改变UI显示的播放信息
-        Log.d(TAG,"on Play Info Update!");
-        setMediaInfoUi(name, mimeType, width, height, size, bps);
-        savePlaylistToConfig();
-        mPlayListAdapter.refresh();
     }
 
     @Override
@@ -557,18 +664,14 @@ public class MediaActivity extends Activity
         switch(group.getId()) {
             case R.id.rg_media_replay_mode:
 
-                int replayMode = PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT;
+                int replayMode = MEDIA_REPLAY_MODE_DEFAULT;
 
                 if (checkedId == mReplayOneRadioButton.getId()) {
-                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_ONE;
+                    replayMode = MEDIA_REPLAY_ONE;
                 } else if (checkedId == mReplayAllRadioButton.getId()) {
-                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_ALL;
+                    replayMode = MEDIA_REPLAY_ALL;
                 } else if (checkedId == mReplayShuffleRadioButton.getId()) {
-                    replayMode = PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
-                }
-
-                if (mPlayer != null) {
-                    mPlayer.setReplayMode(replayMode);
+                    replayMode = MEDIA_REPLAY_SHUFFLE;
                 }
 
                 saveReplayModeToConfig(getApplicationContext(),replayMode);
@@ -664,30 +767,26 @@ public class MediaActivity extends Activity
 
     public static int loadReplayModeFromConfig(Context context) {
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        return config.getInt(CONFIG_REPLAY_MODE, PictureVideoPlayer.MEDIA_REPLAY_MODE_DEFAULT);
+        return config.getInt(CONFIG_REPLAY_MODE, MEDIA_REPLAY_MODE_DEFAULT);
     }
 
-    private void loadReplayMode() {
+    private void loadReplayModeToUi() {
         int playMode = loadReplayModeFromConfig(getApplicationContext());
         int checkId = mReplayAllRadioButton.getId();
         switch (playMode) {
-            case PictureVideoPlayer.MEDIA_REPLAY_ONE:
+            case MEDIA_REPLAY_ONE:
                 checkId = mReplayOneRadioButton.getId();
                 break;
-            case PictureVideoPlayer.MEDIA_REPLAY_ALL:
+            case MEDIA_REPLAY_ALL:
                 checkId = mReplayAllRadioButton.getId();
                 break;
-            case PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE:
+            case MEDIA_REPLAY_SHUFFLE:
                 checkId = mReplayShuffleRadioButton.getId();
                 break;
             default:
                 break;
         }
         mReplayModeRadioGroup.check(checkId);
-
-        if (mPlayer != null) {
-            mPlayer.setReplayMode(playMode);
-        }
     }
 
     private void loadMediaListFromDb() {
@@ -722,9 +821,9 @@ public class MediaActivity extends Activity
             });
         } else {
             // 如果有数据库,则从数据库获取
+            Log.i(TAG, "has media database, so get media list from media database");
             for (MediaBean m:new MediaBeanDao(MediaActivity.this).selectAll())
             {
-                Log.i(TAG, "has media database, so get media list from media database");
                 mMediaLibraryListBeans.add(new MediaLibraryListBean(m));
             }
 
@@ -904,52 +1003,34 @@ public class MediaActivity extends Activity
         }
     }
 
-    private void savePlaylistToConfig() {
-        savePlaylistToConfig(this,mPlayListAdapter.getListDatas());
+    private int getPlayIndexFromConfig() {
+        SharedPreferencesUtil config = new SharedPreferencesUtil(this, Contants.PREF_CONFIG);
+        return config.getInt(CONFIG_PLAY_INDEX);
     }
 
-    public static synchronized void savePlaylistToConfig(Context context, List<PlayListBean> pList) {
+    public static void savePlayIndexToConfig(Context context,int playIndex) {
+        Log.d(TAG,"save " + playIndex);
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        Gson gson = new Gson();
-        String jsonStr = gson.toJson(pList);
-        config.putString(CONFIG_PLAYLIST, jsonStr);
+        config.putInt(CONFIG_PLAY_INDEX, playIndex);
     }
 
-    public static boolean hasPlaylistConfig(Context context) {
-        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
-        if (jsonStr.equals("[]")) {
+    public static boolean havePlayList(Context context) {
+        List<PlayBean> pList = new PlayBeanDao(context).selectAll();
+        if(pList==null || pList.isEmpty()) {
             return false;
         } else {
             return true;
         }
     }
 
-    private void loadPlaylistFromConfig() {
-        List<PlayListBean> data = loadPlaylistFromConfig(this);
-
-        // 取数据库检查一遍，防止MediaActivity不在前台,而播放列表中的条目却有下载任务，那么下载完成playlist中的项目也永远是没下载状态
-        for(Iterator it = data.iterator();it.hasNext();){
-            PlayListBean needCheckItem = (PlayListBean) it.next();
-            MediaBean dbItem = new MediaBeanDao(getApplicationContext()).queryByPath(needCheckItem.getMediaData().getPath());
-            if (dbItem==null) {
-                it.remove();
-            } else {
-                needCheckItem.getMediaData().setDownloadState(dbItem.getDownloadState());
-                needCheckItem.getMediaData().setDownloadProgress(dbItem.getDownloadProgress());
-            }
-        }
-        mPlayListAdapter.setListDatas(data);
+    private void loadPlaylistFromDb() {
+        List<PlayBean> datas = new PlayBeanDao(this).selectAll();
+        // 因为 media表 和 play表 在数据库中是关联的, 所以从数据库中查询出的PlayBean对象中的MediaBean一定是新的
+        // 不必担心media表中的数据下载完成了, 而Play表查询出来的对象的MediaBean字段中还是正在下载
+        int playIndex = getPlayIndexFromConfig();
+        mPlayListAdapter.setListDatas(datas); // 注意setListDatas会先clear再set,clear会导致playIndex丢失,这边预先读出来
+        savePlayIndexToConfig(this, playIndex);
         mPlayListAdapter.refresh();
-    }
-
-    public static List<PlayListBean> loadPlaylistFromConfig(Context context) {
-        Gson gson = new Gson();
-        SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
-        String jsonStr = config.getString(CONFIG_PLAYLIST, "[]");
-        Type type = new TypeToken<List<PlayListBean>>() {
-        }.getType();
-        return gson.fromJson(jsonStr, type);
     }
 
     private void initView() {
@@ -1106,27 +1187,138 @@ public class MediaActivity extends Activity
         // 播放列表
         mPlayListAdapter = new PlayListAdapter(getApplicationContext(), mPlayListBeans);
         mPlayListAdapter.setOnPlaylistItemEventListener(new PlayListAdapter.OnPlaylistItemEventListener() {
-            @Override
-            public void onPlaylistChange(int event, PlayListBean bean) {
-                savePlaylistToConfig();
-                if (event == CHANGE_EVENT_REMOVE) {
-                    if (bean==mPlayer.getCurPlaylistBean() && mPlayer.getPlayState()!=PLAYER_STATE_PLAY_STOP && mPlayer.getPlayState()!=PLAYER_STATE_IDLE) {
-                        mPlayer.mediaPlayNext();
-                    }
-                }
-            }
 
             @Override
-            public void onScaleChange(int position, int scaleType) {
-                if (mPlayer.getPlayState()!= PLAYER_STATE_IDLE
-                        && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_STOP
-                        && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_COMPLETE) {
-                    PlayListBean curPlay = mPlayer.getCurPlaylistBean();
-                    if (curPlay!=null && curPlay.equals(mPlayListAdapter.getItem(position))) {
-                        // 播放的position可能会因为改变顺序的原因而与现在的playlist不对对应.所以使用Bean比较
-                        mPlayer.changeScaleNow(scaleType);
-                    }
+            public List<PlayBean> onPlayListChanged(int event, List<PlayBean> changeBeans) {
+                if (event!=CHANGE_EVENT_CLEAR && (changeBeans==null || changeBeans.isEmpty())) {
+                    Log.w(TAG, "change event" + event + ", but Beans is empty!");
+                    return new PlayBeanDao(MediaActivity.this).selectAll();
                 }
+
+                int playIndex;
+
+                switch (event) {
+                    case CHANGE_EVENT_REMOVE:
+                        // remove 比较特殊, 我们是先删除数据库, 然后此函数返回后再sync play list
+                        new PlayBeanDao(MediaActivity.this).delete(changeBeans);
+
+                        // 根据remove的条目的idx, 判断当前的playIndex需要前移几次
+                        // 如果移除的条目含有正在播放的,则停止播放, 全移除完毕后如果还有可以播放的条目,则播放该条目
+                        boolean playNeedResume = false;
+                        int removeHowManyItemsBeforePlayItem = 0;
+                        playIndex = getPlayIndexFromConfig();
+
+                        PlayBean curPlay = mPlayer.getCurPlayBean();
+                        if (curPlay!=null) {
+                            for (PlayBean willDelete:changeBeans) {
+                                if (playIndex == willDelete.getIdx()) {
+                                    mPlayer.mediaStop();
+                                    playNeedResume = true;
+                                }
+
+                                if (playIndex > willDelete.getIdx()) {
+                                    removeHowManyItemsBeforePlayItem++;
+                                }
+                            }
+                        }
+
+                        if (mPlayListAdapter.hasPlayableItem() && playNeedResume) {
+                            // mediaPlay第一个参数传null,会回调onMediaPlayRequestPlayBean去请求获得播放条目
+                            // 此函数从数据库获得数据,然后更新index并保存
+                            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_STAY,true);
+                        } else {
+                            // 播放器根本没有播放任何东西
+                            //  或
+                            // 删除的东西没有一个在播放的
+                            Log.d(TAG,"sort before playIndex = " + playIndex);
+                            playIndex = playIndex - removeHowManyItemsBeforePlayItem;
+                            mPlayListAdapter.setPlayIndex(playIndex);
+                            savePlayIndexToConfig(MediaActivity.this,playIndex);
+                            Log.d(TAG,"sort after playIndex = " + playIndex);
+                        }
+
+                        break;
+
+                    case CHANGE_EVENT_SCALE:
+
+                        if (!mPlayer.isPreview()
+                                && mPlayer.getPlayState()!= PLAYER_STATE_IDLE
+                                && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_STOP
+                                && mPlayer.getPlayState()!= PLAYER_STATE_PLAY_COMPLETE) {
+
+                            playIndex = mPlayListAdapter.getPlayIndex();
+                            if (playIndex == changeBeans.get(0).getIdx()) {
+                                mPlayer.changeScaleNow(changeBeans.get(0).getScale());
+                            }
+                        }
+
+                        for (PlayBean bean:changeBeans) {
+                            new PlayBeanDao(MediaActivity.this).createOrUpdate(bean);
+                        }
+                        break;
+
+                    case CHANGE_EVENT_CLEAR:
+                        new PlayBeanDao(MediaActivity.this).deleteAll();
+                        mPlayListAdapter.setPlayIndex(INVALID_POSITION);
+                        savePlayIndexToConfig(MediaActivity.this, INVALID_POSITION);
+                        break;
+
+                    case CHANGE_EVENT_EXCHANGE:
+                        // play index可能改变,所以此处同步顺序改变后的PlayIndex
+                        playIndex = getPlayIndexFromConfig();
+                        if (playIndex == changeBeans.get(0).getIdx()) {
+                            playIndex =  changeBeans.get(1).getIdx();
+                            mPlayListAdapter.setPlayIndex(playIndex);
+                            savePlayIndexToConfig(MediaActivity.this, playIndex);
+                        } else if (playIndex == changeBeans.get(1).getIdx()) {
+                            playIndex =  changeBeans.get(0).getIdx();
+                            mPlayListAdapter.setPlayIndex(playIndex);
+                            savePlayIndexToConfig(MediaActivity.this, playIndex);
+                        }
+
+                        for (PlayBean bean:changeBeans) {
+                            new PlayBeanDao(MediaActivity.this).createOrUpdate(bean);
+                        }
+                        break;
+
+                    case CHANGE_EVENT_ADD:
+                    case CHANGE_EVENT_TIME:
+                    case CHANGE_EVENT_UPDATE:
+                    default:
+                        for (PlayBean bean:changeBeans) {
+                            new PlayBeanDao(MediaActivity.this).createOrUpdate(bean);
+                        }
+                        break;
+                }
+
+                // todo ===================debug remove==================
+//                Exception here = new Exception();
+//                here.printStackTrace();
+
+//                List<PlayBean> printList = new PlayBeanDao(MediaActivity.this).selectAll();
+//                Log.d(TAG,"+++++++++++DB++++++++++++");
+//                if (printList!=null) {
+//                    for (PlayBean a:printList) {
+//                        Log.d(TAG,"db " + a.toString());
+//                    }
+//                }
+//                Log.d(TAG,"-----------DB------------");
+//
+//                Log.d(TAG," ");
+//
+//
+//                List<PlayBean> dataList = mPlayListAdapter.getListDatas();
+//                Log.d(TAG,"============Mem===========");
+//                if (dataList!=null) {
+//                    for (PlayBean a:dataList) {
+//                        Log.d(TAG,"Mem " + a.toString());
+//                    }
+//
+//                }
+//                Log.d(TAG,"-----------Mem------------");
+                // todo ===================debug remove==================
+
+                return new PlayBeanDao(MediaActivity.this).selectAll();
             }
         });
 
@@ -1184,7 +1376,9 @@ public class MediaActivity extends Activity
                 if (ViewUtil.isFastDoubleClick()) {
                     Log.i(TAG, "double click play list!");
                     mPlayer.mediaStop();
-                    mPlayer.mediaPlay(position);
+                    mPlayListAdapter.setPlayIndex(position);
+                    savePlayIndexToConfig(MediaActivity.this, position);
+                    mPlayer.mediaPlay(mPlayListAdapter.getItem(position));
                 }
             }
         });
@@ -1219,7 +1413,6 @@ public class MediaActivity extends Activity
 
         prepareListView();
 
-        mPlayer.setPlayList(mPlayListBeans);
         mPlayer.setOnMediaEventListener(this);
 
         //递归扫描sd卡根目录
@@ -1320,11 +1513,11 @@ public class MediaActivity extends Activity
         LinearLayout layout = findViewById(R.id.ll_skin);
         layout.setBackgroundResource(R.drawable.shape_background);
 
-        loadReplayMode();
+        loadReplayModeToUi();
         loadMediaListOrderMode();
         loadMediaListFromDb();
+        loadPlaylistFromDb();
         updateMultiActionButtonUiState();
-        loadPlaylistFromConfig();
 
         if (!needShowQRcode(this) || loadQRcodeUrlFromConfig(this).isEmpty()) {
             mPlayer.getMaskController().hideQRcode();
@@ -1445,9 +1638,17 @@ public class MediaActivity extends Activity
                 break;
 
             case R.id.bt_media_cloud_list_refresh:
+                mCloudMediaListRefreshBtn.setEnabled(false);
                 loadMediaListFromCloud(getApplicationContext(), new cloudListGetCallback() {
                     @Override
                     public void cloudSyncDone(boolean result) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mCloudMediaListRefreshBtn.setEnabled(true);
+                            }
+                        });
+
                         if (result == true) {
                             Message msg = mHandler.obtainMessage();
                             msg.what = MSG_MEDIA_LIST_UI_SYNC_WITH_DATABASE;
@@ -1556,7 +1757,7 @@ public class MediaActivity extends Activity
         if (addItem.getDownloadState()==STATE_DOWNLOAD_NONE) {
             addToDownload(addItem);
         }
-        mPlayListAdapter.addItem(new PlayListBean(addItem));
+        mPlayListAdapter.addItem(new PlayBean(addItem));
     }
 
     private void updateMultiActionButtonUiState() {
@@ -1598,7 +1799,7 @@ public class MediaActivity extends Activity
                         Log.i(TAG, "mount sata device means power on complete, start full screen play media");
                         if (mPlayer.getPlayState()== PLAYER_STATE_IDLE) {
                             mPlayer.fullScreenSwitch(true);
-                            mPlayer.mediaPlay();
+                            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_STAY,true);
                         }
 
                     } else {
@@ -1717,7 +1918,13 @@ public class MediaActivity extends Activity
                 case MSG_MEDIA_LIST_ITEM_PREVIEW:
                     MediaBean previewItem = (MediaBean)msg.obj;
                     mPlayer.mediaStop();
-                    mPlayer.mediaPreview(previewItem);
+                    PlayBean previewPlayBean = new PlayBean(previewItem);
+                    previewPlayBean.setIdx(PLAY_INDEX_PREVIEW);
+                    // 使用INVALID_POSITION -1 来让play list ui上不显示播放图标
+                    mPlayListAdapter.setPlayIndex(INVALID_POSITION);
+                    // preview的时候只是去掉UI上的播放标记
+                    // savePlayIndexToConfig(MediaActivity.this, INVALID_POSITION);
+                    mPlayer.mediaPlay(previewPlayBean);
                     break;
 
                 case MSG_MEDIA_LIST_UI_SYNC_WITH_DATABASE:
@@ -1748,7 +1955,8 @@ public class MediaActivity extends Activity
 
                 case MSG_MEDIA_PLAY_COMPLETE:
                     if (mPlayListAdapter.hasPlayableItem()) {
-                        mPlayer.mediaAutoReplay();
+                        mPlayer.mediaStop();
+                        mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_FORWARD,false);
                     }
                     break;
 
@@ -2105,24 +2313,27 @@ public class MediaActivity extends Activity
         int deleteCount = 0;
         boolean removePlaying = false;
 
-        Deque<PlayListBean> needToDeleteFromPlaylistDeque = new ArrayDeque<PlayListBean>();
+        Deque<PlayBean> needToDeleteFromPlaylistDeque = new ArrayDeque<>();
 
         while (!mDeleteDeque.isEmpty()) {
             MediaBean needDeleteDiskData = mDeleteDeque.pop();
 
             // 当前删除的项当前正在播放则先停止播放
-            if (needDeleteDiskData.getPath().equals(mPlayer.getCurPlayPath())) {
-                removePlaying = true;
-                mPlayer.mediaStop();
+            PlayBean curPlay = mPlayer.getCurPlayBean();
+            if (curPlay!=null && mPlayer.getPlayState()!=PLAYER_STATE_PLAY_STOP) {
+                if (needDeleteDiskData.getPath().equals(curPlay.getMedia().getPath())) {
+                    removePlaying = true;
+                    mPlayer.mediaStop();
+                }
             }
 
             // 从播放列表找受影响的条目,因为播放列表的条目可能是重复的
             // 所以使用队列记录下与当前的删除文件一致的条目
             needToDeleteFromPlaylistDeque.clear();
-            for (PlayListBean playItem:mPlayListAdapter.getListDatas())
+            for (PlayBean playItem:mPlayListAdapter.getListDatas())
             {
                 // 删除的文件在播放列表中
-                if (playItem.getMediaData().getPath().equals(needDeleteDiskData.getPath()))
+                if (playItem.getMedia().getPath().equals(needDeleteDiskData.getPath()))
                 {
                     needToDeleteFromPlaylistDeque.add(playItem);
                 }
@@ -2130,7 +2341,7 @@ public class MediaActivity extends Activity
 
             // 从播放列表删除这些条目
             while (!needToDeleteFromPlaylistDeque.isEmpty()) {
-                PlayListBean needDeletePlayData = needToDeleteFromPlaylistDeque.pop();
+                PlayBean needDeletePlayData = needToDeleteFromPlaylistDeque.pop();
                 mPlayListAdapter.removeItem(needDeletePlayData);
             }
 

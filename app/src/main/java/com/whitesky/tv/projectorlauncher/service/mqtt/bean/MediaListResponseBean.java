@@ -1,9 +1,10 @@
 package com.whitesky.tv.projectorlauncher.service.mqtt.bean;
 
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
 
-import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_DEFAULT;
+import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.MEDIA_SCALE_DEFAULT;
+
 
 /**
  * Created by jeff on 18-3-5.
@@ -16,12 +17,12 @@ public class MediaListResponseBean {
     int scale;
     int duration;
 
-    public MediaListResponseBean(PlayListBean data) {
-        this.id = data.getMediaData().getId();
-        this.name = data.getMediaData().getPath();
-        this.type = data.getMediaData().getType();
-        this.scale = data.getPlayScale();
-        this.duration = data.getMediaData().getDuration();
+    public MediaListResponseBean(PlayBean data) {
+        this.id = data.getMedia().getId();
+        this.name = data.getMedia().getPath();
+        this.type = data.getMedia().getType();
+        this.scale = data.getScale();
+        this.duration = data.getTime();
     }
 
     public MediaListResponseBean(MediaBean data) {

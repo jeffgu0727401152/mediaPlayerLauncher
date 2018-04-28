@@ -10,11 +10,13 @@ import android.widget.Spinner;
 import com.whitesky.sdk.widget.ViewHolder;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBeanDao;
 
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
@@ -36,38 +38,54 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
  * Created by jeff on 18-1-16.
  */
 
-public class PlayListAdapter extends CommonAdapter<PlayListBean>
+public class PlayListAdapter extends CommonAdapter<PlayBean>
 {
     private final String TAG = this.getClass().getSimpleName();
     static final Object listLock = new Object();
 
     public static final int CHANGE_EVENT_ADD = 0;
     public static final int CHANGE_EVENT_REMOVE = 1;
-    public static final int CHANGE_EVENT_EXCHANGE = 2;
-    public static final int CHANGE_EVENT_SCALE = 3;
-    public static final int CHANGE_EVENT_TIME = 4;
-    public static final int CHANGE_EVENT_UPDATE = 5;
+    public static final int CHANGE_EVENT_CLEAR = 2;
+    public static final int CHANGE_EVENT_EXCHANGE = 3;
+    public static final int CHANGE_EVENT_SCALE = 4;
+    public static final int CHANGE_EVENT_TIME = 5;
+    public static final int CHANGE_EVENT_UPDATE = 6;
 
     private OnPlaylistItemEventListener mOnPlaylistItemEventListener = null;
 
-    public PlayListAdapter(Context context, List<PlayListBean> data)
+    public int getPlayIndex() {
+        return playIndex;
+    }
+
+    public void setPlayIndex(int playIndex) {
+        this.playIndex = playIndex;
+        refresh();
+    }
+
+    // 数组中的下标, 可以数据库当ID用
+    private int playIndex = 0;
+
+    public PlayListAdapter(Context context, List<PlayBean> data)
     {
         super(context, data, R.layout.item_play_list);
     }
 
-    @Override
-    public void convert(ViewHolder holder, final int position, PlayListBean item) {
-        holder.setText(R.id.tv_media_title, item.getMediaData().getTitle());
-
+    private String genTimeString(int duration) {
         String hms = " -- : -- : -- ";
-        if (item.getMediaData().getDuration()!=0) {
+        if (duration!=0) {
             SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
             formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-            hms = formatter.format(item.getMediaData().getDuration());
+            hms = formatter.format(duration);
         }
-        holder.setText(R.id.tv_media_duration, hms);
+        return hms;
+    }
 
-        switch (item.getMediaData().getType())
+    @Override
+    public void convert(ViewHolder holder, final int position, PlayBean item) {
+        holder.setText(R.id.tv_media_title, item.getMedia().getTitle());
+        holder.setText(R.id.tv_media_duration, genTimeString(item.getTime()));
+
+        switch (item.getMedia().getType())
         {
             case MEDIA_PICTURE:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_picture);
@@ -81,25 +99,29 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 break;
             case MEDIA_MUSIC:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_music);
+                holder.getView(R.id.bt_media_time_add).setVisibility(View.INVISIBLE);
+                holder.getView(R.id.bt_media_time_minus).setVisibility(View.INVISIBLE);
                 break;
             default:
                 holder.setImageResource(R.id.iv_media_ico, R.drawable.img_media_type_unknown);
+                holder.getView(R.id.bt_media_time_add).setVisibility(View.INVISIBLE);
+                holder.getView(R.id.bt_media_time_minus).setVisibility(View.INVISIBLE);
                 break;
         }
 
         // 歌曲播放位置指示
-        holder.getImageView(R.id.iv_media_play_indicator).setVisibility(item.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+        holder.getImageView(R.id.iv_media_play_indicator).setVisibility(playIndex==position ? View.VISIBLE : View.INVISIBLE);
 
         //scale选择spinner
         ArrayAdapter adapter = new ArrayAdapter<String>(mContext, R.layout.item_media_play_scale_spinner, R.id.tv_media_play_scale_idx);
         adapter.add(mContext.getResources().getString(R.string.str_media_scale_fix_xy));
         adapter.add(mContext.getResources().getString(R.string.str_media_scale_fix_center));
         ((Spinner) holder.getView(R.id.sp_media_scale)).setAdapter(adapter);
-        ((Spinner) holder.getView(R.id.sp_media_scale)).setSelection(item.getPlayScale());
+        ((Spinner) holder.getView(R.id.sp_media_scale)).setSelection(item.getScale());
         ((Spinner) holder.getView(R.id.sp_media_scale)).setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
-                PlayListBean bean = null;
+                PlayBean bean = null;
                 synchronized (listLock) {
                     if (position>=getListDatas().size()) {
                         Log.w(TAG, "delete play list too quick!");
@@ -110,14 +132,15 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
                 }
 
 
-                if (bean == null || bean.getPlayScale() == pos) {
+                if (bean == null || bean.getScale() == pos) {
                     return;
                 }
 
-                bean.setPlayScale(pos);
+                bean.setScale(pos);
                 if (mOnPlaylistItemEventListener != null) {
-                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_SCALE, bean);
-                    mOnPlaylistItemEventListener.onScaleChange(position, pos);
+                    ArrayList<PlayBean> changeList =  new ArrayList<>();
+                    changeList.add(bean);
+                    mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_SCALE, changeList);
                 }
             }
 
@@ -139,10 +162,13 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist add time");
-                int duration = getItem(position).getMediaData().getDuration();
-                getItem(position).getMediaData().setDuration(duration + 5000);
+                PlayBean bean = getItem(position);
+                int duration = bean.getTime();
+                bean.setTime(duration + 5000);
                 if (mOnPlaylistItemEventListener != null) {
-                    mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_TIME,getItem(position));
+                    ArrayList<PlayBean> changeList =  new ArrayList<>();
+                    changeList.add(bean);
+                    mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_TIME, changeList);
                 }
                 refresh();
             }
@@ -152,36 +178,40 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist minus time" + position);
-                int duration = getItem(position).getMediaData().getDuration();
+                PlayBean bean = getItem(position);
+                int duration = bean.getTime();
                 if (duration > 10000) {
-                    getItem(position).getMediaData().setDuration(duration - 5000);
+                    bean.setTime(duration - 5000);
                     if (mOnPlaylistItemEventListener != null) {
-                        mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_TIME,getItem(position));
+                        ArrayList<PlayBean> changeList =  new ArrayList<>();
+                        changeList.add(bean);
+                        mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_TIME, changeList);
                     }
                 }
                 refresh();
             }
         });
 
-        if (item.getMediaData().getSource()==SOURCE_LOCAL) {
+        if (item.getMedia().getSource()==SOURCE_LOCAL) {
             holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
         } else {
-            if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_NONE) {
+            // 下载状态显示
+            if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_NONE) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
-            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_WAITING) {
+            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_WAITING) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_waiting));
-            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_DOWNLOADING) {
+            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_DOWNLOADING) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
-            } else if(item.getMediaData().getDownloadState() == STATE_DOWNLOAD_PAUSED) {
+                holder.setText(R.id.tv_media_state, String.valueOf(item.getMedia().getDownloadProgress()*100/item.getMedia().getSize()) + "%");
+            } else if(item.getMedia().getDownloadState() == STATE_DOWNLOAD_PAUSED) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state,
-                        mContext.getResources().getString(R.string.str_media_download_pause) + String.valueOf(item.getMediaData().getDownloadProgress()*100/item.getMediaData().getSize()) + "%");
-            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_ERROR) {
+                        mContext.getResources().getString(R.string.str_media_download_pause) + String.valueOf(item.getMedia().getDownloadProgress()*100/item.getMedia().getSize()) + "%");
+            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_ERROR) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_error));
-            } else if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_START) {
+            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_START) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
                 holder.setText(R.id.tv_media_state, "...");
             } else {
@@ -189,23 +219,36 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             }
         }
 
-        if (item.getMediaData().getType() == MEDIA_VIDEO
-                &&item.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
-                &&item.getMediaData().getDuration()==0) {
-            holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
+        // 下载的视频文件没有播放时长, 认为是格式错误的
+        if (item.getMedia().getType() == MEDIA_VIDEO
+                &&item.getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
+                &&item.getMedia().getDuration()==0) {
             holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_format_error));
+            holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
         }
     }
 
 
     public boolean exchange(int src, int dst) {
         if (src != INVALID_POSITION && dst != INVALID_POSITION) {
+
+            ArrayList<PlayBean> changeList =  new ArrayList<>();
+
             synchronized (listLock) {
                 Collections.swap(getListDatas(), src, dst);
+
+                PlayBean srcBean = getItem(src);
+                PlayBean dstBean = getItem(dst);
+                int dstIndex = dstBean.getIdx();
+                dstBean.setIdx(srcBean.getIdx());
+                srcBean.setIdx(dstIndex);
+
+                changeList.add(srcBean);
+                changeList.add(dstBean);
             }
 
             if (mOnPlaylistItemEventListener != null) {
-                mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_EXCHANGE,null);
+                mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_EXCHANGE, changeList);
             }
 
             refresh();
@@ -220,70 +263,103 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
             super.clear();
         }
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,null);
+            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_CLEAR,null);
         }
         refresh();
     }
 
     @Override
-    public void addItem(PlayListBean item) {
+    public void addItem(PlayBean item) {
         synchronized (listLock) {
+            item.setIdx(getCount());
             super.addItem(item);
         }
 
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_ADD,item);
+            ArrayList<PlayBean> changeList =  new ArrayList<>();
+            changeList.add(item);
+            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_ADD, changeList);
         }
+
         refresh();
     }
 
+    public void removeItem(int position) {
+        PlayBean removeBean = getItem(position);
+        removeItem(removeBean);
+    }
+
+
     @Override
-    public void removeItem(PlayListBean item) {
-        synchronized (listLock) {
-            super.removeItem(item);
+    public void removeItem(PlayBean item) {
+        List<PlayBean> removeList = new ArrayList<>();
+        removeList.add(item);
+        removeItem(removeList);
+    }
+
+    public void removeItem(List<PlayBean> items) {
+        if (items==null || items.isEmpty()) {
+            Log.w(TAG, "items empty to remove!");
+            return;
         }
 
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,item);
+            List<PlayBean> newList = mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_REMOVE,items);
+
+            synchronized (listLock) {
+                listDatas.clear();
+                for (int i = 0; i < newList.size(); i++) {
+                    listDatas.add(newList.get(i));
+                }
+            }
+
+        } else {
+
+            synchronized (listLock) {
+                for (PlayBean item: items) {
+                    super.removeItem(item);
+                }
+            }
         }
+
         refresh();
     }
 
     @Override
     // 重写方法不改变内部数据对象的指向
-    public void setListDatas(List<PlayListBean> items){
+    public void setListDatas(List<PlayBean> items){
         synchronized (listLock) {
             listDatas.clear();
+        }
+
+        if (mOnPlaylistItemEventListener != null) {
+            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_CLEAR, null);
         }
 
         if (items == null) {
             return;
         }
 
+        ArrayList<PlayBean> changeList =  new ArrayList<>();
+
         synchronized (listLock) {
             for (int i = 0; i < items.size(); i++) {
+                items.get(i).setIdx(i);
                 listDatas.add(items.get(i));
+                changeList.add(items.get(i));
             }
-        }
-    }
-
-    public void removeItem(int position) {
-        PlayListBean removeBean = getItem(position);
-
-        synchronized (listLock) {
-            super.removeItem(removeBean);
         }
 
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_REMOVE,removeBean);
+            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_ADD, changeList);
         }
-        refresh();
+
     }
 
     public boolean isAllItemsFromCloud() {
         synchronized (listLock) {
-            for (PlayListBean bean:getListDatas()) {
-                if (bean.getMediaData().getSource()==SOURCE_LOCAL) {
+            for (PlayBean bean:getListDatas()) {
+                if (bean.getMedia().getSource()==SOURCE_LOCAL) {
                     return false;
                 }
             }
@@ -293,8 +369,8 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
 
     public boolean hasPlayableItem() {
         synchronized (listLock) {
-            for (PlayListBean bean:getListDatas()) {
-                if (bean.getMediaData().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+            for (PlayBean bean:getListDatas()) {
+                if (bean.getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
                     return true;
                 }
             }
@@ -303,22 +379,29 @@ public class PlayListAdapter extends CommonAdapter<PlayListBean>
     }
 
     public void update(MediaBean data) {
+        ArrayList<PlayBean> changeList =  new ArrayList<>();
+
         synchronized (listLock) {
-            for (PlayListBean it : listDatas) {
-                if (it.getMediaData().getPath().equals(data.getPath())) {
-                    it.setMediaData(data);
+            for (PlayBean it : listDatas) {
+                if (it.getMedia().getPath().equals(data.getPath())) {
+                    it.setMedia(data);
+                    if (data.getDownloadState() == STATE_DOWNLOAD_DOWNLOADED) {
+                        if (it.getTime() == 0) {
+                            it.setTime(data.getDuration());
+                        }
+                    }
+                    changeList.add(it);
                 }
             }
         }
 
         if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlaylistChange(CHANGE_EVENT_UPDATE,null);
+            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_UPDATE, changeList);
         }
     }
 
     public interface OnPlaylistItemEventListener {
-        void onPlaylistChange(int event,PlayListBean bean);
-        void onScaleChange(int position, int scaleType);
+        List<PlayBean> onPlayListChanged(int event,List<PlayBean> changeBeans);
     }
 
     public void setOnPlaylistItemEventListener(OnPlaylistItemEventListener onPlaylistItemEventListener) {

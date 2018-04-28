@@ -26,9 +26,10 @@ import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.FileListPushBean;
 import com.whitesky.tv.projectorlauncher.service.mqtt.bean.DeviceInfoResponseBean;
@@ -69,20 +70,22 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.widget.AdapterView.INVALID_POSITION;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.PROJECT_NAME;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.QRCODE_GET_STATUS_SUCCESS;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_NO_AVAILABLE;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.VERSION_CHECK_STATUS_SUCCESS;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_REPLAY_ALL;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_REPLAY_ONE;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_REPLAY_SHUFFLE;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.needShowQRcode;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.savePlayIndexToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveQRcodeUrlToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveReplayModeToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowMaskToConfig;
 import static com.whitesky.tv.projectorlauncher.media.MediaActivity.saveShowQRcodeToConfig;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ALL;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_ONE;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.MEDIA_REPLAY_SHUFFLE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
@@ -689,15 +692,21 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         }
     }
 
-    private void savePlaylistAndStartActivityToPlay(List<PlayListBean> playlist) {
-        MediaActivity.savePlaylistToConfig(getApplication(), playlist);
+    private void savePlaylistAndStartActivityToPlay(List<PlayBean> playlist) {
+
+        new PlayBeanDao(getApplication()).deleteAll();
+        new PlayBeanDao(getApplication()).createOrUpdate(playlist);
+
+        savePlayIndexToConfig(getApplicationContext(), INVALID_POSITION);
+
         if (!playlist.isEmpty()) {
             // 立刻开始播放
-            for (PlayListBean bean : playlist) {
-                callMediaDownload(bean.getMediaData());
+            for (PlayBean bean : playlist) {
+                callMediaDownload(bean.getMedia());
             }
             startActivity(new Intent(getApplicationContext(), MediaActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         }
+
     }
 
     private Handler mqttServiceHandler = new Handler() {
@@ -706,7 +715,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             Gson gson = new Gson();
             String jsonStr;
             List<MediaListResponseBean> responseDataList = new ArrayList<MediaListResponseBean>();
-            List<PlayListBean> pList;
+            List<PlayBean> pList;
             Deque<MediaBean> dDeque;
 
             if (msg.what!=MSG_NONE) {
@@ -846,7 +855,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_REQUEST_PLAYLIST:
-                    pList = MediaActivity.loadPlaylistFromConfig(getApplicationContext());
+                    pList = new PlayBeanDao(getApplicationContext()).selectAll();
                     responseDataList.clear();
                     for (int i = 0; i < pList.size(); i++) {
                         responseDataList.add(new MediaListResponseBean(pList.get(i)));
@@ -895,7 +904,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                 MediaActivity.loadMediaListFromCloud(getApplicationContext(), new MediaActivity.cloudListGetCallback() {
                                     @Override
                                     public void cloudSyncDone(boolean result) {
-                                        ArrayList<PlayListBean> pList = new ArrayList<>();
+                                        ArrayList<PlayBean> pList = new ArrayList<>();
                                         boolean stillNeedSync = DataListCovert.covertCloudPushToPlayList(getApplicationContext(), pList, mNeedToPlayList);
                                         if (stillNeedSync) {
                                             Log.w(TAG, "we have sync with cloud,but still missing some item!");
@@ -1000,20 +1009,14 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
                     } else {
-                        pList = MediaActivity.loadPlaylistFromConfig(getApplicationContext());
-
                         dDeque = new ArrayDeque<>();
-                        // 删除文件不用管本地数据库中没有服务器传过来的条目的问题
+                        // 删除文件不用管本地数据库中没有的, 而服务器传过来的条目的删除
                         DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,deleteList);
                         while (!dDeque.isEmpty()) {
                             MediaBean deleteBean = dDeque.pop();
 
-                            for (Iterator<PlayListBean> ite = pList.iterator(); ite.hasNext();) {
-                                PlayListBean pItem = ite.next();
-                                if (pItem.getMediaData().getPath().equals(deleteBean.getPath())) {
-                                    ite.remove();
-                                }
-                            }
+                            // 从播放列表数据库移除相关条目
+                            new PlayBeanDao(getApplicationContext()).delete(new ArrayList<PlayBean>(deleteBean.getPlayBeans()));
 
                             if (deleteBean.getSource()==SOURCE_LOCAL) {          // 本地文件
                                 // 从数据库删除
@@ -1044,8 +1047,6 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                 }
                             }
                         }
-
-                        MediaActivity.savePlaylistToConfig(getApplication(), pList);
                     }
                     break;
 

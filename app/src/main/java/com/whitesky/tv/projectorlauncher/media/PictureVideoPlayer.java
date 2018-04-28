@@ -30,7 +30,7 @@ import android.widget.Toast;
 
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
 import com.whitesky.tv.projectorlauncher.media.maskController.MaskController;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
@@ -39,8 +39,6 @@ import com.whitesky.tv.projectorlauncher.utils.ViewUtil;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,14 +46,17 @@ import java.util.concurrent.Executors;
 import static android.content.Context.AUDIO_SERVICE;
 import static android.media.MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
 import static android.media.MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT;
-import static android.widget.AdapterView.INVALID_POSITION;
-import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_CENTER;
-import static com.whitesky.tv.projectorlauncher.media.bean.PlayListBean.MEDIA_SCALE_FIT_XY;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_PLAY_DRIECT_BACKWORD;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_PLAY_DRIECT_FORWARD;
+import static com.whitesky.tv.projectorlauncher.media.MediaActivity.MEDIA_PLAY_DRIECT_STAY;
+import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.MEDIA_SCALE_FIT_CENTER;
+import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.MEDIA_SCALE_FIT_XY;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_UNKNOWN;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
+import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.PLAY_INDEX_PREVIEW;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
 
 /**
@@ -68,12 +69,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     // 路径加上此头后setDataSource会调用底层插件播放
     public static final String PRIVATE_PROTOCOL_PREFIX = "privprotocol:";
     //public static final String PRIVATE_PROTOCOL_PREFIX = "";
-
-    // 重放模式
-    public static final int  MEDIA_REPLAY_ONE = 0;
-    public static final int  MEDIA_REPLAY_ALL = 1;
-    public static final int  MEDIA_REPLAY_SHUFFLE = 2;
-    public static final int  MEDIA_REPLAY_MODE_DEFAULT = MEDIA_REPLAY_ALL;
 
     // 播放器的播放状态
     public static final int PLAYER_STATE_IDLE = -1;              //表示从来没有播放,只要开始播放过就不可能是IDLE
@@ -88,11 +83,11 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int ERROR_FILE_PATH_NONE = -1;
     public static final int ERROR_FILE_NOT_EXIST = -2;
     public static final int ERROR_PLAYLIST_INVALIDED_POSITION = -3;
-    public static final int ERROR_PLAYLIST_FOUND_NONE = -4;
+    public static final int ERROR_PLAYLIST_MEDIA_NONE = -4;
     public static final int ERROR_VIDEO_PREPARE_ERROR = -5;
     public static final int ERROR_VIDEO_PLAY_ERROR = -6;
     public static final int ERROR_IMAGE_PLAY_ERROR = -7;
-    public static final int ERROR_FILE_NEED_DOWNLOAD_ERROR = -8;
+    public static final int ERROR_FILE_NEED_DOWNLOAD = -8;
 
     public static final int PICTURE_DEFAULT_PLAY_DURATION_MS = 10000;
     private static final int UPDATE_SEEKBAR_THREAD_SLEEP_TIME_MS = 300;
@@ -123,22 +118,15 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     private AudioManager mAudioManager;
     private MediaPlayer mMediaPlayer;
 
-    private List<PlayListBean> mPlayList;
-
-    public PlayListBean getCurPlaylistBean() {
-        return curPlaylistBean;
+    public PlayBean getCurPlayBean() {
+        return curPlayBean;
     }
-    private PlayListBean curPlaylistBean;
+    private PlayBean curPlayBean;
 
-    public MediaBean getCurPreviewMediaBean() {
-        return curPreviewMediaBean;
+    public boolean isPreview() {
+        return isPreview;
     }
-    private MediaBean curPreviewMediaBean;
-
-    public String getCurPlayPath() {
-        return curPlayPath;
-    }
-    private String curPlayPath;
+    private boolean isPreview;
 
     ExecutorService mSeekBarUpdateService;
 
@@ -167,15 +155,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         return mPlayState;
     }
     private int mPlayState = PLAYER_STATE_IDLE;
-    private int mPlayPosition;
-
-    public int getReplayMode() {
-        return mReplayMode;
-    }
-    public void setReplayMode(int mode) {
-        this.mReplayMode = mode;
-    }
-    private int mReplayMode = MEDIA_REPLAY_ALL;
 
     //播放完成回调
     public interface OnMediaEventListener {
@@ -184,6 +163,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         void onMediaPlayCompletion();
         void onMediaPlayError(int error, MediaBean errorBean);
         void onMediaPlayInfoUpdate(String name, String mimeType, int width, int height, long size, int bps);
+        PlayBean onMediaPlayRequestPlayBean(int direct, boolean force);
     }
 
     public void setOnMediaEventListener(OnMediaEventListener listener) {
@@ -251,10 +231,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mOriginSurfaceWidth = flp.width;
 
         mMaskController.bringToFront();
-    }
-
-    public void setPlayList( List<PlayListBean> list) {
-        mPlayList = list;
     }
 
     @Override
@@ -412,22 +388,19 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.i(TAG, "SurfaceHolder surfaceCreated");
-            if (mPlayList != null
-                    && mPlayList.size() > 0
-                    && mStartRightNow==true
+            if (mStartRightNow==true && MediaActivity.havePlayList(mContext)
                     && MediaActivity.isLocalMassStorageMounted(mContext)) {
+                Log.i(TAG, "SurfaceHolder auto play media");
                 // 每次surface从隐藏到出现都是一次surfaceCreated,所以这里必须mStartRightNow来标志这次的surfaceCreated是由于MediaActivity onResume引起的
                 fullScreenSwitch(true);
-                mediaPlay();
-                Log.i(TAG, "SurfaceHolder auto play media");
+                mediaPlay(MEDIA_PLAY_DRIECT_STAY, true);
             }
             // 强制清空mStartRightNow标志,防止下次图片视频切换再自动播放
             mStartRightNow = false;
         }
 
         @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width,
-                                   int height) {
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             Log.i(TAG, "SurfaceHolder size change");
         }
 
@@ -499,48 +472,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
 
     // 媒体播放控制
-    public void mediaPreview(MediaBean mPreviewItem)
-    {
-        curPlaylistBean = null;
-        Log.d(TAG,"media Preview:" + mPreviewItem.getPath());
-        String path="";
-        int type = MEDIA_UNKNOWN;
-        int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
-        if (mPreviewItem!=null)
-        {
-            path = mPreviewItem.getPath();
-            type = mPreviewItem.getType();
-            time = mPreviewItem.getDuration();
-        }
-
-        if (path.isEmpty())
-        {
-            Log.e(TAG,"media Preview path none!");
-            mPlayState = PLAYER_STATE_PLAY_STOP;
-            if (mOnMediaEventListener!=null)
-            {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_PATH_NONE, mPreviewItem);
-            }
-            return;
-        }
-
-        curPreviewMediaBean = mPreviewItem;
-        curPlayPath = mPreviewItem.getPath();
-
-        switch (type)
-        {
-            case MEDIA_VIDEO:
-                videoPlay(path, MEDIA_SCALE_FIT_XY);
-                break;
-            case MEDIA_PICTURE:
-                picturePlay(path, time, MEDIA_SCALE_FIT_XY);
-                break;
-            default:
-                break;
-        }
-    }
-
-
     public void mediaStop()
     {
         mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
@@ -550,8 +481,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
         mMediaStop = true;    //保证上一个mSeekBarUpdateService一定可以被结束
 
-        curPlaylistBean = null;
-        curPlayPath = null;
+        curPlayBean = null;
 
         if (mOnMediaEventListener!=null)
         {
@@ -559,58 +489,64 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         }
     }
 
-    // 寻找播放列表中上一次记录的播放的位置开始播放
-    public void mediaPlay() {
-        if (mPlayList==null || mPlayList.isEmpty()) {
-            mPlayState = PLAYER_STATE_PLAY_STOP;
-            if (mOnMediaEventListener!=null)
-            {
-                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
-            }
-            return;
-        }
-
-        int idx = 0;
-        for (PlayListBean bean:mPlayList) {
-            if (bean.isPlaying()) {
-                break;
-            }
-            idx++;
-        }
-        mediaPlay(idx);
+    // 告知方向和是否强制根据方向切换上一首下一首,mediaPlay自己去查询playIndex进行播放
+    public void mediaPlay(int direct, boolean force) {
+        mediaPlay(null,direct, force);
     }
 
-    public void mediaPlay(int position)
-    {
-        curPreviewMediaBean = null;
-        Log.d(TAG,"media Play position:" + position);
+    // 告知需要播放的条目, 根据条目的idx区分是preview还是播放列表双击
+    public void mediaPlay(PlayBean bean) {
+        mediaPlay(bean, MEDIA_PLAY_DRIECT_FORWARD, true);
+    }
+
+    // 如果传入的PlayBean不是空的,则播放这个bean,idx如果是-1,则代表是预览
+    // 否则根据forward和force参数向MediaActivity请求
+    private void mediaPlay(PlayBean bean, int direct, boolean force) {
+        Log.d(TAG,"media Play bean:" + bean + " direct=" + direct + " force=" + force);
+
+        curPlayBean = null;
+        isPreview = false;
+        if (bean==null) {
+            // 沒有指定,所以我们主动去请求
+            if (mOnMediaEventListener!=null) {
+                // 下面的函数会设置play list ui上的正在播放标志，但是对于bean!=null的情况调不到这边,需要自己去设置ui
+                curPlayBean = mOnMediaEventListener.onMediaPlayRequestPlayBean(direct,force);
+            }
+
+            if (curPlayBean==null) {
+                // 没有请求到,则认为播放列表不存在
+                mPlayState = PLAYER_STATE_PLAY_STOP;
+                if (mOnMediaEventListener!=null)
+                {
+                    mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
+                }
+                return;
+            }
+        } else {
+            //双击播放列表/预览而来
+            curPlayBean = bean;
+            if(bean.getIdx()==PLAY_INDEX_PREVIEW) {
+                // 由预览指定而来
+                isPreview = true;
+            }
+        }
+
 
         String path="";
         int type = MEDIA_UNKNOWN;
         int time = PICTURE_DEFAULT_PLAY_DURATION_MS;
         int scale = MEDIA_SCALE_FIT_XY;
 
-        if (position==INVALID_POSITION || position>=mPlayList.size()) {
-            Log.e(TAG,"media Play position(" + position +") POSITION INVALID!");
-            mPlayState = PLAYER_STATE_PLAY_STOP;
-            if (mOnMediaEventListener!=null)
-            {
-                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_INVALIDED_POSITION, null);
-            }
-            return;
-        }
-
-        MediaBean fileBean = mPlayList.get(position).getMediaData();
+        MediaBean fileBean = curPlayBean.getMedia();
         if (fileBean!=null) {
             path = fileBean.getPath();
             type = fileBean.getType();
-            time = fileBean.getDuration();
-            scale =  mPlayList.get(position).getPlayScale();
+            scale =  curPlayBean.getScale();
         } else {
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_FOUND_NONE, null);
+                mOnMediaEventListener.onMediaPlayError(ERROR_PLAYLIST_MEDIA_NONE, null);
             }
             return;
         }
@@ -631,14 +567,14 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_NEED_DOWNLOAD_ERROR, fileBean);
+                mOnMediaEventListener.onMediaPlayError(ERROR_FILE_NEED_DOWNLOAD, fileBean);
             }
             return;
         }
 
         if (path==null || path.isEmpty())
         {
-            Log.e(TAG,"media Play position(" + position +") FILE_PATH_ERROR!");
+            Log.e(TAG,"media Play FILE_PATH_ERROR!" + fileBean.toString());
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
@@ -649,17 +585,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
 
         mPlayBtn.setBackgroundResource(R.drawable.selector_media_pause_btn);
 
-        mPlayPosition = position;
-        curPlaylistBean = mPlayList.get(position);
-        curPlayPath = curPlaylistBean.getMediaData().getPath();
-
-        // 设置正在播放标志，后面onMediaPlayInfoUpdate用adapter的refresh在UI上显示指示器
-        for (PlayListBean bean : mPlayList) {
-            bean.setPlaying(false);
-        }
-        curPlaylistBean.setPlaying(true);
-
-        //ToastUtil.showToast(mContext, "path=" + path + ", position=" + position);
+        //ToastUtil.showToast(mContext, "play path=" + path);
         Log.d(TAG,"media Play path:" + path + ", type:" + type);
 
         switch (type)
@@ -668,11 +594,13 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                 videoPlay(path, scale);
                 break;
             case MEDIA_PICTURE:
+                time = curPlayBean.getTime();
                 picturePlay(path, time, scale);
                 break;
             default:
                 break;
         }
+
     }
 
     public void mediaPlayOrPauseOrResume()
@@ -681,7 +609,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         {
             case PLAYER_STATE_IDLE:
             case PLAYER_STATE_PLAY_STOP:
-                mediaPlay();
+                mediaPlay(MEDIA_PLAY_DRIECT_STAY,false);
                 break;
             case PLAYER_STATE_PLAY_PICTURE:
                 mPlayBtn.setBackgroundResource(R.drawable.selector_media_play_btn);
@@ -706,30 +634,19 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         }
     }
 
-    public void mediaAutoReplay()
-    {
-        if (mReplayMode!=MEDIA_REPLAY_ONE) {
-            updatePlayPosition(true);
-        }
-        mediaStop(); // 因为会在media stop中将cur play bean设置为null,而这个变量又被update Play Position用到,所以这边必须遵循这个调用顺序
-        mediaPlay(mPlayPosition);
-    }
-
     public void mediaPlayNext()
     {
-        updatePlayPosition(true);
         mediaStop();
-        mediaPlay(mPlayPosition);
+        mediaPlay(MEDIA_PLAY_DRIECT_FORWARD, true);
     }
 
     public void mediaPlayPrevious()
     {
-        updatePlayPosition(false);
         mediaStop();
-        mediaPlay(mPlayPosition);
+        mediaPlay(MEDIA_PLAY_DRIECT_BACKWORD, true);
     }
 
-    public void seekTo(int msec)
+    private void seekTo(int msec)
     {
         switch (mPlayState)
         {
@@ -763,8 +680,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         mPictureView = null;
         mOnMediaEventListener = null;
         mPlayState = PLAYER_STATE_IDLE;
-        mReplayMode = MEDIA_REPLAY_ALL;
-        mPlayList = null;
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
             mMediaPlayer.reset();
@@ -804,7 +719,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             if (mOnMediaEventListener!=null)
             {
                 mOnMediaEventListener.onMediaPlayError(ERROR_FILE_NOT_EXIST,
-                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+                        curPlayBean ==null?null: curPlayBean.getMedia());
             }
             return;
         }
@@ -928,7 +843,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                     if (mOnMediaEventListener!=null)
                     {
                         mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_ERROR,
-                                curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+                                curPlayBean ==null?null: curPlayBean.getMedia());
                     }
                     return false;
                 }
@@ -949,7 +864,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PREPARE_ERROR,curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+                mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PREPARE_ERROR, curPlayBean ==null?null: curPlayBean.getMedia());
             }
         }
     }
@@ -988,7 +903,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             if (mOnMediaEventListener!=null)
             {
                 mOnMediaEventListener.onMediaPlayError(ERROR_FILE_NOT_EXIST,
-                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+                        curPlayBean ==null?null: curPlayBean.getMedia());
             }
             return;
         }
@@ -1011,7 +926,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             if(mOnMediaEventListener !=null)
             {
                 mOnMediaEventListener.onMediaPlayError(ERROR_IMAGE_PLAY_ERROR,
-                        curPlaylistBean==null?null:curPlaylistBean.getMediaData());
+                        curPlayBean ==null?null: curPlayBean.getMedia());
             }
             return;
         }
@@ -1097,56 +1012,6 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
         Log.i(TAG, "picture Resume");
         mPlayState = PLAYER_STATE_PLAY_PICTURE;
         ToastUtil.showToast(mContext, R.string.str_media_play_resume);
-    }
-
-    private int updatePlayPosition(boolean forward) {
-        if (mPlayList.size()==0) {
-            mPlayPosition = INVALID_POSITION;
-            return mPlayPosition;
-        }
-
-        // 借这个机会调整mPlayPosition的位置
-        // 播放列表是可以拖动编辑删除的,播放列表的position会改变
-        // 当前播放器的mPlayPosition与实际位置就不对了
-        // 如果删除了该条目,则indexOf返回-1,下面+1会从0开始播放
-        if (curPlaylistBean!=null) {
-            mPlayPosition = mPlayList.indexOf(curPlaylistBean);
-        }
-
-        switch(mReplayMode)
-        {
-            case MEDIA_REPLAY_ALL:
-            case MEDIA_REPLAY_ONE:
-                if (forward)
-                {
-                    mPlayPosition++;
-                    if (mPlayPosition >= mPlayList.size()) {
-                        mPlayPosition = 0;
-                    }
-                }
-                else
-                {
-                    mPlayPosition--;
-                    if (mPlayPosition<0) {
-                        mPlayPosition = mPlayList.size()-1;
-                    }
-                }
-                break;
-
-            case MEDIA_REPLAY_SHUFFLE:
-                mPlayPosition = getRandomNum(mPlayList.size());
-                break;
-        }
-
-        return mPlayPosition;
-    }
-
-    private int getRandomNum(int endNum){
-        if(endNum > 0){
-            Random random = new Random();
-            return random.nextInt(endNum);
-        }
-        return 0;
     }
 
 }

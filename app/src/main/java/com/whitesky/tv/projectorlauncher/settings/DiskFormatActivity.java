@@ -24,8 +24,9 @@ import android.widget.TextView;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
-import com.whitesky.tv.projectorlauncher.media.bean.PlayListBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
+import com.whitesky.tv.projectorlauncher.media.db.PlayBeanDao;
 import com.whitesky.tv.projectorlauncher.service.download.DownloadService;
 
 import java.lang.ref.WeakReference;
@@ -242,17 +243,18 @@ public class DiskFormatActivity extends Activity implements View.OnClickListener
                     case MSG_FORMAT_START:
                         activity.showFormatPadding();
                         break;
+
                     case MSG_FORMAT_DONE:
                         activity.showSataFormatDoneView();
-
                         // 格式化磁盘后清空数据库与播放列表
                         new MediaBeanDao(mActivity.get()).deleteAll();
-                        List<PlayListBean> emptyList= new ArrayList<>();
-                        MediaActivity.savePlaylistToConfig(mActivity.get(), emptyList);
+                        new PlayBeanDao(mActivity.get()).deleteAll();
                         break;
+
                     case MSG_FORMAT_NONE:
                         activity.showSataNotFoundView();
                         break;
+
                     default:
                         break;
                 }

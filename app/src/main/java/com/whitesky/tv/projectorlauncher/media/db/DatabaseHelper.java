@@ -20,7 +20,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     // 数据库名称
     public static final String DATABASE_NAME = "media.db";
 
-    public static final int VERSION = 6;
+    public static final int VERSION = 8;
 
     // 本类的单例实例
     private static DatabaseHelper instance;
@@ -64,7 +64,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
         try {
             TableUtils.createTable(connectionSource, MediaBean.class);
-            //TableUtils.createTable(connectionSource, PlayBean.class);
+            TableUtils.createTable(connectionSource, PlayBean.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -74,7 +74,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
         try {
             TableUtils.dropTable(connectionSource, MediaBean.class, true);
-            //TableUtils.dropTable(connectionSource, PlayBean.class, true);
+            TableUtils.dropTable(connectionSource, PlayBean.class, true);
             onCreate(database, connectionSource);
         } catch (SQLException e) {
             e.printStackTrace();
