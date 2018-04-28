@@ -91,6 +91,7 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_MASK
 import static com.whitesky.tv.projectorlauncher.common.Contants.CONFIG_SHOW_QRCODE;
 import static com.whitesky.tv.projectorlauncher.common.Contants.COPY_TO_USB_MEDIA_EXPORT_FOLDER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_PATH;
+import static com.whitesky.tv.projectorlauncher.common.Contants.MASS_STORAGE_MOUNT_BROKER;
 import static com.whitesky.tv.projectorlauncher.common.Contants.LOCAL_SATA_MOUNT_PATH;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DEFAULT;
 import static com.whitesky.tv.projectorlauncher.common.Contants.MEDIA_LIST_ORDER_DURATION;
@@ -446,6 +447,7 @@ public class MediaActivity extends Activity
                 bundle.putString(BUNDLE_KEY_STORAGE_PATH, intent.getData().getPath());
                 msg.setData(bundle);
                 mHandler.sendMessageDelayed(msg, 500);
+
                 ToastUtil.showToast(context, getResources().getString(R.string.str_media_usb_device_plug_in_toast) + intent.getData().getPath());
 
             } else if (action.equals(Intent.ACTION_MEDIA_REMOVED) || action.equals(Intent.ACTION_MEDIA_UNMOUNTED)) {
@@ -1590,7 +1592,7 @@ public class MediaActivity extends Activity
                 case MSG_USB_PLUG_IN:
                     String storagePath = msg.getData().getString(BUNDLE_KEY_STORAGE_PATH);
 
-                    if (MASS_STORAGE_PATH.equals(storagePath)) {
+                    if (MASS_STORAGE_MOUNT_BROKER.equals(storagePath)) {
                         // 挂载了硬盘设备,很可能是开机,直接触发播放
                         // 播放类中在surfaceHolder建立的时候会尝试播放一次，但是可能会因为没有挂载SATA而失败，这边补一次
                         Log.i(TAG, "mount sata device means power on complete, start full screen play media");

@@ -42,6 +42,7 @@ public class Contants
     // MediaActivity +++
     public static final String LOCAL_SATA_MOUNT_PATH = "/mnt/sata";         // 硬盘的固定挂载目录
     public static final String MASS_STORAGE_PATH = "/mnt/sata/disk";  // 硬盘的固定挂载目录
+    public static final String MASS_STORAGE_MOUNT_BROKER = "/mnt/sata/broker";  // fuse挂载硬盘的目录
     public static final String LOCAL_MEDIA_FOLDER = "local";                // usb导入本地的文件位置
     public static final String CLOUD_MEDIA_FOLDER = "cloud";                // 云端下载文件的储存总目录
     public static final String CLOUD_MEDIA_PRIVATE_FOLDER = "private";      // 用户私人上传文件的储存目录
