@@ -30,6 +30,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.j256.ormlite.dao.ForeignCollection;
 import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.admin.DeviceInfoActivity;
 import com.whitesky.tv.projectorlauncher.application.MainApplication;
@@ -102,11 +103,14 @@ import static com.whitesky.tv.projectorlauncher.common.Contants.USB_DEVICE_DEFAU
 import static com.whitesky.tv.projectorlauncher.common.Contants.mMountExceptList;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_NOT_YET;
 import static com.whitesky.tv.projectorlauncher.common.HttpConstants.LOGIN_STATUS_SUCCESS;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_NEED_DOWNLOAD;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_NOT_EXIST;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_FILE_PATH_NONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_IMAGE_PLAY_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_INVALIDED_POSITION;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PLAY_ERROR;
-import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PREPARE_ERROR;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_PLAYLIST_MEDIA_NONE;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PLAY_FAILED;
+import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.ERROR_VIDEO_PREPARE_FAILED;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_IDLE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_COMPLETE;
 import static com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer.PLAYER_STATE_PLAY_STOP;
@@ -127,7 +131,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADING;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_ERROR;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
 import static com.whitesky.tv.projectorlauncher.media.db.PlayBean.PLAY_INDEX_PREVIEW;
 import static com.whitesky.tv.projectorlauncher.service.download.DownloadService.EXTRA_KEY_URL;
@@ -253,7 +256,7 @@ public class MediaActivity extends Activity
 
     private void changeWholePlayList(List<PlayBean> target) {
         // 替换整个列表的这个调用会回调CHANGE_EVENT_CLEAR到MediaActivity,将PlayIndex设置为-1
-        mPlayListAdapter.setListDatas(target);
+        mPlayListAdapter.setListDatasNotifyChange(target);
         mPlayListAdapter.refresh();
 
         for (PlayBean bean : mPlayListAdapter.getListDatas()) {
@@ -418,28 +421,35 @@ public class MediaActivity extends Activity
 
                 MediaBean bean = intent.getParcelableExtra(Contants.EXTRA_DOWNLOAD_STATE_CONTEXT);
 
-                if (bean.getDownloadState()==STATE_DOWNLOAD_NONE) {
-
+                if (bean.getDownloadState()==STATE_DOWNLOAD_NONE || bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                    // 删除和下载完成文件更新磁盘容量
                     updateCapacityUi(MASS_STORAGE_PATH);
 
-                } else if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                }
 
-                    updateCapacityUi(MASS_STORAGE_PATH);
+                mMediaLibraryListAdapter.update(bean);
 
-                    if (mPlayListAdapter.isAllItemsFromCloud() && mPlayer.isFullScreen() && mPlayer.getPlayState()== PLAYER_STATE_PLAY_STOP) {
+                // 被播放加入播放列表的项目,才需要在下载的时候通知播放列表更新
+                ForeignCollection<PlayBean> playListRefs = new MediaBeanDao(getApplicationContext()).queryByPath(bean.getPath()).getPlayBeans();
+                if (playListRefs!=null && !playListRefs.isEmpty())
+                {
+                    mPlayListAdapter.updateNotifyChange(bean);
+                }
+
+                // 如果一个下载列表中不存在已经下载完成的项目, 在play complete的时候就不会在调用mediaPlay
+                // 那么当这边有下载完的条目的时候,就需要开始播放
+                if (bean.getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                    if (mPlayer.isFullScreen() && mPlayer.getPlayState()== PLAYER_STATE_PLAY_STOP) {
                         Message msg = mHandler.obtainMessage();
                         msg.what = MSG_MEDIA_PLAY_COMPLETE;
                         mHandler.sendMessage(msg);
                     }
                 }
 
-                mPlayListAdapter.update(bean);
-                mMediaLibraryListAdapter.update(bean);
-
                 // 调用refresh刷新list会导致UI无法,目前是每下载2M就会汇报一次进度,如果网速非常快,更新频繁可能导致ANR
                 // 所以此处实时更新变量的内容,但是刷新限定一秒更新一次,除非需要更新的内容是 下载完毕/下载错误
                 long timeNow = System.currentTimeMillis();
-                if (timeNow - mLastDownloadUpdateUiTime > 1500
+                if (timeNow - mLastDownloadUpdateUiTime > 1000
                         || bean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADING) {
                     Log.i(TAG,"download update refresh list");
                     mMediaLibraryListAdapter.refresh();
@@ -588,7 +598,13 @@ public class MediaActivity extends Activity
         int playIndex = getPlayIndexFromConfig();
         int replayMode = loadReplayModeFromConfig(getApplicationContext());
 
+        // 计算出应该播放的位置
         playIndex = updatePlayPosition(direct,replayMode, playIndex, force);
+
+        // 该播放的位置的文件是否已经下载
+        if (playIndex!=INVALID_POSITION && mPlayListAdapter.getItem(playIndex).getMedia().getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
+            playIndex = mPlayListAdapter.firstPlayableItemIndex(playIndex);
+        }
 
         mPlayListAdapter.setPlayIndex(playIndex);
         savePlayIndexToConfig(this,mPlayListAdapter.getPlayIndex());
@@ -626,27 +642,36 @@ public class MediaActivity extends Activity
     @Override
     public void onMediaPlayError(int error, MediaBean errorBean) {
         // 播放错误
-        Log.d(TAG,"media Play error! ERR_NO:" + error);
+        Log.d(TAG,"media Play ERR_NO:" + error);
         if (errorBean!=null) {
             Log.d(TAG, "error bean is " + errorBean.toString());
         }
 
         // 需要使用toast提示用户的错误
         switch (error) {
-            case ERROR_PLAYLIST_INVALIDED_POSITION:
-                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_list_empty);
-                break;
             case ERROR_FILE_PATH_NONE:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_path_error);
                 break;
             case ERROR_FILE_NOT_EXIST:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_file_not_found_error);
                 break;
-            case ERROR_VIDEO_PREPARE_ERROR:
+            case ERROR_PLAYLIST_INVALIDED_POSITION:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_list_empty);
+                break;
+            case ERROR_PLAYLIST_MEDIA_NONE:
+                // 播放列表数据中没有媒体数据
+                break;
+            case ERROR_VIDEO_PREPARE_FAILED:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_error_file_format);
                 break;
-            case ERROR_VIDEO_PLAY_ERROR:
+            case ERROR_VIDEO_PLAY_FAILED:
                 ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_video_error);
+                break;
+            case ERROR_IMAGE_PLAY_ERROR:
+                ToastUtil.showToast(MediaActivity.this, R.string.str_media_play_image_error);
+                break;
+            case ERROR_FILE_NEED_DOWNLOAD:
+                // 文件需要下载
                 break;
             default:
                 break;
@@ -1009,7 +1034,7 @@ public class MediaActivity extends Activity
     }
 
     public static void savePlayIndexToConfig(Context context,int playIndex) {
-        Log.d(TAG,"save " + playIndex);
+        Log.d(TAG,"save play index = " + playIndex);
         SharedPreferencesUtil config = new SharedPreferencesUtil(context, Contants.PREF_CONFIG);
         config.putInt(CONFIG_PLAY_INDEX, playIndex);
     }
@@ -1028,7 +1053,7 @@ public class MediaActivity extends Activity
         // 因为 media表 和 play表 在数据库中是关联的, 所以从数据库中查询出的PlayBean对象中的MediaBean一定是新的
         // 不必担心media表中的数据下载完成了, 而Play表查询出来的对象的MediaBean字段中还是正在下载
         int playIndex = getPlayIndexFromConfig();
-        mPlayListAdapter.setListDatas(datas); // 注意setListDatas会先clear再set,clear会导致playIndex丢失,这边预先读出来
+        mPlayListAdapter.setListDatasNotifyChange(datas); // 注意setListDatas会先clear再set,clear会导致playIndex丢失,这边预先读出来
         savePlayIndexToConfig(this, playIndex);
         mPlayListAdapter.refresh();
     }
@@ -1203,7 +1228,8 @@ public class MediaActivity extends Activity
                         new PlayBeanDao(MediaActivity.this).delete(changeBeans);
 
                         // 根据remove的条目的idx, 判断当前的playIndex需要前移几次
-                        // 如果移除的条目含有正在播放的,则停止播放, 全移除完毕后如果还有可以播放的条目,则播放该条目
+                        // 如果移除的条目含有正在播放的,则停止播放
+                        // 全移除完毕后如果还有可以播放的条目,则播放该条目
                         boolean playNeedResume = false;
                         int removeHowManyItemsBeforePlayItem = 0;
                         playIndex = getPlayIndexFromConfig();
@@ -1211,7 +1237,8 @@ public class MediaActivity extends Activity
                         PlayBean curPlay = mPlayer.getCurPlayBean();
                         if (curPlay!=null) {
                             for (PlayBean willDelete:changeBeans) {
-                                if (playIndex == willDelete.getIdx()) {
+                                // 只删除播放列表,不用考虑正在预览的情况,因为媒体库中的该文件没有受到影响
+                                if (playNeedResume==false && playIndex == willDelete.getIdx()) {
                                     mPlayer.mediaStop();
                                     playNeedResume = true;
                                 }
@@ -1222,21 +1249,16 @@ public class MediaActivity extends Activity
                             }
                         }
 
-                        if (mPlayListAdapter.hasPlayableItem() && playNeedResume) {
-                            // mediaPlay第一个参数传null,会回调onMediaPlayRequestPlayBean去请求获得播放条目
-                            // 此函数从数据库获得数据,然后更新index并保存
-                            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_STAY,true);
-                        } else {
-                            // 播放器根本没有播放任何东西
-                            //  或
-                            // 删除的东西没有一个在播放的
-                            Log.d(TAG,"sort before playIndex = " + playIndex);
+                        // 更新playIndex
+                        if (removeHowManyItemsBeforePlayItem!=0) {
                             playIndex = playIndex - removeHowManyItemsBeforePlayItem;
                             mPlayListAdapter.setPlayIndex(playIndex);
-                            savePlayIndexToConfig(MediaActivity.this,playIndex);
-                            Log.d(TAG,"sort after playIndex = " + playIndex);
+                            savePlayIndexToConfig(MediaActivity.this, playIndex);
                         }
 
+                        if (mPlayListAdapter.hasPlayableItem() && playNeedResume) {
+                            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_STAY,true);
+                        }
                         break;
 
                     case CHANGE_EVENT_SCALE:
@@ -1365,7 +1387,7 @@ public class MediaActivity extends Activity
 
             @Override
             public boolean canExchange(int srcPosition, int position) {
-                return mPlayListAdapter.exchange(srcPosition, position);
+                return mPlayListAdapter.exchangeNotifyChange(srcPosition, position);
             }
         });
 
@@ -1757,7 +1779,8 @@ public class MediaActivity extends Activity
         if (addItem.getDownloadState()==STATE_DOWNLOAD_NONE) {
             addToDownload(addItem);
         }
-        mPlayListAdapter.addItem(new PlayBean(addItem));
+        mPlayListAdapter.addItemNotifyChange(new PlayBean(addItem));
+        mPlayListAdapter.refresh();
     }
 
     private void updateMultiActionButtonUiState() {
@@ -2313,83 +2336,85 @@ public class MediaActivity extends Activity
         int deleteCount = 0;
         boolean removePlaying = false;
 
-        Deque<PlayBean> needToDeleteFromPlaylistDeque = new ArrayDeque<>();
-
         while (!mDeleteDeque.isEmpty()) {
-            MediaBean needDeleteDiskData = mDeleteDeque.pop();
+            // todo remove log
+            Log.d(TAG,"delete one begin!");
+            MediaBean needDeleteMediaData = mDeleteDeque.pop();
 
+            Log.d(TAG,"remove playing!");
             // 当前删除的项当前正在播放则先停止播放
             PlayBean curPlay = mPlayer.getCurPlayBean();
-            if (curPlay!=null && mPlayer.getPlayState()!=PLAYER_STATE_PLAY_STOP) {
-                if (needDeleteDiskData.getPath().equals(curPlay.getMedia().getPath())) {
+            if (!removePlaying && curPlay!=null && mPlayer.getPlayState()!=PLAYER_STATE_PLAY_STOP) {
+                if (needDeleteMediaData.getPath().equals(curPlay.getMedia().getPath())) {
                     removePlaying = true;
                     mPlayer.mediaStop();
                 }
             }
 
-            // 从播放列表找受影响的条目,因为播放列表的条目可能是重复的
-            // 所以使用队列记录下与当前的删除文件一致的条目
-            needToDeleteFromPlaylistDeque.clear();
-            for (PlayBean playItem:mPlayListAdapter.getListDatas())
-            {
-                // 删除的文件在播放列表中
-                if (playItem.getMedia().getPath().equals(needDeleteDiskData.getPath()))
-                {
-                    needToDeleteFromPlaylistDeque.add(playItem);
-                }
-            }
+            Log.d(TAG,"remove playlist begin ++!");
+            // 从播放列表删除受影响的条目
+            ArrayList<PlayBean> needDeletePlayData = new ArrayList<PlayBean>(needDeleteMediaData.getPlayBeans());
+            mPlayListAdapter.removeItemNotifyChange(needDeletePlayData);
 
-            // 从播放列表删除这些条目
-            while (!needToDeleteFromPlaylistDeque.isEmpty()) {
-                PlayBean needDeletePlayData = needToDeleteFromPlaylistDeque.pop();
-                mPlayListAdapter.removeItem(needDeletePlayData);
-            }
+            Log.d(TAG,"remove playlist end! --");
 
-            if (needDeleteDiskData.getSource()==SOURCE_LOCAL) { // 本地文件
+            if (needDeleteMediaData.getSource()==SOURCE_LOCAL) { // 本地文件
 
                 // 从界面中删除
-                mMediaLibraryListAdapter.removeItem(needDeleteDiskData);
+                mMediaLibraryListAdapter.removeItem(needDeleteMediaData);
                 // 从数据库删除
-                new MediaBeanDao(MediaActivity.this).delete(needDeleteDiskData);
-                //从磁盘删除
-                FileUtil.deleteFile(needDeleteDiskData.getPath());
+                new MediaBeanDao(MediaActivity.this).delete(needDeleteMediaData);
+                // 从磁盘删除
+                FileUtil.deleteFile(needDeleteMediaData.getPath());
 
-            } else {                                                            // 云端文件
+            } else {                                             // 云端文件
 
-                int downloadState = needDeleteDiskData.getDownloadState();
+                int downloadState = needDeleteMediaData.getDownloadState();
+
                 if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
 
-                    needDeleteDiskData.setDownloadProgress(0);
-                    needDeleteDiskData.setDownloadState(STATE_DOWNLOAD_NONE);
-                    needDeleteDiskData.setDuration(0);
+                    needDeleteMediaData.setDownloadProgress(0);
+                    needDeleteMediaData.setDownloadState(STATE_DOWNLOAD_NONE);
+                    needDeleteMediaData.setDuration(0);
 
                     // 更新界面
-                    mMediaLibraryListAdapter.update(needDeleteDiskData);
+                    mMediaLibraryListAdapter.update(needDeleteMediaData);
                     // 更新数据库
-                    new MediaBeanDao(MediaActivity.this).update(needDeleteDiskData);
+                    new MediaBeanDao(MediaActivity.this).update(needDeleteMediaData);
                     // 从磁盘删除
-                    FileUtil.deleteFile(needDeleteDiskData.getPath());
+                    FileUtil.deleteFile(needDeleteMediaData.getPath());
 
-                } else if (downloadState != STATE_DOWNLOAD_NONE) {
+                } else if (downloadState == STATE_DOWNLOAD_NONE) {
+
+                    // 没有开始下载的云端条目,啥都不做
+
+                } else {
 
                     Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
-                    intent.putExtra(EXTRA_KEY_URL, needDeleteDiskData.getUrl());
+                    intent.putExtra(EXTRA_KEY_URL, needDeleteMediaData.getUrl());
                     Log.i(TAG, intent.getAction());
                     startService(intent);
+
                 }
             }
+
+            Log.d(TAG,"delete one end!");
 
             deleteCount++;
         }
 
-        // playlist还有剩下的元素,并且停止过播放
-        if (mPlayListAdapter.getCount()>=1 && removePlaying)
-        {
-            mPlayer.mediaPlayNext();
+        if (deleteCount>0) {
+            updateCapacityUi(MASS_STORAGE_PATH);
+            mMediaLibraryListAdapter.refresh();
+            mPlayListAdapter.refresh();
         }
 
-        mMediaLibraryListAdapter.refresh();
-        updateCapacityUi(MASS_STORAGE_PATH);
+        // playlist还有剩下的元素,并且停止过播放
+        if (mPlayListAdapter.getCount()>0 && removePlaying)
+        {
+            mPlayer.mediaPlay(MEDIA_PLAY_DRIECT_FORWARD,false);
+        }
+
         ToastUtil.showToast(MediaActivity.this, getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
     }
 }

@@ -151,7 +151,7 @@ public class MqttUtil {
             try {
                 mConOpt.setWill(mTopic, lastMessage.getBytes(), mMqttMsgQos, mMqttMsgRetained);
             } catch (Exception e) {
-                Log.i(TAG, "Exception Occured", e);
+                e.printStackTrace();
                 iMqttActionListener.onFailure(null, e);
             }
         }

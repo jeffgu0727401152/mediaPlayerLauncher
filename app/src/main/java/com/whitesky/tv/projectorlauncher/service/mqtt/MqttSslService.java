@@ -1027,6 +1027,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             } else {                                             // 云端文件
 
                                 int downloadState = deleteBean.getDownloadState();
+
                                 if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
 
                                     deleteBean.setDownloadProgress(0);
@@ -1038,12 +1039,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                                     // 从磁盘删除
                                     FileUtil.deleteFile(deleteBean.getPath());
 
-                                } else if (downloadState != STATE_DOWNLOAD_NONE) {
+                                } else if (downloadState == STATE_DOWNLOAD_NONE) {
+
+                                    // 没有开始下载的云端条目,啥都不做
+
+                                } else {
 
                                     Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
                                     intent.putExtra(EXTRA_KEY_URL, deleteBean.getUrl());
                                     Log.i("TAG", intent.getAction());
                                     startService(intent);
+
                                 }
                             }
                         }

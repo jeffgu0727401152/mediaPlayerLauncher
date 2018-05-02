@@ -84,8 +84,8 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
     public static final int ERROR_FILE_NOT_EXIST = -2;
     public static final int ERROR_PLAYLIST_INVALIDED_POSITION = -3;
     public static final int ERROR_PLAYLIST_MEDIA_NONE = -4;
-    public static final int ERROR_VIDEO_PREPARE_ERROR = -5;
-    public static final int ERROR_VIDEO_PLAY_ERROR = -6;
+    public static final int ERROR_VIDEO_PREPARE_FAILED = -5;
+    public static final int ERROR_VIDEO_PLAY_FAILED = -6;
     public static final int ERROR_IMAGE_PLAY_ERROR = -7;
     public static final int ERROR_FILE_NEED_DOWNLOAD = -8;
 
@@ -514,7 +514,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             }
 
             if (curPlayBean==null) {
-                // 没有请求到,则认为播放列表不存在
+                // 没有请求到,则认为播放列表不存在 或 不存在可以播放的内容
                 mPlayState = PLAYER_STATE_PLAY_STOP;
                 if (mOnMediaEventListener!=null)
                 {
@@ -551,9 +551,10 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             return;
         }
 
-        // 如果是没有下载的文件,则直接播放完成，并开服务下载他
+        // 如果是没有下载的文件,则直接当成播放完成跳过
         if (fileBean.getDownloadState()!=STATE_DOWNLOAD_DOWNLOADED) {
 
+            // 万一这个文件的状态是完全没有开始下载,保险起见,这边加入下载(一般情况下,加入播放列表的时候,就会将没有下载的文件加入下载)
             if (fileBean.getDownloadState()==STATE_DOWNLOAD_NONE) {
                 Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_START);
                 intent.putExtra(EXTRA_KEY_URL, fileBean.getUrl());
@@ -842,7 +843,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
                     mPlayState = PLAYER_STATE_PLAY_STOP;
                     if (mOnMediaEventListener!=null)
                     {
-                        mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_ERROR,
+                        mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PLAY_FAILED,
                                 curPlayBean ==null?null: curPlayBean.getMedia());
                     }
                     return false;
@@ -864,7 +865,7 @@ public class PictureVideoPlayer extends FrameLayout implements View.OnClickListe
             mPlayState = PLAYER_STATE_PLAY_STOP;
             if (mOnMediaEventListener!=null)
             {
-                mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PREPARE_ERROR, curPlayBean ==null?null: curPlayBean.getMedia());
+                mOnMediaEventListener.onMediaPlayError(ERROR_VIDEO_PREPARE_FAILED, curPlayBean ==null?null: curPlayBean.getMedia());
             }
         }
     }

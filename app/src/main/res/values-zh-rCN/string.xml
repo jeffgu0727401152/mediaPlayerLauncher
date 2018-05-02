@@ -99,6 +99,7 @@
     <string name="str_media_play_file_not_found_error">找不到媒体文件!</string>
     <string name="str_media_play_error_file_format">媒体文件编码可能有问题!</string>
     <string name="str_media_play_video_error">视频播放错误!</string>
+    <string name="str_media_play_image_error">图片播放错误!</string>
     <string name="str_media_play_list_empty">请检查播放列表</string>
 
     <string name="str_media_receive_mqtt_toast">远程控制</string>

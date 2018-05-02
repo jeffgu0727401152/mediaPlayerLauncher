@@ -12,7 +12,6 @@ import com.whitesky.tv.projectorlauncher.R;
 import com.whitesky.tv.projectorlauncher.common.adapter.CommonAdapter;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
-import com.whitesky.tv.projectorlauncher.media.db.PlayBeanDao;
 
 
 import java.text.SimpleDateFormat;
@@ -33,6 +32,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_START;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
+import static com.whitesky.tv.projectorlauncher.utils.MediaScanUtil.genTimeString;
 
 /**
  * Created by jeff on 18-1-16.
@@ -68,16 +68,6 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
     public PlayListAdapter(Context context, List<PlayBean> data)
     {
         super(context, data, R.layout.item_play_list);
-    }
-
-    private String genTimeString(int duration) {
-        String hms = " -- : -- : -- ";
-        if (duration!=0) {
-            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-            formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-            hms = formatter.format(duration);
-        }
-        return hms;
     }
 
     @Override
@@ -153,7 +143,7 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
             @Override
             public void onClick(View v) {
                 Log.i(TAG,"playlist remove position " + position);
-                removeItem(position);
+                removeItemNotifyChange(position);
                 refresh();
             }
         });
@@ -161,7 +151,7 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         holder.getButton(R.id.bt_media_time_add).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG,"playlist add time");
+                Log.i(TAG,"playlist add time" + position);
                 PlayBean bean = getItem(position);
                 int duration = bean.getTime();
                 bean.setTime(duration + 5000);
@@ -221,15 +211,15 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
 
         // 下载的视频文件没有播放时长, 认为是格式错误的
         if (item.getMedia().getType() == MEDIA_VIDEO
-                &&item.getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED
-                &&item.getMedia().getDuration()==0) {
+                && item.getMedia().getDownloadState() == STATE_DOWNLOAD_DOWNLOADED
+                && item.getMedia().getDuration() == 0) {
             holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_format_error));
             holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
         }
     }
 
 
-    public boolean exchange(int src, int dst) {
+    public boolean exchangeNotifyChange(int src, int dst) {
         if (src != INVALID_POSITION && dst != INVALID_POSITION) {
 
             ArrayList<PlayBean> changeList =  new ArrayList<>();
@@ -257,19 +247,21 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         return false;
     }
 
-    @Override
-    public void clear() {
+    public void clearNotifyChange() {
         synchronized (listLock) {
             super.clear();
         }
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_CLEAR,null);
         }
-        refresh();
     }
 
     @Override
-    public void addItem(PlayBean item) {
+    public void clear() {
+        clearNotifyChange();
+    }
+
+    public void addItemNotifyChange(PlayBean item) {
         synchronized (listLock) {
             item.setIdx(getCount());
             super.addItem(item);
@@ -280,11 +272,14 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
             changeList.add(item);
             mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_ADD, changeList);
         }
-
-        refresh();
     }
 
-    public void removeItem(int position) {
+    @Override
+    public void addItem(PlayBean item) {
+        addItemNotifyChange(item);
+    }
+
+    public void removeItemNotifyChange(int position) {
         PlayBean removeBean = getItem(position);
         removeItem(removeBean);
     }
@@ -294,10 +289,10 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
     public void removeItem(PlayBean item) {
         List<PlayBean> removeList = new ArrayList<>();
         removeList.add(item);
-        removeItem(removeList);
+        removeItemNotifyChange(removeList);
     }
 
-    public void removeItem(List<PlayBean> items) {
+    public void removeItemNotifyChange(List<PlayBean> items) {
         if (items==null || items.isEmpty()) {
             Log.w(TAG, "items empty to remove!");
             return;
@@ -321,20 +316,11 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
                 }
             }
         }
-
-        refresh();
     }
 
-    @Override
-    // 重写方法不改变内部数据对象的指向
-    public void setListDatas(List<PlayBean> items){
-        synchronized (listLock) {
-            listDatas.clear();
-        }
-
-        if (mOnPlaylistItemEventListener != null) {
-            mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_CLEAR, null);
-        }
+    // 外部使用此函数,这样日后在阅读代码的时候可以清晰知道会回调到数据库
+    public void setListDatasNotifyChange(List<PlayBean> items) {
+        clearNotifyChange();
 
         if (items == null) {
             return;
@@ -353,18 +339,12 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         if (mOnPlaylistItemEventListener != null) {
             mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_ADD, changeList);
         }
-
     }
 
-    public boolean isAllItemsFromCloud() {
-        synchronized (listLock) {
-            for (PlayBean bean:getListDatas()) {
-                if (bean.getMedia().getSource()==SOURCE_LOCAL) {
-                    return false;
-                }
-            }
-            return true;
-        }
+    @Override
+    // 重写父类方法,保证修改list内容会同步记录到数据库
+    public void setListDatas(List<PlayBean> items){
+        setListDatasNotifyChange(items);
     }
 
     public boolean hasPlayableItem() {
@@ -378,7 +358,24 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         }
     }
 
-    public void update(MediaBean data) {
+    public int firstPlayableItemIndex(int index) {
+        synchronized (listLock) {
+            for (int i = index; i<getCount(); i++) {
+                if (getItem(i).getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                    return i;
+                }
+            }
+
+            for (int i = 0; i<index; i++) {
+                if (getItem(i).getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
+                    return i;
+                }
+            }
+            return INVALID_POSITION;
+        }
+    }
+
+    public void updateNotifyChange(MediaBean data) {
         ArrayList<PlayBean> changeList =  new ArrayList<>();
 
         synchronized (listLock) {

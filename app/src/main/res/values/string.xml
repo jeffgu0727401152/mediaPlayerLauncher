@@ -98,6 +98,7 @@
     <string name="str_media_play_file_not_found_error">Cannot find any Media files</string>
     <string name="str_media_play_error_file_format">Error with media file format encoding!</string>
     <string name="str_media_play_video_error">Video play error!</string>
+    <string name="str_media_play_image_error">Picture play error!</string>
     <string name="str_media_play_list_empty">Please check the play list</string>
 
     <string name="str_media_receive_mqtt_toast">Remote Control</string>

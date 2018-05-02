@@ -11,7 +11,9 @@ import com.whitesky.tv.projectorlauncher.media.PictureVideoPlayer;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -291,6 +293,16 @@ public class MediaScanUtil {
         }
 
         return 0;
+    }
+
+    public static String genTimeString(int duration) {
+        String hms = " -- : -- : -- ";
+        if (duration!=0) {
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
+            hms = formatter.format(duration);
+        }
+        return hms;
     }
 
     public boolean isNeedDuration() {

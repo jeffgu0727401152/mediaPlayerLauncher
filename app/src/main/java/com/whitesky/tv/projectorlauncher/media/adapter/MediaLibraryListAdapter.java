@@ -31,6 +31,7 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOA
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_START;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
+import static com.whitesky.tv.projectorlauncher.utils.MediaScanUtil.genTimeString;
 
 /**
  * Created by jeff on 18-1-16.
@@ -83,17 +84,11 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
                 break;
         }
 
+        // 设置文件名 与 播放时长
         holder.setText(R.id.tv_media_title, item.getMediaData().getTitle());
+        holder.setText(R.id.tv_media_duration,  genTimeString(item.getMediaData().getDuration()));
 
-        String hms = " -- : -- : -- ";
-        if (item.getMediaData().getDuration()!=0) {
-            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-            formatter.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
-            hms = formatter.format(item.getMediaData().getDuration());
-        }
-        holder.setText(R.id.tv_media_duration, hms);
-
-        // 设置来源图标
+        // 设置文件来源图标
         switch (item.getMediaData().getSource())
         {
             case SOURCE_LOCAL:
@@ -114,6 +109,7 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
                 break;
         }
 
+        // 下载状态显示
         if (item.getMediaData().getSource()==SOURCE_LOCAL) {
             holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
         } else {
@@ -140,7 +136,7 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
             }
         }
 
-        // 决定功能按钮使能与否
+        // 决定功能按钮使能
         if (item.getMediaData().getSource()!=SOURCE_LOCAL) {
             if (item.getMediaData().getDownloadState() == STATE_DOWNLOAD_DOWNLOADED) {
                 holder.getButton(R.id.bt_media_download).setBackgroundResource(R.drawable.selector_media_download_btn);
@@ -219,25 +215,14 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
     }
 
     public interface OnAllMediaListItemEventListener {
-        public void doItemDelete(int position);
-        public void doItemPreview(int position);
-        public void doItemDownLoad(int position);
-        public void itemSelectedChange();
+        void doItemDelete(int position);
+        void doItemPreview(int position);
+        void doItemDownLoad(int position);
+        void itemSelectedChange();
     }
 
     public void setOnALlMediaListItemListener(OnAllMediaListItemEventListener onAllMediaListItemEventListener) {
         this.mOnALlMediaListItemEventListener = onAllMediaListItemEventListener;
-    }
-
-    public boolean exchange(int src, int dst) {
-        synchronized (mListLock) {
-            if (src != INVALID_POSITION && dst != INVALID_POSITION) {
-                Collections.swap(getListDatas(), src, dst);
-                refresh();
-                return true;
-            }
-            return false;
-        }
     }
 
     public void update(MediaBean data) {

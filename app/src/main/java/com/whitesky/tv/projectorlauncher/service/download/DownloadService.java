@@ -293,7 +293,7 @@ public class DownloadService extends Service {
 
         @Override
         public void onProgress(MediaBean bean) {
-            Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
+            //Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
             sendProgressToOtaActivity(bean);
         }
 
@@ -347,7 +347,7 @@ public class DownloadService extends Service {
 
         @Override
         public void onProgress(MediaBean bean) {
-            Log.d(TAG,bean.getUrl() + " onProgress " + bean.getDownloadProgress());
+            //Log.d(TAG, bean.getUrl() + " onProgress " + bean.getDownloadProgress());
             sendResultToMediaActivity(bean);
         }
 
