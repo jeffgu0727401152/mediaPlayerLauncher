@@ -35,6 +35,7 @@ public class MqttUtil {
 
     private MqttAndroidClient mClient;
     private MqttConnectOptions mConOpt;
+    private Context mContext;
 
     private String protocol = MQTT_DEFAULT_PROTOCOL;
     private String host = MQTT_DEFAULT_HOST;
@@ -48,7 +49,7 @@ public class MqttUtil {
     private boolean mMqttMsgRetained = false;
     private int mMqttTimeout_s = 10;
     private int mMqttHeartBeat_s = 60;
-    private int mMqttRetryDelay_ms = 20*1000;
+    private int mMqttRetryDelay_ms = 10*1000;
     private int mMqttMsgQos = 0;
 
     public interface MqttMessageCallback
@@ -69,6 +70,7 @@ public class MqttUtil {
 
     private MqttUtil(Context context) {
         clientId = DeviceInfoActivity.getSysSn(context);
+        mContext = context;
         loadPropValue();
         mqttClientInit(context);
     }
@@ -84,17 +86,26 @@ public class MqttUtil {
 
     /**
      * 连接服务器
-     * MqttService有自己的重连机制，在断线情况下会重连，但是首次连接失败后，需要再调用connect方法
+     * MqttService有自己的重连机制，在断线情况下会重连，但是并不会帮忙订阅
      */
     public void connect() {
-        if (mClient !=null && !mClient.isConnected()) {
-            try {
+        if (mClient==null) {
+            Log.e(TAG, "mClient is null!!!");
+            return;
+        }
+
+        try {
+            if (!mClient.isConnected()) {
+
                 mClient.connect(mConOpt, null, iMqttActionListener);
-            } catch (MqttException e) {
-                e.printStackTrace();
+
+            } else {
+
+                mClient.subscribe(mTopic, mMqttMsgQos);
+
             }
-        } else {
-            Log.e(TAG,"already connected!");
+        } catch (MqttException e) {
+            e.printStackTrace();
         }
     }
 
@@ -152,7 +163,6 @@ public class MqttUtil {
                 mConOpt.setWill(mTopic, lastMessage.getBytes(), mMqttMsgQos, mMqttMsgRetained);
             } catch (Exception e) {
                 e.printStackTrace();
-                iMqttActionListener.onFailure(null, e);
             }
         }
     }
@@ -215,40 +225,19 @@ public class MqttUtil {
             } catch (MqttException e) {
                 e.printStackTrace();
             }
+        } else {
+            Log.d(TAG,"fail to publish, because is not connected");
         }
+
         return flag;
     }
 
     public boolean publish(byte[] payload, int qos) {
-        boolean flag = false;
-        if (mClient != null && mClient.isConnected()) {
-            Log.d(TAG,"Publishing to topic \"" + mTopic + "\" qos " + qos);
-            MqttMessage message = new MqttMessage(payload);
-            message.setQos(qos);
-            try {
-                mClient.publish(mTopic, message);
-                flag = true;
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        }
-        return flag;
+        return publish(mTopic,payload,qos);
     }
 
     public boolean publish(String payload, int qos) {
-        boolean flag = false;
-        if (mClient != null && mClient.isConnected()) {
-            Log.d(TAG,"Publishing to topic \"" + mTopic + "\" qos " + qos);
-            MqttMessage message = new MqttMessage(payload.getBytes());
-            message.setQos(qos);
-            try {
-                mClient.publish(mTopic, message);
-                flag = true;
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        }
-        return flag;
+        return publish(payload.getBytes(),qos);
     }
 
     private Handler mqttUtilHandler = new Handler()
@@ -259,7 +248,13 @@ public class MqttUtil {
             {
                 case MQTT_RECONNECT:
                     Log.i(TAG, "mqtt reconnect!");
-                    connect();
+                    if (NetworkUtil.isNetworkAvailable(mContext)) {
+                        connect();
+                    } else {
+                        Message tryAgainMsg = mqttUtilHandler.obtainMessage();
+                        tryAgainMsg.what = MQTT_RECONNECT;
+                        mqttUtilHandler.sendMessageDelayed(tryAgainMsg, mMqttRetryDelay_ms);
+                    }
                     break;
                 default:
                     Log.i(TAG, "unknown msg " + msg.what);

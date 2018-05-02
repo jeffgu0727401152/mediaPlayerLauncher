@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,6 +25,7 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
 import com.whitesky.tv.projectorlauncher.utils.AppUtil;
 import com.whitesky.tv.projectorlauncher.utils.MediaScanUtil;
+import com.whitesky.tv.projectorlauncher.utils.NetworkUtil;
 import com.whitesky.tv.projectorlauncher.utils.PathUtil;
 import com.whitesky.tv.projectorlauncher.utils.ShellUtil;
 import com.whitesky.tv.projectorlauncher.utils.ToastUtil;
@@ -246,13 +246,9 @@ public class DownloadService extends Service {
             String action = intent.getAction();
             if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 Log.i(TAG, "network status change!");
-                ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-
                 // 恢复网络的时候重新启动下载
-                if(info != null && info.isAvailable() && MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
-                    String name = info.getTypeName();
-                    Log.d(TAG, "resume all download, network on " + name);
+                if(NetworkUtil.isNetworkAvailable(getApplicationContext()) && MediaActivity.isLocalMassStorageMounted(getApplicationContext())) {
+                    Log.d(TAG, "resume all download");
                     for (MediaBean tmp : new MediaBeanDao(getApplicationContext()).selectItemsDownloading()) {
                         tmp.setDownloadState(STATE_DOWNLOAD_NONE);
                         DownloadManager.getInstance().download(tmp, mMediaDownloadCallback);
@@ -268,13 +264,8 @@ public class DownloadService extends Service {
         downloadServiceHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo info = cm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-                if(info != null && info.isAvailable()) {
-                    String name = info.getTypeName();
+                if(NetworkUtil.isNetworkAvailable(getApplicationContext())) {
                     Log.d(TAG, bean.getUrl() + " network is ok, retry download!");
-
-                    // 发生错误自动重新下载
                     bean.setDownloadState(STATE_DOWNLOAD_NONE);
                     DownloadManager.getInstance().download(bean, callback);
                 }
