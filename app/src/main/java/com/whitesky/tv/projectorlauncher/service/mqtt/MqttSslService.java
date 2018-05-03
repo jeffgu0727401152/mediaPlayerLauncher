@@ -25,6 +25,7 @@ import com.whitesky.tv.projectorlauncher.application.MainApplication;
 import com.whitesky.tv.projectorlauncher.common.Contants;
 import com.whitesky.tv.projectorlauncher.common.HttpConstants;
 import com.whitesky.tv.projectorlauncher.home.HomeActivity;
+import com.whitesky.tv.projectorlauncher.media.DeleteTask;
 import com.whitesky.tv.projectorlauncher.media.MediaActivity;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.MediaBeanDao;
@@ -180,6 +181,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
         } else {
             Log.e(TAG,"this msg is not for this device sn!!!");
         }
+
     }
     // MQTT Util callback ---
 
@@ -330,7 +332,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         }
 
                     } catch (Exception e) {
-                        Log.e(TAG, "Exception in heartbeat thread" + e.toString());
+                        e.printStackTrace();
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException ie) {
@@ -379,7 +381,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         }
 
                     } catch (Exception e) {
-                        Log.e(TAG, "Exception in get QRcode Url thread" + e.toString());
+                        e.printStackTrace();
                     }
                 }
             }
@@ -438,7 +440,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         serverResponse = new Gson().fromJson(htmlBody, VersionCheckResultBean.class);
                     } catch (IllegalStateException e) {
                         serverResponse = null;
-                        Log.e(TAG, "exception in json parse!" + e.toString());
+                        e.printStackTrace();
                     }
 
                     if (serverResponse != null) {
@@ -513,7 +515,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         serverResponse = new Gson().fromJson(htmlBody, QRcodeResultBean.class);
                     } catch (IllegalStateException e) {
                         serverResponse = null;
-                        Log.e(TAG, "exception in json parse!" + e.toString());
+                        e.printStackTrace();
                     }
 
                     if (serverResponse != null) {
@@ -545,6 +547,66 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                 }
             }
         });
+    }
+
+    private class MqttDeleteMediaCallback implements DeleteTask.DeleteTaskListener {
+        @Override
+        public void onDeleteStartCallback(){
+            ((MainApplication)getApplication()).isBusyInDelete = true;
+        }
+
+
+        @Override
+        public void onDeleteOneCallback(MediaBean bean){
+            // 从播放列表数据库移除相关条目
+            new PlayBeanDao(getApplicationContext()).delete(new ArrayList<PlayBean>(bean.getPlayBeans()));
+
+            if (bean.getSource()==SOURCE_LOCAL) {          // 本地文件
+                // 从数据库删除
+                new MediaBeanDao(getApplicationContext()).delete(bean);
+                // 从磁盘删除
+                FileUtil.deleteFile(bean.getPath());
+
+            } else {                                       // 云端文件
+
+                int downloadState = bean.getDownloadState();
+
+                if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
+
+                    bean.setDownloadProgress(0);
+                    bean.setDownloadState(STATE_DOWNLOAD_NONE);
+                    bean.setDuration(0);
+
+                    // 更新数据库
+                    new MediaBeanDao(getApplicationContext()).update(bean);
+                    // 从磁盘删除
+                    FileUtil.deleteFile(bean.getPath());
+
+                } else if (downloadState == STATE_DOWNLOAD_NONE) {
+
+                    // 没有开始下载的云端条目,啥都不做
+
+                } else {
+
+                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
+                    intent.putExtra(EXTRA_KEY_URL, bean.getUrl());
+                    startService(intent);
+                }
+            }
+        }
+
+        @Override
+        public void onAllDeleteDoneCallback(int deleteCount) {
+            ToastUtil.showToast(getApplicationContext(), getResources().getString(R.string.str_media_file_delete_toast) + deleteCount);
+            ((MainApplication)getApplication()).isBusyInDelete = false;
+        }
+    }
+
+    private void mqttDeleteMediaFileInThread(Deque<MediaBean> deleteDeque) {
+        DeleteTask.DeleteTaskParam param = new DeleteTask.DeleteTaskParam();
+        param.deleteQueue = new ArrayDeque<>(deleteDeque);
+        param.callback = new MqttDeleteMediaCallback();
+        new DeleteTask(getApplicationContext(),false).execute(param);
     }
 
     private void parserMqttMessage(String mqttMessage) {
@@ -666,7 +728,8 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
             }
         }
 
-        if (((MainApplication)getApplication()).isBusyInCopy) {
+        if (((MainApplication)getApplication()).isBusyInCopy
+                || ((MainApplication)getApplication()).isBusyInDelete) {
             switch (msgWhat) {
                 case MSG_REQUEST_INFO:
                 case MSG_REQUEST_PLAYLIST:
@@ -881,7 +944,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_PUSH_PLAYLIST:
                     Type type = new TypeToken<List<MediaListPushBean>>(){ }.getType();
-                    ArrayList<MediaListPushBean> playCloudList = gson.fromJson(rawStr.substring(100), type);
+                    ArrayList<MediaListPushBean> playCloudList = null;
+                    try {
+                        playCloudList = gson.fromJson(rawStr.substring(100), type);
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (playCloudList == null) {
+                        Log.w(TAG,"json parse error!");
+                        return;
+                    }
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
 
@@ -922,7 +995,17 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_PUSH_PLAYMODE:
-                    PlayModePushBean playMode = gson.fromJson(rawStr.substring(100),PlayModePushBean.class);
+                    PlayModePushBean playMode = null;
+                    try {
+                        playMode = gson.fromJson(rawStr.substring(100), PlayModePushBean.class);
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (playMode==null) {
+                        Log.w(TAG,"json parse error!");
+                        return;
+                    }
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
 
@@ -950,17 +1033,28 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
 
                 case MSG_PUSH_DOWNLOAD:
                     type = new TypeToken<List<FileListPushBean>>(){ }.getType();
-                    ArrayList<FileListPushBean> downloadCloudList = gson.fromJson(rawStr.substring(100), type);
+                    ArrayList<FileListPushBean> downloadList = null;
+                    try {
+                        downloadList = gson.fromJson(rawStr.substring(100), type);
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (downloadList == null) {
+                        Log.w(TAG,"json parse error!");
+                        return;
+                    }
+
                     dDeque = new ArrayDeque<>();
                     // 这边需要处理，本地数据库中没有云端条目，而云端却发送过来让你下载的情况
-                    boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadCloudList);
+                    boolean needSync = DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,downloadList);
                     if (needSync) {
 
                         if (((MainApplication)getApplication()).isMediaActivityForeground) {
                             // 交给MediaActivity同步，同步结束后下载这些文件
                             Intent intent=new Intent(Contants.ACTION_PUSH_DOWNLOAD_NEED_SYNC);
                             Bundle bundle = new Bundle();
-                            bundle.putParcelableArrayList(Contants.EXTRA_MQTT_ACTION_CONTEXT, downloadCloudList);
+                            bundle.putParcelableArrayList(Contants.EXTRA_MQTT_ACTION_CONTEXT, downloadList);
                             intent.putExtras(bundle);
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
@@ -969,7 +1063,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                             if (mNeedToDownloadList!=null) {
                                 Log.w(TAG,"mNeedToDownloadList already has a cloud sync http request");
                             } else {
-                                mNeedToDownloadList = downloadCloudList;
+                                mNeedToDownloadList = downloadList;
                                 MediaActivity.loadMediaListFromCloud(getApplicationContext(), new MediaActivity.cloudListGetCallback() {
                                     @Override
                                     public void cloudSyncDone(boolean result) {
@@ -997,8 +1091,18 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                     break;
 
                 case MSG_PUSH_DELETE:
-                    type = new TypeToken<List<FileListPushBean>>(){ }.getType();
-                    ArrayList<FileListPushBean> deleteList = gson.fromJson(rawStr.substring(100), type);
+                    type = new TypeToken<List<FileListPushBean>>(){}.getType();
+                    ArrayList<FileListPushBean> deleteList = null;
+                    try {
+                        deleteList = gson.fromJson(rawStr.substring(100), type);
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (deleteList == null) {
+                        Log.w(TAG,"json parse error!");
+                        return;
+                    }
 
                     if (((MainApplication)getApplication()).isMediaActivityForeground) {
 
@@ -1012,47 +1116,7 @@ public class MqttSslService extends Service implements MqttUtil.MqttMessageCallb
                         dDeque = new ArrayDeque<>();
                         // 删除文件不用管本地数据库中没有的, 而服务器传过来的条目的删除
                         DataListCovert.covertCloudFileListToMediaBeanList(getApplicationContext(),dDeque,deleteList);
-                        while (!dDeque.isEmpty()) {
-                            MediaBean deleteBean = dDeque.pop();
-
-                            // 从播放列表数据库移除相关条目
-                            new PlayBeanDao(getApplicationContext()).delete(new ArrayList<PlayBean>(deleteBean.getPlayBeans()));
-
-                            if (deleteBean.getSource()==SOURCE_LOCAL) {          // 本地文件
-                                // 从数据库删除
-                                new MediaBeanDao(getApplicationContext()).delete(deleteBean);
-                                // 从磁盘删除
-                                FileUtil.deleteFile(deleteBean.getPath());
-
-                            } else {                                             // 云端文件
-
-                                int downloadState = deleteBean.getDownloadState();
-
-                                if (downloadState == STATE_DOWNLOAD_DOWNLOADED) {
-
-                                    deleteBean.setDownloadProgress(0);
-                                    deleteBean.setDownloadState(STATE_DOWNLOAD_NONE);
-                                    deleteBean.setDuration(0);
-
-                                    // 更新数据库
-                                    new MediaBeanDao(getApplicationContext()).update(deleteBean);
-                                    // 从磁盘删除
-                                    FileUtil.deleteFile(deleteBean.getPath());
-
-                                } else if (downloadState == STATE_DOWNLOAD_NONE) {
-
-                                    // 没有开始下载的云端条目,啥都不做
-
-                                } else {
-
-                                    Intent intent = new Intent().setAction(DownloadService.ACTION_MEDIA_DOWNLOAD_CANCEL);
-                                    intent.putExtra(EXTRA_KEY_URL, deleteBean.getUrl());
-                                    Log.i("TAG", intent.getAction());
-                                    startService(intent);
-
-                                }
-                            }
-                        }
+                        mqttDeleteMediaFileInThread(dDeque);
                     }
                     break;
 

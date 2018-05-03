@@ -7,6 +7,7 @@ import com.j256.ormlite.dao.Dao;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -110,6 +111,10 @@ public class PlayBeanDao {
                 users = dao.queryForAll();
             } catch (SQLException e) {
                 e.printStackTrace();
+            }
+
+            if (users==null) {
+                users = new ArrayList<>();
             }
             return users;
         }

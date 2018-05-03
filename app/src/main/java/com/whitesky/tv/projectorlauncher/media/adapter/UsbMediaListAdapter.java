@@ -47,7 +47,9 @@ public class UsbMediaListAdapter extends CommonAdapter<UsbMediaListBean>
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, UsbMediaListBean item) {
+    public void convert(ViewHolder holder, final int position) {
+        UsbMediaListBean item = getItem(position);
+
         holder.setText(R.id.tv_media_title, item.getTitle());
         holder.setText(R.id.tv_media_size, FileUtil.formatFileSize(item.getSize()));
         holder.setText(R.id.tv_media_list_pos, String.valueOf(position + 1) + ".");

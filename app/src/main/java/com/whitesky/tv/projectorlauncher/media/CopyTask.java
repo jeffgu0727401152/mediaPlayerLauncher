@@ -34,7 +34,7 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
     private CopyTaskParam param;
     private Deque<String> copyDoneDeque = new ArrayDeque<String>();
 
-    public interface CopyDoneListener {
+    public interface CopyTaskListener {
         /**
          * @param
          */
@@ -50,7 +50,7 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
         Deque<String> fromList = new ArrayDeque<String>();
         String desFolder;
         long totalSize;
-        CopyDoneListener callback;
+        CopyTaskListener callback;
     }
 
     public CopyTask(Context context) {
@@ -80,7 +80,7 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
         try {
             long totalNow = 0;
 
-            Log.i(TAG, "Start Copy file(s) total length: " + param.totalSize);
+            Log.i(TAG, "Start Copy file(s), total length: " + param.totalSize);
 
             copyDoneDeque.clear();
             byte[] bytes = new byte[USB_COPY_BUFFER_SIZE];
@@ -115,7 +115,7 @@ public class CopyTask extends AsyncTask<CopyTask.CopyTaskParam, Integer, Void> {
             Log.e(TAG, "error in CopyTask!", e);
         }
 
-        Log.i(TAG, "total copy time " + (System.currentTimeMillis() - time) + "ms");
+        Log.i(TAG, "total copy cost time " + (System.currentTimeMillis() - time) + "ms");
         return null;
     }
 

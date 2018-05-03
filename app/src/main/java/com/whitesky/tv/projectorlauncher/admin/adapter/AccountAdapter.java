@@ -21,11 +21,11 @@ public class AccountAdapter extends CommonAdapter<ListViewBean>
     }
     
     @Override
-    public void convert(ViewHolder holder, final int position, ListViewBean item)
+    public void convert(ViewHolder holder, final int position)
     {
-        holder.setText(R.id.tv_people_account, item.getTitle());
-        holder.setText(R.id.tv_people_date, item.getDiscribe());
-        switch (item.getState())
+        holder.setText(R.id.tv_people_account, getItem(position).getTitle());
+        holder.setText(R.id.tv_people_date, getItem(position).getDiscribe());
+        switch (getItem(position).getState())
         {
             case 0: // 绿色
                 holder.setImageResource(R.id.img_project_state, R.mipmap.icon_user_default);

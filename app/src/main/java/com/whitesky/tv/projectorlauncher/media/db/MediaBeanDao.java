@@ -5,6 +5,7 @@ import android.content.Context;
 import com.j256.ormlite.dao.Dao;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
@@ -89,6 +90,10 @@ public class MediaBeanDao {
                 users = dao.queryForAll();
             } catch (SQLException e) {
                 e.printStackTrace();
+            }
+
+            if (users==null) {
+                users = new ArrayList<>();
             }
             return users;
         }

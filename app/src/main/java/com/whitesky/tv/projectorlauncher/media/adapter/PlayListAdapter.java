@@ -14,11 +14,9 @@ import com.whitesky.tv.projectorlauncher.media.db.MediaBean;
 import com.whitesky.tv.projectorlauncher.media.db.PlayBean;
 
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TimeZone;
 
 import static android.widget.AdapterView.INVALID_POSITION;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_MUSIC;
@@ -26,12 +24,6 @@ import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_PICTURE
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.MEDIA_VIDEO;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.SOURCE_LOCAL;
 import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADED;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_DOWNLOADING;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_ERROR;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_NONE;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_PAUSED;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_START;
-import static com.whitesky.tv.projectorlauncher.media.db.MediaBean.STATE_DOWNLOAD_WAITING;
 import static com.whitesky.tv.projectorlauncher.utils.MediaScanUtil.genTimeString;
 
 /**
@@ -41,7 +33,6 @@ import static com.whitesky.tv.projectorlauncher.utils.MediaScanUtil.genTimeStrin
 public class PlayListAdapter extends CommonAdapter<PlayBean>
 {
     private final String TAG = this.getClass().getSimpleName();
-    static final Object listLock = new Object();
 
     public static final int CHANGE_EVENT_ADD = 0;
     public static final int CHANGE_EVENT_REMOVE = 1;
@@ -59,7 +50,6 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
 
     public void setPlayIndex(int playIndex) {
         this.playIndex = playIndex;
-        refresh();
     }
 
     // 数组中的下标, 可以数据库当ID用
@@ -71,7 +61,15 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, PlayBean item) {
+    public void convert(ViewHolder holder, final int position) {
+
+        if (position>=listDatas.size()) {
+            Log.w(TAG, "delete play list too quick! error position = " + position);
+            return;
+        }
+
+        PlayBean item = getItem(position);
+
         holder.setText(R.id.tv_media_title, item.getMedia().getTitle());
         holder.setText(R.id.tv_media_duration, genTimeString(item.getTime()));
 
@@ -112,15 +110,11 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long arg3) {
                 PlayBean bean = null;
-                synchronized (listLock) {
-                    if (position>=getListDatas().size()) {
-                        Log.w(TAG, "delete play list too quick!");
-                        return;
-                    } else {
-                        bean = getItem(position);
-                    }
+                if (position>=getListDatas().size()) {
+                    return;
+                } else {
+                    bean = getItem(position);
                 }
-
 
                 if (bean == null || bean.getScale() == pos) {
                     return;
@@ -185,25 +179,10 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         if (item.getMedia().getSource()==SOURCE_LOCAL) {
             holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
         } else {
-            // 下载状态显示
-            if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_NONE) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
-            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_WAITING) {
+            // 下载状态播放列表只显示需下载
+            if (item.getMedia().getDownloadState() != STATE_DOWNLOAD_DOWNLOADED) {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_waiting));
-            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_DOWNLOADING) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, String.valueOf(item.getMedia().getDownloadProgress()*100/item.getMedia().getSize()) + "%");
-            } else if(item.getMedia().getDownloadState() == STATE_DOWNLOAD_PAUSED) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state,
-                        mContext.getResources().getString(R.string.str_media_download_pause) + String.valueOf(item.getMedia().getDownloadProgress()*100/item.getMedia().getSize()) + "%");
-            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_ERROR) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, mContext.getResources().getString(R.string.str_media_download_error));
-            } else if (item.getMedia().getDownloadState() == STATE_DOWNLOAD_START) {
-                holder.getTextView(R.id.tv_media_state).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_media_state, "...");
+                holder.setText(R.id.tv_media_state, "......");
             } else {
                 holder.getTextView(R.id.tv_media_state).setVisibility(View.INVISIBLE);
             }
@@ -300,14 +279,12 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
 
         if (mOnPlaylistItemEventListener != null) {
             List<PlayBean> newList = mOnPlaylistItemEventListener.onPlayListChanged(CHANGE_EVENT_REMOVE,items);
-
             synchronized (listLock) {
                 listDatas.clear();
                 for (int i = 0; i < newList.size(); i++) {
                     listDatas.add(newList.get(i));
                 }
             }
-
         } else {
 
             synchronized (listLock) {
@@ -341,15 +318,9 @@ public class PlayListAdapter extends CommonAdapter<PlayBean>
         }
     }
 
-    @Override
-    // 重写父类方法,保证修改list内容会同步记录到数据库
-    public void setListDatas(List<PlayBean> items){
-        setListDatasNotifyChange(items);
-    }
-
     public boolean hasPlayableItem() {
         synchronized (listLock) {
-            for (PlayBean bean:getListDatas()) {
+            for (PlayBean bean:listDatas) {
                 if (bean.getMedia().getDownloadState()==STATE_DOWNLOAD_DOWNLOADED) {
                     return true;
                 }

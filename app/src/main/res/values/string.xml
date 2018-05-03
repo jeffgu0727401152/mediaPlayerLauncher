@@ -111,15 +111,16 @@
     <string name="str_media_download_error">Error!</string>
     <string name="str_media_format_error">uncoded!</string>
 
-
     <string name="str_media_cloud_file_need_login_toast">Device needs login to get cloud media list</string>
     <string name="str_media_cloud_file_could_not_export_toast">Cloud media file(s) cannot be exported to U disk</string>
     <string name="str_media_file_copy_toast">Copy files:</string>
     <string name="str_media_file_delete_toast">Delete files:</string>
     <string name="str_media_file_copy_process_dialog_title">Copying...</string>
+    <string name="str_media_file_delete_process_dialog_title">Deleting...</string>
     <string name="str_media_file_delete_dialog_title">Do you want to delete file(s)?</string>
     <string name="str_media_file_copy_same_dialog_title"> File(s) are already exists in the target folder</string>
     <string name="str_media_file_copy_process_dialog_prompt">Do not exit or unplug the U disk before copy complete</string>
+    <string name="str_media_file_delete_process_dialog_prompt">Do not exit before delete complete</string>
     <string name="str_media_file_copy_capacity_prompt">Insufficient HardDisk capacity! Please delete some media file and try it again!</string>
 
 

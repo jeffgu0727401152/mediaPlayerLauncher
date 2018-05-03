@@ -164,6 +164,21 @@ public class MediaBean  implements Parcelable {
 
     public MediaBean() {}
 
+    public MediaBean(MediaBean bean) {
+        this.title = bean.getTitle();
+        this.type = bean.getType();
+        this.id = bean.getId();
+        this.source = bean.getSource();
+        this.path = bean.getPath();
+        this.duration = bean.getDuration();
+        this.size = bean.getSize();
+        this.description = bean.getDescription();
+        this.downloadProgress = bean.getDownloadProgress();
+        this.downloadState = bean.getDownloadState();
+        this.playBeans = bean.getPlayBeans();
+        this.url = bean.getUrl();
+    }
+
     public MediaBean(String name, int id, int type, int source, String path, int duration, long size) {
         this.title = name;
         this.type = type;

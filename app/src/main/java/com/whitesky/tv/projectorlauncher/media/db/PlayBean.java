@@ -88,7 +88,7 @@ public class PlayBean implements Parcelable, Comparable<PlayBean> {
         this.idx = PLAY_INDEX_WAIT_DEFINE;
         this.scale = MEDIA_SCALE_DEFAULT;
         this.time = media.getDuration();
-        this.media = media;
+        this.media = new MediaBean(media);
     }
 
     public PlayBean(PlayBean bean) {
@@ -134,7 +134,7 @@ public class PlayBean implements Parcelable, Comparable<PlayBean> {
     }
 
     public void setMedia(MediaBean media) {
-        this.media = media;
+        this.media = new MediaBean(media);
     }
 
     @Override

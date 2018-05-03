@@ -304,8 +304,10 @@ public class DownloadService extends Service {
                     && mySignature.equals(apkSignature)
                     /*&& apkVersionCode > myVersionCode*/) {
 
-                if (((MainApplication)getApplication()).isBusyInFormat || ((MainApplication)getApplication()).isBusyInCopy) {
-                    Log.w(TAG,"can not update because device is in sata disk format/copy file to internal!");
+                if (((MainApplication)getApplication()).isBusyInFormat
+                        || ((MainApplication)getApplication()).isBusyInCopy
+                        || ((MainApplication)getApplication()).isBusyInDelete) {
+                    Log.w(TAG,"can not update because device is in sata disk format/copy/delete file!");
                     sendFailToOtaActivity(bean);
                 } else {
                     downloadServiceHandler.sendEmptyMessage(MSG_OTA_READY_TO_INSTALL);

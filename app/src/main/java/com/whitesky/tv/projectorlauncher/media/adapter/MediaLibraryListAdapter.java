@@ -41,8 +41,6 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
 {
     private final String TAG = this.getClass().getSimpleName();
 
-    private final Object mListLock = new Object();
-
     private OnAllMediaListItemEventListener mOnALlMediaListItemEventListener;
 
     public MediaLibraryListAdapter(Context context, List<MediaLibraryListBean> data)
@@ -63,7 +61,9 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
     }
 
     @Override
-    public void convert(ViewHolder holder, final int position, MediaLibraryListBean item) {
+    public void convert(ViewHolder holder, final int position) {
+        MediaLibraryListBean item = getItem(position);
+
         // 设置标号
         holder.setText(R.id.tv_media_list_pos, String.valueOf(position + 1) + ".");
 
@@ -226,18 +226,16 @@ public class MediaLibraryListAdapter extends CommonAdapter<MediaLibraryListBean>
     }
 
     public void update(MediaBean data) {
-        synchronized (mListLock) {
-            for (MediaLibraryListBean it : listDatas) {
-                if (it.getMediaData().getPath().equals(data.getPath())) {
-                    it.setMediaData(data);
-                    return;
-                }
+        for (MediaLibraryListBean it : listDatas) {
+            if (it.getMediaData().getPath().equals(data.getPath())) {
+                it.setMediaData(data);
+                return;
             }
         }
     }
 
     public void removeItem(MediaBean data) {
-        synchronized (mListLock) {
+        synchronized (listLock) {
             MediaLibraryListBean found = null;
             for (MediaLibraryListBean it : listDatas) {
                 if (it.getMediaData().getPath().equals(data.getPath())) {
